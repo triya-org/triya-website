@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triya.ai - AI-Powered Video Surveillance</title>
+  <style>
+    /* Base Styles */
+    :root {
+      --background: #0e0e0e;
+      --text: #e0e0e0;
+      --accent: #38bdf8;
+      --gray-800: #1f2937;
+      --gray-700: #374151;
+      --gray-500: #6b7280;
+      --gray-400: #9ca3af;
+      --dark-bg: #121212;
+      --darker-bg: #0a0a0a;
+      --card-bg: #151515;
+      --border-color: #222222;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    
+    a {
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    a:hover {
+      color: var(--accent);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background-color: var(--accent);
+      color: #000;
+    }
+    
+    .btn-primary:hover {
+      background-color: rgba(56, 189, 248, 0.9);
+      color: #000;
+    }
+    
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--gray-700);
+    }
+    
+    .btn-secondary:hover {
+      background-color: var(--gray-800);
+    }
+
+    .btn-lg {
+      padding: 12px 24px;
+      font-size: 1.125rem;
+    }
+    
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: rgba(14, 14, 14, 0.95);
+      backdrop-filter: blur(4px);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .logo-icon {
+      color: var(--accent);
+      height: 32px;
+      width: 32px;
+    }
+    
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    
+    nav {
+      display: none;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .login-link {
+      display: none;
+    }
+    
+    /* Hero Section */
+    .hero {
+      padding: 4rem 0 6rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(56, 189, 248, 0.1), transparent);
+      opacity: 0.3;
+      z-index: 0;
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 64rem;
+      margin: 0 auto;
+    }
+    
+    .hero-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+    
+    .hero-title-gradient {
+      background: linear-gradient(to right, var(--accent), #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .hero-description {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero-logo {
+      margin: 0 auto;
+      position: relative;
+      width: 12rem;
+      height: 12rem;
+    }
+
+    .hero-logo-pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background-color: rgba(56, 189, 248, 0.2);
+      animation: pulse 2s infinite;
+    }
+
+    .hero-logo-triangle {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        opacity: 1;
+      }
+      70% {
+        transform: scale(1.1);
+        opacity: 0.7;
+      }
+      100% {
+        transform: scale(0.95);
+        opacity: 1;
+      }
+    }
+    
+    /* Comparison Section */
+    .comparison {
+      padding: 4rem 0;
+      background-color: var(--dark-bg);
+    }
+    
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    
+    .comparison-card {
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+    }
+    
+    .comparison-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .comparison-subtitle {
+      color: var(--gray-400);
+      margin-bottom: 1.5rem;
+    }
+    
+    .before-content {
+      background-color: var(--background);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-select {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background-color: #181818;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .with-content {
+      background-color: var(--background);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .camera-view {
+      position: relative;
+      width: 100%;
+      background-color: var(--gray-800);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      aspect-ratio: 16 / 9;
+    }
+
+    .camera-placeholder {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .query-input {
+      background-color: var(--card-bg);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--gray-700);
+      display: flex;
+      align-items: center;
+    }
+
+    .query-text {
+      flex-grow: 1;
+    }
+
+    .query-indicator {
+      background-color: var(--accent);
+      height: 2rem;
+      width: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+    }
+
+    /* Trusted By Section */
+    .trusted-by {
+      padding: 4rem 0;
+    }
+
+    .trusted-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .trusted-logos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .trusted-logo {
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--card-bg);
+      border-radius: 0.5rem;
+    }
+
+    .trusted-logo-text {
+      color: var(--gray-500);
+      font-weight: 600;
+    }
+
+    /* Problem Statement */
+    .problem {
+      padding: 4rem 0;
+      background-color: var(--dark-bg);
+    }
+
+    .problem-header {
+      max-width: 48rem;
+      margin: 0 auto 3rem;
+    }
+
+    .problem-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .problem-description {
+      font-size: 1.125rem;
+      color: var(--gray-400);
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .problem-card {
+      background-color: var(--background);
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .problem-icon {
+      width: 3rem;
+      height: 3rem;
+      background-color: rgba(56, 189, 248, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+    }
+
+    .problem-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .problem-card-description {
+      color: var(--gray-400);
+    }
+
+    /* Alert Examples */
+    .alerts {
+      padding: 4rem 0;
+    }
+
+    .alerts-examples {
+      max-width: 32rem;
+      margin: 0 auto 4rem;
+    }
+
+    .alert-item {
+      background-color: var(--card-bg);
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .alert-content {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .alert-thumbnail {
+      width: 6rem;
+      height: 5rem;
+      border-radius: 0.25rem;
+      object-fit: cover;
+      margin-right: 1rem;
+    }
+
+    .alert-details {
+      flex-grow: 1;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-time {
+      font-size: 0.875rem;
+      color: var(--gray-400);
+    }
+
+    .alert-indicator {
+      margin-left: auto;
+      width: 1.5rem;
+      height: 1.5rem;
+      background-color: var(--accent);
+      border-radius: 50%;
+    }
+
+    .alerts-message {
+      text-align: center;
+    }
+
+    .alerts-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .alerts-description {
+      font-size: 1.125rem;
+    }
+
+    /* Features Section */
+    .features {
+      padding: 4rem 0;
+      background-color: var(--dark-bg);
+    }
+
+    .features-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .features-column {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .feature-icon {
+      width: 3rem;
+      height: 3rem;
+      background-color: rgba(56, 189, 248, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+
+    .feature-content h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-content p {
+      color: var(--gray-400);
+    }
+
+    /* Specs Section */
+    .specs {
+      padding: 4rem 0;
+    }
+
+    .specs-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .specs-card {
+      background-color: var(--background);
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .specs-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .specs-list {
+      list-style: none;
+    }
+
+    .specs-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .specs-check {
+      width: 1.5rem;
+      height: 1.5rem;
+      background-color: rgba(56, 189, 248, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+
+    /* CTA Section */
+    .cta {
+      padding: 4rem 0;
+      background: linear-gradient(to bottom, var(--background), var(--dark-bg));
+    }
+
+    .cta-content {
+      max-width: 48rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-description {
+      font-size: 1.125rem;
+      margin-bottom: 2rem;
+      color: var(--gray-400);
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    /* Footer */
+    footer {
+      background-color: var(--darker-bg);
+      padding: 3rem 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .footer-column h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-links a {
+      color: var(--gray-400);
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .footer-logo-icon {
+      color: var(--accent);
+      height: 2rem;
+      width: 2rem;
+      margin-right: 0.5rem;
+    }
+
+    .footer-copyright {
+      color: var(--gray-400);
+    }
+
+    /* Responsive Styles */
+    @media (min-width: 640px) {
+      .hero-title {
+        font-size: 3rem;
+      }
+      
+      .hero-actions, .cta-actions {
+        flex-direction: row;
+      }
+      
+      .login-link {
+        display: block;
+      }
+    }
+
+    @media (min-width: 768px) {
+      nav {
+        display: block;
+      }
+      
+      .hero-title {
+        font-size: 3.75rem;
+      }
+      
+      .comparison-grid, .problem-grid, .specs-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4rem;
+      }
+      
+      .footer-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .footer-bottom {
+        flex-direction: row;
+      }
+      
+      .footer-logo {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .hero {
+        padding: 6rem 0 8rem;
+      }
+      
+      .hero-title {
+        font-size: 4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <div class="header-container">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" class="logo-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span class="logo-text">Triya.ai</span>
+        </div>
+        <nav>
+          <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#specs">Architecture</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+          </div>
+        </nav>
+        <div class="header-actions">
+          <a href="#login" class="login-link">Platform Login</a>
+          <a href="#demo" class="btn btn-primary">Request Demo</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-overlay"></div>
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <span class="hero-title-gradient">Edge Intelligence for</span>
+            <br>
+            <span class="hero-title-gradient">Next-Gen Security.</span>
+            <br>
+            <span>Your Vision, Our AI.</span>
+          </h1>
+          <p class="hero-description">
+            Triya.ai transforms existing camera networks with edge-based AI processing.
+            <br>
+            Sub-500ms latency, on-premise security, and natural language control.
+          </p>
+          <div class="hero-actions">
+            <a href="#demo" class="btn btn-primary btn-lg">Request a demo</a>
+            <a href="#action" class="btn btn-secondary btn-lg">Explore capabilities</a>
+          </div>
+          <div class="hero-logo">
+            <div class="hero-logo-pulse"></div>
+            <div class="hero-logo-triangle">
+              <svg viewBox="0 0 100 100" width="100%" height="100%">
+                <path d="M50 10 L90 70 L10 70 Z" fill="url(#triya-gradient)" />
+                <defs>
+                  <linearGradient id="triya-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#0e0e0e" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison">
+      <div class="container">
+        <div class="comparison-grid">
+          <div class="comparison-card">
+            <h2 class="comparison-title">Traditional Solutions</h2>
+            <p class="comparison-subtitle">Resource-intensive cloud processing</p>
+            <div class="before-content">
+              <div class="form-group">
+                <div class="form-label">Detection Criteria</div>
+                <div class="form-select">
+                  <span>Appearance Filter</span>
+                  <div>
+                    <span>Dark Clothing</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="ml-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-label">Alert Conditions</div>
+                <div class="form-select">
+                  <span>Zone Entry</span>
+                  <div>
+                    <span>Area B-7</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="ml-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-label">Processing Location</div>
+                <div class="form-select">
+                  <span>Cloud Analysis</span>
+                  <div>
+                    <span>1.5s Latency</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="ml-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="comparison-card">
+            <h2 class="comparison-title">With Triya Edge AI</h2>
+            <p class="comparison-subtitle">On-premise intelligence with natural language</p>
+            <div class="with-content">
+              <div class="camera-view">
+                <img class="camera-placeholder" src="https://placehold.co/640x360/2f3136/808080" alt="Security camera view of parking lot">
+              </div>
+              <div class="query-input">
+                <div class="query-text">أبلغني إذا شاهدت أي شخص يتسكع بالقرب من المركبات في ساحة الانتظار</div>
+                <div class="query-indicator">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trusted By Section -->
+    <section class="trusted-by" style="display: none;">
+      <div class="container">
+        <h2 class="trusted-title">Trusted by:</h2>
+        <div class="trusted-logos">
+          <div class="trusted-logo">
+            <div class="trusted-logo-text">Company 1</div>
+          </div>
+          <div class="trusted-logo">
+            <div class="trusted-logo-text">Company 2</div>
+          </div>
+          <div class="trusted-logo">
+            <div class="trusted-logo-text">Company 3</div>
+          </div>
+          <div class="trusted-logo">
+            <div class="trusted-logo-text">Company 4</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem Statement -->
+    <section class="problem">
+      <div class="container">
+        <div class="problem-header">
+          <h2 class="problem-title">
+            Cloud-based analytics 
+            <br>
+            compromise your <span style="color: var(--accent);">security posture</span>
+          </h2>
+          <p class="problem-description">
+            Today's security environments demand immediate response, data sovereignty, and intelligent analysis that traditional cloud systems simply can't deliver
+          </p>
+        </div>
+
+        <div class="problem-grid">
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 class="problem-card-title">Cloud latency creates security gaps</h3>
+            <p class="problem-card-description">
+              When every millisecond counts, cloud processing introduces dangerous delays between threat detection and security response
+            </p>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="problem-card-title">Generic AI models miss regional context</h3>
+            <p class="problem-card-description">
+              Global models struggle with Arabic license plates, regional behaviors, and cultural nuances critical for GCC security implementations
+            </p>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="problem-card-title">Data sovereignty and compliance risks</h3>
+            <p class="problem-card-description">
+              Sending sensitive security footage to cloud services creates PDPL/GDPR compliance challenges and potential data breaches
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alert Examples Section -->
+    <section class="alerts">
+      <div class="container">
+        <div class="alerts-examples">
+          <div class="alert-item">
+            <div class="alert-content">
+              <img class="alert-thumbnail" src="https://placehold.co/100x80/2f3136/808080" alt="Security footage thumbnail">
+              <div class="alert-details">
+                <h4 class="alert-title">Unauthorized access detected at perimeter gate E3</h4>
+                <p class="alert-time">47 seconds ago</p>
+              </div>
+              <div class="alert-indicator"></div>
+            </div>
+          </div>
+
+          <div class="alert-item">
+            <div class="alert-content">
+              <img class="alert-thumbnail" src="https://placehold.co/100x80/2f3136/808080" alt="Security footage thumbnail">
+              <div class="alert-details">
+                <h4 class="alert-title">PPE violation in manufacturing zone B - missing hardhat</h4>
+                <p class="alert-time">3 minutes ago</p>
+              </div>
+              <div class="alert-indicator"></div>
+            </div>
+          </div>
+
+          <div class="alerts-message">
+            <h2 class="alerts-title">
+              Real-time detection.
+              <br>
+              <span style="color: var(--accent);">Edge-powered intelligence.</span>
+            </h2>
+            <p class="alerts-description">
+              Our on-device AI processes video instantly at the edge, with Arabic and English natural language understanding
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2 class="features-title">Triya.ai <span style="color: var(--accent);">Edge Innovation</span></h2>
+        <div class="features-grid">
+          <div class="features-column">
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>Retrofit Edge Gateway</h3>
+                <p>
+                  Connect our Jetson-powered gateway to your existing RTSP/ONVIF cameras and instantly transform your infrastructure without replacing hardware.
+                </p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>GCC-Optimized Vision Models</h3>
+                <p>
+                  Our models are specifically trained for regional contexts, with Arabic license plate recognition and region-specific behavioral pattern detection.
+                </p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>Sub-500ms Detection Latency</h3>
+                <p>
+                  Our optimized edge processing delivers real-time threat detection with less than half a second from event to alert, vital for critical security situations.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="features-column">
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>Bilingual AI Interface</h3>
+                <p>
+                  Query your footage in Arabic or English through our on-device LLM, supporting natural language search without internet connectivity.
+                </p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>Data Sovereignty Assured</h3>
+                <p>
+                  Video never leaves your premises, with edge vector storage and on-device processing ensuring complete PDPL/GDPR compliance and data ownership.
+                </p>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="feature-content">
+                <h3>Economic Transformation</h3>
+                <p>
+                  Under $600 per gateway delivers enterprise-grade AI capabilities to existing camera networks, making AI security accessible for small to large facilities.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Specs -->
+    <section id="specs" class="specs">
+      <div class="container">
+        <h2 class="specs-title">Technical <span style="color: var(--accent);">Architecture</span></h2>
+        <div class="specs-grid">
+          <div class="specs-card">
+            <h3>Edge Computing Platform</h3>
+            <ul class="specs-list">
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>NVIDIA Jetson Orin Nano Super</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Support for up to 16 RTSP/ONVIF streams</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>480ms average processing latency</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Configurable on-device storage (512GB-8TB)</span>
+              </li>
+            </ul>
+          </div>
+          <div class="specs-card">
+            <h3>AI & Analytics Capabilities</h3>
+            <ul class="specs-list">
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>INT8-optimized YOLOv8 & DeepSORT</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>FastReID for subject re-identification</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Arabic-optimized ALPR (94.3% accuracy)</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>TensorRT-LLM compiled bilingual interface</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>On-device Qdrant vector similarity search</span>
+              </li>
+              <li class="specs-item">
+                <div class="specs-check">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Responsive Next.js/Tailwind dashboard</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+      <div class="container">
+        <div class="cta-content">
+          <h2 class="cta-title">Secure your facilities with edge intelligence</h2>
+          <p class="cta-description">
+            Schedule a personalized demonstration to see how Triya.ai can transform your existing surveillance infrastructure for a fraction of the cost of cloud-based solutions.
+          </p>
+          <div class="cta-actions">
+            <a href="#demo" class="btn btn-primary btn-lg">Request a demo</a>
+            <a href="#contact" class="btn btn-secondary btn-lg">Contact our team</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-column">
+          <h3>Product</h3>
+          <ul class="footer-links">
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Pricing</a></li>
+            <li><a href="#">Roadmap</a></li>
+            <li><a href="#">Documentation</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Company</h3>
+          <ul class="footer-links">
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Press</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Resources</h3>
+          <ul class="footer-links">
+            <li><a href="#">Case Studies</a></li>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Contact</h3>
+          <ul class="footer-links">
+            <li><a href="#">info@triya.ai</a></li>
+            <li><a href="#">+971 5X XXX XXXX</a></li>
+            <li><a href="#">Support</a></li>
+            <li><a href="#">Sales</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" class="footer-logo-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span class="logo-text">Triya.ai</span>
+        </div>
+        <div class="footer-copyright">
+          &copy; <script>document.write(new Date().getFullYear())</script> Triya.ai. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // Add any necessary JavaScript functionality here
+    document.addEventListener('DOMContentLoaded', function() {
+      // Mobile menu toggle functionality could be added here if needed
+      
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 80, // Adjust for header height
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
