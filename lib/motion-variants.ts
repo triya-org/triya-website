@@ -1,4 +1,6 @@
-export const fadeInUp = {
+import { Variants } from "framer-motion";
+
+export const fadeInUp: Variants = {
   hidden: {
     opacity: 0,
     y: 20,
@@ -8,12 +10,12 @@ export const fadeInUp = {
     y: 0,
     transition: {
       duration: 0.5,
-      ease: [0.6, 0.05, 0.01, 0.9],
+      ease: "easeOut",
     },
   },
 };
 
-export const fadeIn = {
+export const fadeIn: Variants = {
   hidden: {
     opacity: 0,
   },
@@ -21,12 +23,12 @@ export const fadeIn = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      ease: [0.6, 0.05, 0.01, 0.9],
+      ease: "easeOut",
     },
   },
 };
 
-export const staggerChildren = {
+export const staggerChildren: Variants = {
   visible: {
     transition: {
       staggerChildren: 0.1,
@@ -34,7 +36,7 @@ export const staggerChildren = {
   },
 };
 
-export const scaleIn = {
+export const scaleIn: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.9,
@@ -44,12 +46,12 @@ export const scaleIn = {
     scale: 1,
     transition: {
       duration: 0.5,
-      ease: [0.6, 0.05, 0.01, 0.9],
+      ease: "easeOut",
     },
   },
 };
 
-export const slideInFromLeft = {
+export const slideInFromLeft: Variants = {
   hidden: {
     opacity: 0,
     x: -50,
@@ -59,12 +61,12 @@ export const slideInFromLeft = {
     x: 0,
     transition: {
       duration: 0.5,
-      ease: [0.6, 0.05, 0.01, 0.9],
+      ease: "easeOut",
     },
   },
 };
 
-export const slideInFromRight = {
+export const slideInFromRight: Variants = {
   hidden: {
     opacity: 0,
     x: 50,
@@ -74,7 +76,7 @@ export const slideInFromRight = {
     x: 0,
     transition: {
       duration: 0.5,
-      ease: [0.6, 0.05, 0.01, 0.9],
+      ease: "easeOut",
     },
   },
 };
