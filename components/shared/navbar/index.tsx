@@ -75,6 +75,7 @@ export function Navbar() {
         
         <NavigationMenu className="mx-6 hidden md:flex">
           <NavigationMenuList>
+            {/* Product menu hidden for now - will be added once product is built
             <NavigationMenuItem>
               <NavigationMenuTrigger>Product</NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -106,6 +107,7 @@ export function Navbar() {
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
+            */}
             
             <NavigationMenuItem>
               <NavigationMenuTrigger>Industries</NavigationMenuTrigger>

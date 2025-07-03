@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 
 const navItems = [
+  /* Product menu hidden for now - will be added once product is built
   {
     title: "Product",
     items: [
@@ -21,6 +22,7 @@ const navItems = [
       { title: "Pricing", href: "/pricing" },
     ],
   },
+  */
   {
     title: "Industries",
     items: [

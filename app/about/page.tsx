@@ -40,10 +40,10 @@ export default function AboutPage() {
         title: "Our Mission",
         description: "To democratize AI-powered security by making advanced surveillance accessible, affordable, and effective for organizations of all sizes across the Middle East.",
         stats: [
-          { label: "Founded", value: "2024" },
+          { label: "Founded", value: "2025" },
           { label: "Team Size", value: "15+" },
-          { label: "Countries", value: "3" },
-          { label: "Deployments", value: "50+" }
+          { label: "Countries (target by end 2025)", value: "2" },
+          { label: "Deployments (target by 2025)", value: "5+" }
         ]
       },
       values: {
@@ -87,10 +87,10 @@ export default function AboutPage() {
         title: "مهمتنا",
         description: "إضفاء الطابع الديمقراطي على الأمن المدعوم بالذكاء الاصطناعي من خلال جعل المراقبة المتقدمة في متناول الجميع وبأسعار معقولة وفعالة للمؤسسات من جميع الأحجام في جميع أنحاء الشرق الأوسط.",
         stats: [
-          { label: "تأسست", value: "2024" },
+          { label: "تأسست", value: "2025" },
           { label: "حجم الفريق", value: "15+" },
-          { label: "البلدان", value: "3" },
-          { label: "عمليات النشر", value: "50+" }
+          { label: "البلدان (الهدف بنهاية 2025)", value: "2" },
+          { label: "عمليات النشر (الهدف بحلول 2025)", value: "5+" }
         ]
       },
       values: {
