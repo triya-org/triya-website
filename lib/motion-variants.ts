@@ -8,7 +8,7 @@ export const fadeInUp = {
     y: 0,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.6, 0.05, 0.01, 0.9],
     },
   },
 };
@@ -21,7 +21,7 @@ export const fadeIn = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.6, 0.05, 0.01, 0.9],
     },
   },
 };
@@ -44,7 +44,7 @@ export const scaleIn = {
     scale: 1,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.6, 0.05, 0.01, 0.9],
     },
   },
 };
@@ -59,7 +59,7 @@ export const slideInFromLeft = {
     x: 0,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.6, 0.05, 0.01, 0.9],
     },
   },
 };
@@ -74,7 +74,7 @@ export const slideInFromRight = {
     x: 0,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.6, 0.05, 0.01, 0.9],
     },
   },
 };
