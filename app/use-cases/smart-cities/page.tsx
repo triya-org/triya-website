@@ -190,7 +190,7 @@ export default function SmartCitiesPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-[70vh] md:h-[65vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[100dvh] md:h-[65vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
         <div className="absolute inset-0 z-0">
           <video
