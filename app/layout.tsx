@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const dmSans = localFont({
   src: "../public/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf",
@@ -40,6 +41,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body className={`${dmSans.variable} font-sans min-h-screen bg-background text-foreground flex flex-col`}>
         <Navbar />
         <main className="flex-1">{children}</main>

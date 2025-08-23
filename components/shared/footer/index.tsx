@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, Mail, Phone, Linkedin } from "lucide-react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 export function Footer() {
+  const { trackLinkedInClick } = useAnalytics();
+  
   return (
     <footer className="border-t bg-muted/50">
       <div className="container py-16">
@@ -22,7 +27,7 @@ export function Footer() {
               Transform any camera into AI-powered security with Arabic-first capabilities.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://linkedin.com/company/triya-ai" target="_blank">
+              <Link href="https://linkedin.com/company/triya-ai" target="_blank" onClick={trackLinkedInClick}>
                 <Button variant="ghost" size="icon">
                   <Linkedin className="h-4 w-4" />
                 </Button>
