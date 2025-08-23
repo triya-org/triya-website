@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: 'Triya.ai Contact Form <onboarding@resend.dev>',
       to: ['admin@triya.ai'],
-      reply_to: email,
+      replyTo: email,
       subject: `New Contact Form Submission from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
