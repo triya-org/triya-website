@@ -21,6 +21,7 @@ import {
 
 export default function ContactPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { trackContactForm } = useAnalytics();
 
   useEffect(() => {
@@ -143,28 +144,52 @@ export default function ContactPage() {
   };
 
   const t = content[language];
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     // Get form data
     const formData = new FormData(e.currentTarget);
-    const company = formData.get('company') as string;
+    const formValues = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      company: formData.get('company') as string,
+      phone: formData.get('phone') as string,
+      message: formData.get('message') as string,
+    };
     
-    // Track form submission
-    trackContactForm({ 
-      company: company || undefined,
-      industry: undefined // Can be added if you have industry field
-    });
-    
-    // Handle form submission (you can add your email service here)
-    console.log("Form submitted and tracked");
-    
-    // Show success message (you might want to add a toast notification)
-    alert("Thank you for your message. We'll get back to you within 24 hours!");
-    
-    // Reset form
-    e.currentTarget.reset();
+    try {
+      // Send to API
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formValues),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      // Track form submission
+      trackContactForm({ 
+        company: formValues.company || undefined,
+        industry: undefined
+      });
+      
+      // Show success message
+      alert("Thank you for your message! We'll get back to you within 24 hours.");
+      
+      // Reset form
+      e.currentTarget.reset();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert("Sorry, there was an error sending your message. Please try again or email us directly at admin@triya.ai");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -244,9 +269,9 @@ export default function ContactPage() {
                         required
                       />
                     </div>
-                    <Button type="submit" className="w-full gap-2">
-                      {t.form.submit}
-                      <Send className="h-4 w-4" />
+                    <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+                      {isSubmitting ? 'Sending...' : t.form.submit}
+                      {!isSubmitting && <Send className="h-4 w-4" />}
                     </Button>
                   </form>
                 </CardContent>
