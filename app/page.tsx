@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Globe, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
 import { UseCases } from "@/components/sections/use-cases";
 import { CTASection } from "@/components/sections/cta-section";
@@ -22,6 +23,7 @@ export default function Home() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
   const [mounted, setMounted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const { trackRequestDemo, trackWatchVideo } = useAnalytics();
 
   useEffect(() => {
     setMounted(true);
@@ -144,7 +146,12 @@ export default function Home() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
               variants={fadeInUp}
             >
-              <Button size="lg" className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90" asChild>
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90" 
+                asChild
+                onClick={() => trackRequestDemo('Hero Section')}
+              >
                 <Link href="/contact">
                   {t.hero.cta1} <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -153,7 +160,10 @@ export default function Home() {
                 size="lg" 
                 variant="outline" 
                 className="w-full sm:w-auto gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"
-                onClick={() => setShowVideoModal(true)}
+                onClick={() => {
+                  trackWatchVideo('Hero Section');
+                  setShowVideoModal(true);
+                }}
               >
                 <Play className="h-4 w-4" /> {t.hero.cta2}
               </Button>

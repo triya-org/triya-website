@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 
 export default function ContactPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
+  const { trackContactForm } = useAnalytics();
 
   useEffect(() => {
     const savedLang = localStorage.getItem("language") as "en" | "ar";
@@ -142,10 +144,27 @@ export default function ContactPage() {
 
   const t = content[language];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted");
+    
+    // Get form data
+    const formData = new FormData(e.currentTarget);
+    const company = formData.get('company') as string;
+    
+    // Track form submission
+    trackContactForm({ 
+      company: company || undefined,
+      industry: undefined // Can be added if you have industry field
+    });
+    
+    // Handle form submission (you can add your email service here)
+    console.log("Form submitted and tracked");
+    
+    // Show success message (you might want to add a toast notification)
+    alert("Thank you for your message. We'll get back to you within 24 hours!");
+    
+    // Reset form
+    e.currentTarget.reset();
   };
 
   return (
@@ -198,27 +217,28 @@ export default function ContactPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="name">{t.form.fields.name}</Label>
-                        <Input id="name" required />
+                        <Input id="name" name="name" required />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">{t.form.fields.email}</Label>
-                        <Input id="email" type="email" required />
+                        <Input id="email" name="email" type="email" required />
                       </div>
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="company">{t.form.fields.company}</Label>
-                        <Input id="company" />
+                        <Input id="company" name="company" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">{t.form.fields.phone}</Label>
-                        <Input id="phone" type="tel" />
+                        <Input id="phone" name="phone" type="tel" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="message">{t.form.fields.message}</Label>
                       <Textarea
                         id="message"
+                        name="message"
                         placeholder={t.form.fields.messagePlaceholder}
                         rows={5}
                         required

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -41,6 +42,7 @@ const industries = [
 
 export function Navbar() {
   const [language, setLanguage] = React.useState<"en" | "ar">("en");
+  const { trackRequestDemo } = useAnalytics();
 
   React.useEffect(() => {
     // Check for saved language preference
@@ -149,7 +151,7 @@ export function Navbar() {
             <Button variant="outline" onClick={toggleLanguage}>
               {language === "en" ? "العربية" : "English"}
             </Button>
-            <Button asChild>
+            <Button asChild onClick={() => trackRequestDemo('Navbar')}>
               <Link href="/contact">Request Demo</Link>
             </Button>
           </div>
