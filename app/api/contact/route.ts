@@ -9,9 +9,12 @@ export async function POST(request: Request) {
     const { name, email, company, phone, message } = body;
 
     // Send email using Resend
+    // Note: The 'from' email must be verified in Resend dashboard
+    // For now, using onboarding@resend.dev which works for testing
     const { data, error } = await resend.emails.send({
-      from: 'Triya.ai Contact Form <noreply@triya.ai>',
+      from: 'Triya.ai Contact Form <onboarding@resend.dev>',
       to: ['admin@triya.ai'],
+      reply_to: email,
       subject: `New Contact Form Submission from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -58,7 +61,7 @@ This email was sent from the contact form on triya.ai
 
     // Also send a confirmation email to the user
     await resend.emails.send({
-      from: 'Triya.ai <noreply@triya.ai>',
+      from: 'Triya.ai <onboarding@resend.dev>',
       to: [email],
       subject: 'Thank you for contacting Triya.ai',
       html: `
