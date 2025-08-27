@@ -27,7 +27,7 @@ export function Footer() {
               Transform any camera into AI-powered security with Arabic-first capabilities.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://linkedin.com/company/triya-ai" target="_blank" onClick={trackLinkedInClick}>
+              <Link href="https://www.linkedin.com/company/triyaai/about/" target="_blank" onClick={trackLinkedInClick}>
                 <Button variant="ghost" size="icon">
                   <Linkedin className="h-4 w-4" />
                 </Button>
