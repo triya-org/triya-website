@@ -143,7 +143,7 @@ export default function Home() {
             )}
             
             <motion.div 
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="flex items-center justify-center"
               variants={fadeInUp}
             >
               <Button 
@@ -156,7 +156,7 @@ export default function Home() {
                   {t.hero.cta1} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button 
+              {/* <Button 
                 size="lg" 
                 variant="outline" 
                 className="w-full sm:w-auto gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"
@@ -166,7 +166,7 @@ export default function Home() {
                 }}
               >
                 <Play className="h-4 w-4" /> {t.hero.cta2}
-              </Button>
+              </Button> */}
             </motion.div>
             
             <motion.div 
