@@ -8,6 +8,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, company, phone, message } = body;
 
+    console.log('Contact form submission:', { name, email, company, phone });
+    console.log('Resend API Key exists:', !!process.env.RESEND_API_KEY);
+
     // Send email using Resend
     // Note: The 'from' email must be verified in Resend dashboard
     // For now, using onboarding@resend.dev which works for testing
