@@ -113,7 +113,6 @@ export default function RetailPage() {
         title: "Revolutionize Your Retail Security",
         description: "Discover how AI can protect your assets and enhance customer experience",
         primaryButton: "Schedule Demo",
-        secondaryButton: "View ROI Calculator"
       }
     },
     ar: {
@@ -198,7 +197,6 @@ export default function RetailPage() {
         title: "ثورة في أمن التجزئة الخاص بك",
         description: "اكتشف كيف يمكن للذكاء الاصطناعي حماية أصولك وتعزيز تجربة العملاء",
         primaryButton: "جدولة عرض توضيحي",
-        secondaryButton: "عرض حاسبة العائد على الاستثمار"
       }
     }
   };
@@ -257,11 +255,6 @@ export default function RetailPage() {
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </motion.div>
@@ -432,9 +425,6 @@ export default function RetailPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="gap-2">
                 {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline">
-                {t.cta.secondaryButton}
               </Button>
             </div>
           </motion.div>
