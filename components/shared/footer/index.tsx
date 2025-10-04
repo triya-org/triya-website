@@ -24,7 +24,7 @@ export function Footer() {
               className="h-10 w-auto"
             />
             <p className="text-sm text-muted-foreground">
-              Transform any camera into AI-powered security with Arabic-first capabilities.
+              Transform any camera into a privacy-first, AI-powered security & analytics solution
             </p>
             <div className="flex space-x-4">
               <Link href="https://www.linkedin.com/company/triyaai/about/" target="_blank" onClick={trackLinkedInClick}>
@@ -83,15 +83,15 @@ export function Footer() {
               </div>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <a href="mailto:founders@triya.ai" className="hover:text-primary">
+                <span className="hover:text-primary">
                   founders@triya.ai
-                </a>
+                </span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <a href="tel:+97158681200" className="hover:text-primary">
+                <span className="hover:text-primary">
                   +971-58-68-1200
-                </a>
+                </span>
               </div>
             </div>
           </div>
