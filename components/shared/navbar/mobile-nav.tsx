@@ -12,28 +12,43 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const navItems = [
-  /* Product menu hidden for now - will be added once product is built
-  {
-    title: "Product",
-    items: [
-      { title: "Features", href: "/features" },
-      { title: "Technology", href: "/technology" },
-      { title: "Pricing", href: "/pricing" },
-    ],
+const getNavItems = (language: "en" | "ar") => ({
+  en: [
+    {
+      title: "Industries",
+      items: [
+        { title: "Manufacturing", href: "/use-cases/manufacturing" },
+        { title: "Retail", href: "/use-cases/retail" },
+        { title: "Smart Cities", href: "/use-cases/smart-cities" },
+        { title: "Event Management", href: "/use-cases/events" },
+      ],
+    },
+    { title: "Contact", href: "/contact" },
+  ],
+  ar: [
+    {
+      title: "الصناعات",
+      items: [
+        { title: "التصنيع", href: "/use-cases/manufacturing" },
+        { title: "التجزئة", href: "/use-cases/retail" },
+        { title: "المدن الذكية", href: "/use-cases/smart-cities" },
+        { title: "إدارة الفعاليات", href: "/use-cases/events" },
+      ],
+    },
+    { title: "اتصل بنا", href: "/contact" },
+  ]
+}[language]);
+
+const getContent = (language: "en" | "ar") => ({
+  en: {
+    menu: "Menu",
+    requestDemo: "Request Demo"
   },
-  */
-  {
-    title: "Industries",
-    items: [
-      { title: "Manufacturing", href: "/use-cases/manufacturing" },
-      { title: "Retail", href: "/use-cases/retail" },
-      { title: "Smart Cities", href: "/use-cases/smart-cities" },
-      { title: "Event Management", href: "/use-cases/events" },
-    ],
-  },
-  { title: "Contact", href: "/contact" },
-];
+  ar: {
+    menu: "القائمة",
+    requestDemo: "طلب عرض توضيحي"
+  }
+}[language]);
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -56,6 +71,9 @@ export function MobileNav() {
     window.location.reload();
   };
 
+  const navItems = getNavItems(language);
+  const t = getContent(language);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild className="md:hidden">
@@ -66,7 +84,7 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="right" className="w-[300px] sm:w-[400px]">
         <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
+          <SheetTitle>{t.menu}</SheetTitle>
         </SheetHeader>
         <nav className="mt-6 flex flex-col space-y-4">
           {navItems.map((item) => (
@@ -105,7 +123,7 @@ export function MobileNav() {
               {language === "en" ? "العربية" : "English"}
             </Button>
             <Button className="w-full" asChild>
-              <Link href="/contact">Request Demo</Link>
+              <Link href="/contact">{t.requestDemo}</Link>
             </Button>
           </div>
         </nav>
