@@ -64,10 +64,10 @@ export default function PrivacyPage() {
                 {/* 1. Introduction */}
                 <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
                 <p className="mb-4">
-                  Triya AI Ltd ("Triya AI", "we", "us", or "our") is an artificial intelligence company registered under the laws of the Abu Dhabi Global Market (ADGM), located at ADGM Square, Al Maryah Island, Abu Dhabi, UAE.
+                  Triya AI Ltd (&ldquo;Triya AI&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) is an artificial intelligence company registered under the laws of the Abu Dhabi Global Market (ADGM), located at ADGM Square, Al Maryah Island, Abu Dhabi, UAE.
                 </p>
                 <p className="mb-4">
-                  We are committed to protecting the privacy, confidentiality, and security of the personal data and video data that we process through our products and services. This Privacy Policy explains how we collect, use, store, share, and protect such data in accordance with the ADGM Data Protection Regulations 2021 ("ADGM DPR"), the UAE Federal Data Protection Law No. 45 of 2021 (PDPL), and international standards including the EU General Data Protection Regulation (GDPR).
+                  We are committed to protecting the privacy, confidentiality, and security of the personal data and video data that we process through our products and services. This Privacy Policy explains how we collect, use, store, share, and protect such data in accordance with the ADGM Data Protection Regulations 2021 (&ldquo;ADGM DPR&rdquo;), the UAE Federal Data Protection Law No. 45 of 2021 (PDPL), and international standards including the EU General Data Protection Regulation (GDPR).
                 </p>
                 <p className="mb-6">
                   By using our website or services, you acknowledge that you have read and understood this Privacy Policy.
@@ -76,10 +76,10 @@ export default function PrivacyPage() {
                 {/* 2. Definitions */}
                 <h2 className="text-2xl font-bold mb-4">2. Definitions</h2>
                 <ul className="mb-6 space-y-2">
-                  <li><strong>Personal Data</strong> – Any information relating to an identified or identifiable natural person (a "Data Subject"), such as name, contact details, image, or IP address.</li>
-                  <li><strong>Video Data / Imagery Data</strong> – Video streams, camera images, frames, and metadata processed by Triya AI's systems.</li>
-                  <li><strong>Customer / Client</strong> – Any organization that uses Triya AI's products or services under contract.</li>
-                  <li><strong>User / Operator</strong> – Authorized individuals of a Customer who access Triya AI's systems or dashboard.</li>
+                  <li><strong>Personal Data</strong> – Any information relating to an identified or identifiable natural person (a &ldquo;Data Subject&rdquo;), such as name, contact details, image, or IP address.</li>
+                  <li><strong>Video Data / Imagery Data</strong> – Video streams, camera images, frames, and metadata processed by Triya AI&apos;s systems.</li>
+                  <li><strong>Customer / Client</strong> – Any organization that uses Triya AI&apos;s products or services under contract.</li>
+                  <li><strong>User / Operator</strong> – Authorized individuals of a Customer who access Triya AI&apos;s systems or dashboard.</li>
                   <li><strong>Data Subject</strong> – Any person whose personal data or image is captured or processed.</li>
                   <li><strong>Processor / Subprocessor</strong> – A third party engaged by Triya AI to process data on our behalf (e.g., cloud provider).</li>
                   <li><strong>Controller</strong> – The entity that determines the purposes and means of processing personal data. In most cases, Triya AI acts as a Processor on behalf of Customers; however, we act as a Controller for certain internal operations.</li>
@@ -140,7 +140,7 @@ export default function PrivacyPage() {
                 <h2 className="text-2xl font-bold mb-4">7. Data Hosting and Cross-Border Transfers</h2>
                 <ul className="mb-6 space-y-2">
                   <li>Data is primarily hosted within the UAE region.</li>
-                  <li>For international clients, data may be hosted in that client's jurisdiction.</li>
+                  <li>For international clients, data may be hosted in that client&apos;s jurisdiction.</li>
                   <li>Cross-border transfers are protected by Standard Contractual Clauses, encryption, and transfers only to adequate jurisdictions.</li>
                 </ul>
 
