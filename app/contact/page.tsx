@@ -148,9 +148,12 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
+    // Store form reference
+    const form = e.currentTarget;
+
     // Get form data
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(form);
     const formValues = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
@@ -158,7 +161,7 @@ export default function ContactPage() {
       phone: formData.get('phone') as string,
       message: formData.get('message') as string,
     };
-    
+
     try {
       // Send to API
       const response = await fetch('/api/contact', {
@@ -169,21 +172,26 @@ export default function ContactPage() {
         body: JSON.stringify(formValues),
       });
 
+      const responseData = await response.json();
+      console.log('API Response:', response.status, responseData);
+
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error(responseData.error || 'Failed to send message');
       }
-      
+
       // Track form submission
-      trackContactForm({ 
+      trackContactForm({
         company: formValues.company || undefined,
         industry: undefined
       });
-      
+
       // Show success message
       alert("Thank you for your message! We'll get back to you within 24 hours.");
-      
-      // Reset form
-      e.currentTarget.reset();
+
+      // Reset form safely
+      if (form) {
+        form.reset();
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       alert("Sorry, there was an error sending your message. Please try again or email us directly at admin@triya.ai");
