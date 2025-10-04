@@ -103,8 +103,7 @@ export default function SmartCitiesPage() {
       cta: {
         title: "Build Your Smart City Infrastructure",
         description: "Discover how AI can make your city safer and more efficient",
-        primaryButton: "Schedule Consultation",
-        secondaryButton: "View City Case Studies"
+        primaryButton: "Request Demo",
       }
     },
     ar: {
@@ -179,8 +178,7 @@ export default function SmartCitiesPage() {
       cta: {
         title: "ابنِ البنية التحتية لمدينتك الذكية",
         description: "اكتشف كيف يمكن للذكاء الاصطناعي جعل مدينتك أكثر أماناً وكفاءة",
-        primaryButton: "جدولة استشارة",
-        secondaryButton: "عرض دراسات حالة المدن"
+        primaryButton: "طلب عرض توضيحي",
       }
     }
   };
@@ -239,11 +237,6 @@ export default function SmartCitiesPage() {
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </motion.div>
@@ -378,9 +371,6 @@ export default function SmartCitiesPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="gap-2">
                 {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline">
-                {t.cta.secondaryButton}
               </Button>
             </div>
           </motion.div>

@@ -104,7 +104,6 @@ export default function ManufacturingPage() {
         title: "Transform Your Manufacturing Security",
         description: "See how Triya.ai can enhance safety and productivity in your facility",
         primaryButton: "Request Demo",
-        secondaryButton: "Download Case Study"
       }
     },
     ar: {
@@ -180,7 +179,6 @@ export default function ManufacturingPage() {
         title: "حوّل أمن التصنيع الخاص بك",
         description: "اكتشف كيف يمكن لـ Triya.ai تعزيز السلامة والإنتاجية في منشأتك",
         primaryButton: "طلب عرض توضيحي",
-        secondaryButton: "تحميل دراسة الحالة"
       }
     }
   };
@@ -239,11 +237,6 @@ export default function ManufacturingPage() {
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </motion.div>
@@ -379,11 +372,6 @@ export default function ManufacturingPage() {
               <Button size="lg" className="gap-2" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,53 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Mail, Phone, Linkedin } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
+const getContent = (language: "en" | "ar") => ({
+  en: {
+    description: "Transform any camera into a privacy-first, AI-powered security & analytics solution",
+    industries: "Industries",
+    industryItems: [
+      { title: "Manufacturing", href: "/use-cases/manufacturing" },
+      { title: "Retail", href: "/use-cases/retail" },
+      { title: "Event Management", href: "/use-cases/events" },
+      { title: "Smart Cities", href: "/use-cases/smart-cities" },
+    ],
+    contactUs: "Contact Us",
+    headquarters: "Headquarters",
+    headquartersLocation: "Abu Dhabi Global Market, UAE",
+    copyright: "© 2025 Triya.ai. All rights reserved.",
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service"
+  },
+  ar: {
+    description: "حوّل أي كاميرا إلى حل أمني وتحليلي مدعوم بالذكاء الاصطناعي ويحمي الخصوصية",
+    industries: "الصناعات",
+    industryItems: [
+      { title: "التصنيع", href: "/use-cases/manufacturing" },
+      { title: "التجزئة", href: "/use-cases/retail" },
+      { title: "إدارة الفعاليات", href: "/use-cases/events" },
+      { title: "المدن الذكية", href: "/use-cases/smart-cities" },
+    ],
+    contactUs: "اتصل بنا",
+    headquarters: "المقر الرئيسي",
+    headquartersLocation: "سوق أبوظبي العالمي، الإمارات",
+    copyright: "© 2025 Triya.ai. جميع الحقوق محفوظة.",
+    privacyPolicy: "سياسة الخصوصية",
+    termsOfService: "شروط الخدمة"
+  }
+}[language]);
+
 export function Footer() {
+  const [language, setLanguage] = useState<"en" | "ar">("en");
   const { trackLinkedInClick } = useAnalytics();
+  
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "ar";
+    if (savedLang) {
+      setLanguage(savedLang);
+    }
+  }, []);
+  
+  const t = getContent(language);
   
   return (
     <footer className="border-t bg-muted/50">
@@ -24,7 +70,7 @@ export function Footer() {
               className="h-10 w-auto"
             />
             <p className="text-sm text-muted-foreground">
-              Transform any camera into AI-powered security with Arabic-first capabilities.
+              {t.description}
             </p>
             <div className="flex space-x-4">
               <Link href="https://www.linkedin.com/company/triyaai/about/" target="_blank" onClick={trackLinkedInClick}>
@@ -35,63 +81,42 @@ export function Footer() {
             </div>
           </div>
           
-          {/* Product */}
-          <div className="space-y-4">
-            <h4 className="font-semibold">Product</h4>
-            <nav className="flex flex-col space-y-2">
-              <Link href="/features" className="text-sm text-muted-foreground hover:text-primary">
-                Features
-              </Link>
-              <Link href="/technology" className="text-sm text-muted-foreground hover:text-primary">
-                Technology
-              </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary">
-                Pricing
-              </Link>
-              <Link href="/case-studies" className="text-sm text-muted-foreground hover:text-primary">
-                Case Studies
-              </Link>
-            </nav>
-          </div>
           
           {/* Industries */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Industries</h4>
+            <h4 className="font-semibold">{t.industries}</h4>
             <nav className="flex flex-col space-y-2">
-              <Link href="/use-cases/manufacturing" className="text-sm text-muted-foreground hover:text-primary">
-                Manufacturing
-              </Link>
-              <Link href="/use-cases/retail" className="text-sm text-muted-foreground hover:text-primary">
-                Retail
-              </Link>
-              <Link href="/use-cases/healthcare" className="text-sm text-muted-foreground hover:text-primary">
-                Healthcare
-              </Link>
-              <Link href="/use-cases/smart-cities" className="text-sm text-muted-foreground hover:text-primary">
-                Smart Cities
-              </Link>
+              {t.industryItems.map((industry) => (
+                <Link 
+                  key={industry.href}
+                  href={industry.href} 
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {industry.title}
+                </Link>
+              ))}
             </nav>
           </div>
           
           {/* Contact */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Contact Us</h4>
+            <h4 className="font-semibold">{t.contactUs}</h4>
             <div className="space-y-2">
               <div className="flex items-start space-x-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>Abu Dhabi Global Market, UAE</span>
+                <span>{t.headquartersLocation}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <a href="mailto:founders@triya.ai" className="hover:text-primary">
+                <span className="hover:text-primary">
                   founders@triya.ai
-                </a>
+                </span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <a href="tel:+97158681200" className="hover:text-primary">
+                <span className="hover:text-primary">
                   +971-58-68-1200
-                </a>
+                </span>
               </div>
             </div>
           </div>
@@ -100,14 +125,14 @@ export function Footer() {
         <div className="mt-12 border-t pt-8">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © 2025 Triya.ai. All rights reserved.
+              {t.copyright}
             </p>
             <div className="flex space-x-6">
               <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
-                Privacy Policy
+                {t.privacyPolicy}
               </Link>
               <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
-                Terms of Service
+                {t.termsOfService}
               </Link>
             </div>
           </div>

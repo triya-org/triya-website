@@ -99,21 +99,11 @@ export default function RetailPage() {
           "Complete GDPR/PDPL compliance",
           "Arabic and English customer insights"
         ]
-      },
-      stats: {
-        title: "Proven Results",
-        items: [
-          { value: "70%", label: "Reduction in Theft" },
-          { value: "40%", label: "Faster Checkout" },
-          { value: "25%", label: "Sales Increase" },
-          { value: "<500ms", label: "Alert Response" }
-        ]
-      },
+},
       cta: {
         title: "Revolutionize Your Retail Security",
         description: "Discover how AI can protect your assets and enhance customer experience",
         primaryButton: "Schedule Demo",
-        secondaryButton: "View ROI Calculator"
       }
     },
     ar: {
@@ -184,21 +174,11 @@ export default function RetailPage() {
           "الامتثال الكامل لـ GDPR/PDPL",
           "رؤى العملاء باللغتين العربية والإنجليزية"
         ]
-      },
-      stats: {
-        title: "نتائج مثبتة",
-        items: [
-          { value: "70%", label: "تقليل السرقة" },
-          { value: "40%", label: "دفع أسرع" },
-          { value: "25%", label: "زيادة المبيعات" },
-          { value: "<500ms", label: "استجابة التنبيه" }
-        ]
-      },
+},
       cta: {
         title: "ثورة في أمن التجزئة الخاص بك",
         description: "اكتشف كيف يمكن للذكاء الاصطناعي حماية أصولك وتعزيز تجربة العملاء",
         primaryButton: "جدولة عرض توضيحي",
-        secondaryButton: "عرض حاسبة العائد على الاستثمار"
       }
     }
   };
@@ -259,51 +239,11 @@ export default function RetailPage() {
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
-                </Link>
-              </Button>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerChildren}
-            className="max-w-6xl mx-auto"
-          >
-            <motion.h2 
-              className="text-2xl md:text-3xl font-bold text-center mb-8"
-              variants={fadeInUp}
-            >
-              {t.stats.title}
-            </motion.h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {t.stats.items.map((stat, index) => (
-                <motion.div 
-                  key={index} 
-                  variants={fadeInUp}
-                  className="text-center"
-                >
-                  <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Challenges Section */}
       <section className="py-24">
@@ -432,9 +372,6 @@ export default function RetailPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="gap-2">
                 {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline">
-                {t.cta.secondaryButton}
               </Button>
             </div>
           </motion.div>

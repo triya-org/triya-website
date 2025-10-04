@@ -124,8 +124,7 @@ export default function EventsPage() {
       cta: {
         title: "Secure Your Next Event",
         description: "See how Triya.ai can transform your event security and analytics",
-        primaryButton: "Request Event Demo",
-        secondaryButton: "Download Case Study"
+        primaryButton: "Request Demo",
       }
     },
     ar: {
@@ -219,8 +218,7 @@ export default function EventsPage() {
       cta: {
         title: "أمّن حدثك القادم",
         description: "اكتشف كيف يمكن لـ Triya.ai تحويل أمن وتحليلات حدثك",
-        primaryButton: "طلب عرض توضيحي للحدث",
-        secondaryButton: "تحميل دراسة الحالة"
+        primaryButton: "طلب عرض توضيحي",
       }
     }
   };
@@ -279,11 +277,6 @@ export default function EventsPage() {
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </motion.div>
@@ -462,11 +455,6 @@ export default function EventsPage() {
               <Button size="lg" className="gap-2" asChild>
                 <Link href="/contact">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">
-                  {t.cta.secondaryButton}
                 </Link>
               </Button>
             </div>

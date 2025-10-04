@@ -41,7 +41,7 @@ export default function ContactPage() {
       },
       form: {
         title: "Send us a message",
-        description: "Fill out the form below and we'll get back to you within 24 hours.",
+        description: "",
         fields: {
           name: "Full Name",
           email: "Email Address",
@@ -70,14 +70,8 @@ export default function ContactPage() {
           {
             icon: Phone,
             title: "Call Us",
-            description: "Mon-Fri 9am-6pm GST",
+            description: "",
             detail: "+971-58-68-1200"
-          },
-          {
-            icon: Clock,
-            title: "Response Time",
-            description: "We typically respond within",
-            detail: "24 hours"
           }
         ]
       },
@@ -95,7 +89,7 @@ export default function ContactPage() {
       },
       form: {
         title: "أرسل لنا رسالة",
-        description: "املأ النموذج أدناه وسنعود إليك خلال 24 ساعة.",
+        description: "",
         fields: {
           name: "الاسم الكامل",
           email: "عنوان البريد الإلكتروني",
@@ -126,12 +120,6 @@ export default function ContactPage() {
             title: "اتصل بنا",
             description: "الإثنين-الجمعة 9ص-6م",
             detail: "+971-58-68-1200"
-          },
-          {
-            icon: Clock,
-            title: "وقت الاستجابة",
-            description: "نرد عادة خلال",
-            detail: "24 ساعة"
           }
         ]
       },

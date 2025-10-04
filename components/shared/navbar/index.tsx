@@ -17,28 +17,62 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { MobileNav } from "./mobile-nav";
 
-const industries = [
-  {
-    title: "Manufacturing",
-    href: "/use-cases/manufacturing",
-    description: "PPE compliance and safety monitoring for industrial facilities",
+const getContent = (language: "en" | "ar") => ({
+  en: {
+    industries: "Industries",
+    contact: "Contact",
+    requestDemo: "Request Demo",
+    industryItems: [
+      {
+        title: "Manufacturing",
+        href: "/use-cases/manufacturing",
+        description: "PPE compliance and safety monitoring for industrial facilities",
+      },
+      {
+        title: "Retail",
+        href: "/use-cases/retail",
+        description: "Theft prevention and customer analytics for stores",
+      },
+      {
+        title: "Smart Cities",
+        href: "/use-cases/smart-cities",
+        description: "Traffic management and public safety solutions",
+      },
+      {
+        title: "Event Management",
+        href: "/use-cases/events",
+        description: "Crowd analytics and security for major events",
+      },
+    ]
   },
-  {
-    title: "Retail",
-    href: "/use-cases/retail",
-    description: "Theft prevention and customer analytics for stores",
-  },
-  {
-    title: "Smart Cities",
-    href: "/use-cases/smart-cities",
-    description: "Traffic management and public safety solutions",
-  },
-  {
-    title: "Event Management",
-    href: "/use-cases/events",
-    description: "Crowd analytics and security for major events",
-  },
-];
+  ar: {
+    industries: "الصناعات",
+    contact: "اتصل بنا",
+    requestDemo: "طلب عرض توضيحي",
+    industryItems: [
+      {
+        title: "التصنيع",
+        href: "/use-cases/manufacturing",
+        description: "الامتثال لمعدات الحماية الشخصية ومراقبة السلامة للمرافق الصناعية",
+      },
+      {
+        title: "التجزئة",
+        href: "/use-cases/retail",
+        description: "منع السرقة وتحليلات العملاء للمتاجر",
+      },
+      {
+        title: "المدن الذكية",
+        href: "/use-cases/smart-cities",
+        description: "إدارة حركة المرور وحلول السلامة العامة",
+      },
+      {
+        title: "إدارة الفعاليات",
+        href: "/use-cases/events",
+        description: "تحليلات الحشود والأمن للأحداث الكبرى",
+      },
+    ]
+  }
+}[language]);
 
 export function Navbar() {
   const [language, setLanguage] = React.useState<"en" | "ar">("en");
@@ -60,6 +94,8 @@ export function Navbar() {
     // Reload page to apply language changes
     window.location.reload();
   };
+
+  const t = getContent(language);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -112,10 +148,10 @@ export function Navbar() {
             */}
             
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Industries</NavigationMenuTrigger>
+              <NavigationMenuTrigger>{t.industries}</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  {industries.map((industry) => (
+                  {t.industryItems.map((industry) => (
                     <ListItem
                       key={industry.title}
                       title={industry.title}
@@ -128,18 +164,11 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             
-            <NavigationMenuItem>
-              <Link href="/about" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  About
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
             
             <NavigationMenuItem>
               <Link href="/contact" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Contact
+                  {t.contact}
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
@@ -152,7 +181,7 @@ export function Navbar() {
               {language === "en" ? "العربية" : "English"}
             </Button>
             <Button asChild onClick={() => trackRequestDemo('Navbar')}>
-              <Link href="/contact">Request Demo</Link>
+              <Link href="/contact">{t.requestDemo}</Link>
             </Button>
           </div>
           <MobileNav />
