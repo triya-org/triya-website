@@ -35,24 +35,6 @@ export function Footer() {
             </div>
           </div>
           
-          {/* Product */}
-          <div className="space-y-4">
-            <h4 className="font-semibold">Product</h4>
-            <nav className="flex flex-col space-y-2">
-              <Link href="/features" className="text-sm text-muted-foreground hover:text-primary">
-                Features
-              </Link>
-              <Link href="/technology" className="text-sm text-muted-foreground hover:text-primary">
-                Technology
-              </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary">
-                Pricing
-              </Link>
-              <Link href="/case-studies" className="text-sm text-muted-foreground hover:text-primary">
-                Case Studies
-              </Link>
-            </nav>
-          </div>
           
           {/* Industries */}
           <div className="space-y-4">
