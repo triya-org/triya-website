@@ -48,13 +48,7 @@ export default function Home() {
         titleHighlight: "privacy-first, AI-powered security & analytics solution",
         subtitle: "",
         cta1: "Request Demo",
-        cta2: "Watch Video",
-        metric1: "99%",
-        metric1Label: "Arabic Accuracy",
-        metric2: "<500ms",
-        metric2Label: "Detection Latency",
-        metric3: "90%",
-        metric3Label: "Cost Reduction"
+        cta2: "Watch Video"
       },
       trust: "Trusted by leading organizations across the GCC"
     },
@@ -64,13 +58,7 @@ export default function Home() {
         titleHighlight: "حل أمني وتحليلي مدعوم بالذكاء الاصطناعي مع الحفاظ على الخصوصية",
         subtitle: "",
         cta1: "طلب عرض توضيحي",
-        cta2: "شاهد الفيديو",
-        metric1: "99%",
-        metric1Label: "دقة اللغة العربية",
-        metric2: "<500ms",
-        metric2Label: "زمن الكشف",
-        metric3: "90%",
-        metric3Label: "تخفيض التكلفة"
+        cta2: "شاهد الفيديو"
       },
       trust: "موثوق من قبل المؤسسات الرائدة في دول مجلس التعاون الخليجي"
     }
@@ -167,27 +155,6 @@ export default function Home() {
               >
                 <Play className="h-4 w-4" /> {t.hero.cta2}
               </Button> */}
-            </motion.div>
-            
-            <motion.div 
-              className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8"
-              variants={fadeInUp}
-            >
-              {[
-                { value: t.hero.metric1, label: t.hero.metric1Label },
-                { value: t.hero.metric2, label: t.hero.metric2Label },
-                { value: t.hero.metric3, label: t.hero.metric3Label },
-              ].map((metric, index) => (
-                <motion.div 
-                  key={index}
-                  className="text-center"
-                  variants={fadeInUp}
-                  custom={index}
-                >
-                  <h3 className="text-3xl sm:text-4xl font-bold text-yellow-400">{metric.value}</h3>
-                  <p className="mt-2 text-sm sm:text-base text-gray-300">{metric.label}</p>
-                </motion.div>
-              ))}
             </motion.div>
           </motion.div>
         </div>

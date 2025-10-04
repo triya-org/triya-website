@@ -1,7 +1,8 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Camera, Cpu, BarChart3, Shield } from "lucide-react";
+import Image from "next/image";
+import { Camera, Cpu, Brain, Monitor } from "lucide-react";
 
 interface HowItWorksProps {
   language: "en" | "ar";
@@ -11,60 +12,60 @@ export function HowItWorks({ language }: HowItWorksProps) {
   const content = {
     en: {
       title: "How It Works",
-      subtitle: "Transform your existing security infrastructure with our edge AI platform",
+      subtitle: "Triya AI turns any CCTV camera into an on-prem, natural language conversation system, security & insight engine",
       steps: [
         {
           icon: Camera,
-          title: "Connect Cameras",
-          description: "Integrate with any existing IP camera or CCTV system. No special hardware required.",
+          title: "Camera Feed",
+          description: "Connect existing cameras from any vendor. No need to replace your current CCTV or IP camera infrastructure.",
           number: "01"
         },
         {
           icon: Cpu,
-          title: "Edge Processing",
-          description: "AI models run locally on NVIDIA Jetson devices, ensuring data privacy and sub-500ms latency.",
+          title: "Triya AI Edge Box",
+          description: "Deploy our edge computing box at your location for local AI processing with complete data sovereignty.",
           number: "02"
         },
         {
-          icon: BarChart3,
-          title: "Real-time Analytics",
-          description: "Get instant insights with 99% accuracy in Arabic text and object detection.",
+          icon: Brain,
+          title: "Triya AI Agents",
+          description: "Advanced AI agents process video feeds with full Arabic language support and multi-language capabilities.",
           number: "03"
         },
         {
-          icon: Shield,
-          title: "Actionable Alerts",
-          description: "Receive customized alerts for security incidents, PPE violations, and operational insights.",
+          icon: Monitor,
+          title: "Use TriyaAI",
+          description: "Seamlessly integrate with your existing command center for monitoring and real-time insights.",
           number: "04"
         }
       ]
     },
     ar: {
       title: "كيف يعمل",
-      subtitle: "حوّل البنية التحتية الأمنية الحالية باستخدام منصتنا للذكاء الاصطناعي الطرفي",
+      subtitle: "Triya AI تحول أي كاميرا CCTV إلى نظام محادثة باللغة الطبيعية محلي، ومحرك أمان ورؤى",
       steps: [
         {
           icon: Camera,
-          title: "ربط الكاميرات",
-          description: "التكامل مع أي كاميرا IP أو نظام CCTV موجود. لا يتطلب أجهزة خاصة.",
+          title: "تغذية الكاميرا",
+          description: "ربط الكاميرات الموجودة من أي مورد. لا حاجة لاستبدال البنية التحتية الحالية للكاميرات.",
           number: "01"
         },
         {
           icon: Cpu,
-          title: "المعالجة الطرفية",
-          description: "تعمل نماذج الذكاء الاصطناعي محلياً على أجهزة NVIDIA Jetson، مما يضمن خصوصية البيانات وزمن استجابة أقل من 500ms.",
+          title: "صندوق Triya AI الطرفي",
+          description: "نشر صندوق الحوسبة الطرفية في موقعك للمعالجة المحلية مع السيادة الكاملة على البيانات.",
           number: "02"
         },
         {
-          icon: BarChart3,
-          title: "التحليلات الفورية",
-          description: "احصل على رؤى فورية بدقة 99% في النص العربي وكشف الأشياء.",
+          icon: Brain,
+          title: "وكلاء Triya AI",
+          description: "وكلاء ذكاء اصطناعي متقدمون يعالجون موجزات الفيديو مع دعم كامل للغة العربية وقدرات متعددة اللغات.",
           number: "03"
         },
         {
-          icon: Shield,
-          title: "تنبيهات قابلة للتنفيذ",
-          description: "تلقي تنبيهات مخصصة لحوادث الأمن، وانتهاكات معدات الحماية الشخصية، والرؤى التشغيلية.",
+          icon: Monitor,
+          title: "استخدام TriyaAI",
+          description: "التكامل السلس مع مركز القيادة الموجود لديك للمراقبة والرؤى في الوقت الفعلي.",
           number: "04"
         }
       ]
@@ -81,6 +82,17 @@ export function HowItWorks({ language }: HowItWorksProps) {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t.subtitle}
           </p>
+        </div>
+
+        {/* Diagram */}
+        <div className="mb-16 flex justify-center">
+          <Image
+            src="/how_it_works.png"
+            alt="How Triya AI Works"
+            width={1200}
+            height={400}
+            className="w-full max-w-5xl h-auto"
+          />
         </div>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">

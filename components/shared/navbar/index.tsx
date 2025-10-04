@@ -66,7 +66,7 @@ export function Navbar() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Image
-            src="/brand_kit_transparent_logo.png"
+            src="/triya_ai_new_logo.png"
             alt="Triya.ai"
             width={885}
             height={210}
