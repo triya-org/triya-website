@@ -17,7 +17,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <Image
-              src="/brand_kit_transparent_logo.png"
+              src="/triya_ai_new_logo.png"
               alt="Triya.ai"
               width={885}
               height={210}

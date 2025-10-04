@@ -15,24 +15,28 @@ export function CTASection({ language }: CTASectionProps) {
       subtitle: "Join leading organizations using Triya.ai for intelligent surveillance",
       cta1: "Schedule Demo",
       cta2: "Contact Sales",
-      stat1: "90%",
+      stat1: "85%",
       stat1Label: "Cost Reduction",
       stat2: "24/7",
-      stat2Label: "Monitoring",
-      stat3: "5min",
-      stat3Label: "Setup Time"
+      stat2Label: "AI Agent Monitoring",
+      stat3: "Real-time",
+      stat3Label: "Smart Alerts",
+      stat4: "360°",
+      stat4Label: "Business Insights"
     },
     ar: {
       title: "مستعد لتحويل أمانك؟",
       subtitle: "انضم إلى المؤسسات الرائدة التي تستخدم Triya.ai للمراقبة الذكية",
       cta1: "جدولة عرض توضيحي",
       cta2: "اتصل بالمبيعات",
-      stat1: "90%",
+      stat1: "85%",
       stat1Label: "تخفيض التكلفة",
       stat2: "24/7",
-      stat2Label: "مراقبة",
-      stat3: "5 دقائق",
-      stat3Label: "وقت الإعداد"
+      stat2Label: "مراقبة وكلاء الذكاء الاصطناعي",
+      stat3: "فوري",
+      stat3Label: "تنبيهات ذكية",
+      stat4: "360°",
+      stat4Label: "رؤى الأعمال"
     }
   };
 
@@ -54,7 +58,7 @@ export function CTASection({ language }: CTASectionProps) {
           </p>
 
           {/* Stats */}
-          <div className="mb-10 grid grid-cols-3 gap-8 md:gap-16">
+          <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
             <div>
               <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat1}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat1Label}</div>
@@ -66,6 +70,10 @@ export function CTASection({ language }: CTASectionProps) {
             <div>
               <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat3}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat3Label}</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat4}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{t.stat4Label}</div>
             </div>
           </div>
 

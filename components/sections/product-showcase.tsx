@@ -2,15 +2,12 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Shield, 
-  Zap, 
-  Globe2, 
-  Server, 
-  LineChart, 
-  Lock,
-  Cpu,
-  Languages
+import {
+  Shield,
+  DollarSign,
+  Search,
+  Unlock,
+  LineChart
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
@@ -22,32 +19,32 @@ interface ProductShowcaseProps {
 export function ProductShowcase({ language }: ProductShowcaseProps) {
   const content = {
     en: {
-      title: "Edge AI Platform Features",
+      title: "Our Features",
       subtitle: "Cutting-edge technology designed for modern surveillance needs",
       features: [
         {
-          icon: Languages,
-          title: "Arabic-First LLM",
-          description: "99% accuracy in Arabic language processing, understanding context and nuances",
-          badge: "Industry Leading"
+          icon: DollarSign,
+          title: "85% Cost Savings",
+          description: "Retrofit existing cameras; a lot cheaper than replacement",
+          badge: "Cost Effective"
         },
         {
-          icon: Zap,
-          title: "Sub-500ms Latency",
-          description: "Real-time threat detection and response with ultra-low latency processing",
-          badge: "Real-time"
-        },
-        {
-          icon: Server,
-          title: "On-Premise Processing",
-          description: "Complete data sovereignty with local processing, no cloud dependencies",
+          icon: Shield,
+          title: "Sovereign AI Ready",
+          description: "Edge inference, zero cloud dependency, local data control",
           badge: "Secure"
         },
         {
-          icon: Cpu,
-          title: "NVIDIA Jetson Powered",
-          description: "Optimized for edge computing with TensorRT-LLM acceleration",
-          badge: "High Performance"
+          icon: Search,
+          title: "90% Faster Investigations",
+          description: "Converse with AI in your language (30+ languages supported) for faster investigations",
+          badge: "Efficient"
+        },
+        {
+          icon: Unlock,
+          title: "No Vendor Lock-in",
+          description: "Camera agnostic, works with any existing IP Cameras",
+          badge: "Flexible"
         },
         {
           icon: LineChart,
@@ -64,32 +61,32 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
       ]
     },
     ar: {
-      title: "ميزات منصة الذكاء الاصطناعي الطرفي",
+      title: "ميزاتنا",
       subtitle: "تقنية متطورة مصممة لاحتياجات المراقبة الحديثة",
       features: [
         {
-          icon: Languages,
-          title: "نموذج لغوي عربي أولاً",
-          description: "دقة 99% في معالجة اللغة العربية، فهم السياق والفروقات الدقيقة",
-          badge: "رائد في الصناعة"
+          icon: DollarSign,
+          title: "توفير 85% من التكاليف",
+          description: "تحديث الكاميرات الموجودة؛ أرخص بكثير من الاستبدال",
+          badge: "فعال من حيث التكلفة"
         },
         {
-          icon: Zap,
-          title: "زمن استجابة أقل من 500ms",
-          description: "كشف التهديدات والاستجابة في الوقت الفعلي مع معالجة فائقة السرعة",
-          badge: "الوقت الفعلي"
-        },
-        {
-          icon: Server,
-          title: "معالجة محلية",
-          description: "سيادة البيانات الكاملة مع المعالجة المحلية، بدون اعتماد على السحابة",
+          icon: Shield,
+          title: "الذكاء الاصطناعي السيادي",
+          description: "الاستدلال الطرفي، عدم الاعتماد على السحابة، التحكم في البيانات المحلية",
           badge: "آمن"
         },
         {
-          icon: Cpu,
-          title: "مدعوم بـ NVIDIA Jetson",
-          description: "محسّن للحوسبة الطرفية مع تسريع TensorRT-LLM",
-          badge: "أداء عالي"
+          icon: Search,
+          title: "تحقيقات أسرع بنسبة 90%",
+          description: "تحدث مع الذكاء الاصطناعي بلغتك (أكثر من 30 لغة مدعومة) لتحقيقات أسرع",
+          badge: "فعال"
+        },
+        {
+          icon: Unlock,
+          title: "لا قيود من الموردين",
+          description: "متوافق مع جميع الكاميرات، يعمل مع أي كاميرات IP موجودة",
+          badge: "مرن"
         },
         {
           icon: LineChart,
