@@ -32,7 +32,6 @@ const navItems = [
       { title: "Event Management", href: "/use-cases/events" },
     ],
   },
-  { title: "About", href: "/about" },
   { title: "Contact", href: "/contact" },
 ];
 
