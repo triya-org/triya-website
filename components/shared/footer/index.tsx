@@ -64,8 +64,8 @@ export function Footer() {
               <Link href="/use-cases/retail" className="text-sm text-muted-foreground hover:text-primary">
                 Retail
               </Link>
-              <Link href="/use-cases/healthcare" className="text-sm text-muted-foreground hover:text-primary">
-                Healthcare
+              <Link href="/use-cases/events" className="text-sm text-muted-foreground hover:text-primary">
+                Event Management
               </Link>
               <Link href="/use-cases/smart-cities" className="text-sm text-muted-foreground hover:text-primary">
                 Smart Cities
