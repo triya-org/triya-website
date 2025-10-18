@@ -56,12 +56,6 @@ export default function ContactPage() {
         title: "Get in touch",
         methods: [
           {
-            icon: Building,
-            title: "Headquarters",
-            description: "Abu Dhabi Global Market",
-            detail: "Al Maryah Island, UAE"
-          },
-          {
             icon: Mail,
             title: "Email Us",
             description: "For general inquiries",
@@ -103,12 +97,6 @@ export default function ContactPage() {
       contact: {
         title: "تواصل معنا",
         methods: [
-          {
-            icon: Building,
-            title: "المقر الرئيسي",
-            description: "سوق أبوظبي العالمي",
-            detail: "جزيرة المارية، الإمارات"
-          },
           {
             icon: Mail,
             title: "راسلنا",
