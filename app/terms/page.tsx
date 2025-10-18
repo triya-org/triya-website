@@ -145,7 +145,7 @@ export default function TermsPage() {
                 {/* 13. Governing Law & Dispute Resolution */}
                 <h2 className="text-2xl font-bold mb-4">13. Governing Law &amp; Dispute Resolution</h2>
                 <p className="mb-6">
-                  This Agreement is governed by the laws of Abu Dhabi Global Market (ADGM), UAE. Disputes will be resolved under ADGM court jurisdiction, after good faith negotiation.
+                  This Agreement is governed by the laws of the UAE. Disputes will be resolved under UAE court jurisdiction, after good faith negotiation.
                 </p>
 
                 {/* 14. Miscellaneous */}
@@ -171,7 +171,7 @@ export default function TermsPage() {
                       </a>
                     </div>
                     <p className="text-sm text-muted-foreground mt-4">
-                      Registered in Abu Dhabi Global Market (ADGM), UAE
+                      Registered in UAE
                     </p>
                   </div>
                 </div>
