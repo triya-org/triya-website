@@ -56,6 +56,12 @@ export default function ContactPage() {
         title: "Get in touch",
         methods: [
           {
+            icon: Building,
+            title: "Headquarters",
+            description: "Abu Dhabi Global Market",
+            detail: "Al Maryah Island, UAE"
+          },
+          {
             icon: Mail,
             title: "Email Us",
             description: "For general inquiries",
@@ -65,7 +71,7 @@ export default function ContactPage() {
             icon: Phone,
             title: "Call Us",
             description: "",
-            detail: "+971-58-68-1200"
+            detail: "+971-58-680-1200"
           }
         ]
       },
@@ -98,6 +104,12 @@ export default function ContactPage() {
         title: "تواصل معنا",
         methods: [
           {
+            icon: Building,
+            title: "المقر الرئيسي",
+            description: "سوق أبوظبي العالمي",
+            detail: "جزيرة المارية، الإمارات"
+          },
+          {
             icon: Mail,
             title: "راسلنا",
             description: "للاستفسارات العامة",
@@ -107,7 +119,7 @@ export default function ContactPage() {
             icon: Phone,
             title: "اتصل بنا",
             description: "الإثنين-الجمعة 9ص-6م",
-            detail: "+971-58-68-1200"
+            detail: "+971-58-680-1200"
           }
         ]
       },

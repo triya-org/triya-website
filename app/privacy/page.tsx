@@ -64,10 +64,10 @@ export default function PrivacyPage() {
                 {/* 1. Introduction */}
                 <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
                 <p className="mb-4">
-                  Triya AI Ltd (&ldquo;Triya AI&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) is an artificial intelligence company registered under the laws of the UAE, located at Al Maryah Island, Abu Dhabi, UAE.
+                  Triya AI Ltd (&ldquo;Triya AI&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) is an artificial intelligence company registered under the laws of the Abu Dhabi Global Market (ADGM), located at ADGM Square, Al Maryah Island, Abu Dhabi, UAE.
                 </p>
                 <p className="mb-4">
-                  We are committed to protecting the privacy, confidentiality, and security of the personal data and video data that we process through our products and services. This Privacy Policy explains how we collect, use, store, share, and protect such data in accordance with the UAE Data Protection Regulations, the UAE Federal Data Protection Law No. 45 of 2021 (PDPL), and international standards including the EU General Data Protection Regulation (GDPR).
+                  We are committed to protecting the privacy, confidentiality, and security of the personal data and video data that we process through our products and services. This Privacy Policy explains how we collect, use, store, share, and protect such data in accordance with the ADGM Data Protection Regulations 2021 (&ldquo;ADGM DPR&rdquo;), the UAE Federal Data Protection Law No. 45 of 2021 (PDPL), and international standards including the EU General Data Protection Regulation (GDPR).
                 </p>
                 <p className="mb-6">
                   By using our website or services, you acknowledge that you have read and understood this Privacy Policy.
@@ -88,13 +88,13 @@ export default function PrivacyPage() {
                 {/* 3. Legal Basis for Processing */}
                 <h2 className="text-2xl font-bold mb-4">3. Legal Basis for Processing</h2>
                 <p className="mb-4">
-                  Triya AI processes data lawfully, fairly, and transparently in accordance with UAE DPR, PDPL, and GDPR. Our lawful bases for processing include:
+                  Triya AI processes data lawfully, fairly, and transparently in accordance with ADGM DPR, PDPL, and GDPR. Our lawful bases for processing include:
                 </p>
                 <ul className="mb-6 space-y-2">
                   <li><strong>Contractual Necessity:</strong> To provide services as per our agreements with Customers.</li>
                   <li><strong>Legal Obligation:</strong> To comply with applicable laws or regulations.</li>
                   <li><strong>Legitimate Interest:</strong> To maintain system security, prevent fraud, and improve service performance.</li>
-                  <li><strong>Consent:</strong> When Customers enable optional modules such as face recognition or license plate recognition (ALPR), we process biometric or special-category data only with explicit consent and in full compliance with UAE and GDPR requirements.</li>
+                  <li><strong>Consent:</strong> When Customers enable optional modules such as face recognition or license plate recognition (ALPR), we process biometric or special-category data only with explicit consent and in full compliance with ADGM and GDPR requirements.</li>
                 </ul>
 
                 {/* 4. Data We Collect */}
@@ -153,7 +153,7 @@ export default function PrivacyPage() {
                 {/* 9. Security Measures */}
                 <h2 className="text-2xl font-bold mb-4">9. Security Measures</h2>
                 <p className="mb-6">
-                  We employ encryption, role-based access control, monitoring, audits, and employee confidentiality. In case of a data breach, we notify authorities within 72 hours if required, and affected parties if risk is high.
+                  We employ encryption, role-based access control, monitoring, audits, and employee confidentiality. In case of a data breach, we notify ADGM within 72 hours if required, and affected parties if risk is high.
                 </p>
 
                 {/* 10. Rights of Data Subjects */}
@@ -197,7 +197,7 @@ export default function PrivacyPage() {
                     <div className="flex items-start gap-3">
                       <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div>
-                        <p>Al Maryah Island</p>
+                        <p>ADGM Square, Al Maryah Island</p>
                         <p>Abu Dhabi, UAE</p>
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export default function PrivacyPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm text-muted-foreground">
-                    If unsatisfied with our response, you may contact the UAE Data Protection Office.
+                    If unsatisfied with our response, you may contact the ADGM Office of Data Protection.
                   </p>
                 </div>
               </CardContent>

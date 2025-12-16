@@ -20,7 +20,7 @@ const getContent = (language: "en" | "ar") => ({
     ],
     contactUs: "Contact Us",
     headquarters: "Headquarters",
-    headquartersLocation: "UAE",
+    headquartersLocation: "Abu Dhabi Global Market, UAE",
     copyright: "© 2025 Triya.ai. All rights reserved.",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service"
@@ -36,7 +36,7 @@ const getContent = (language: "en" | "ar") => ({
     ],
     contactUs: "اتصل بنا",
     headquarters: "المقر الرئيسي",
-    headquartersLocation: "الإمارات",
+    headquartersLocation: "سوق أبوظبي العالمي، الإمارات",
     copyright: "© 2025 Triya.ai. جميع الحقوق محفوظة.",
     privacyPolicy: "سياسة الخصوصية",
     termsOfService: "شروط الخدمة"
@@ -115,7 +115,7 @@ export function Footer() {
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 flex-shrink-0" />
                 <span className="hover:text-primary">
-                  +971-58-68-1200
+                  +971-58-680-1200
                 </span>
               </div>
             </div>
