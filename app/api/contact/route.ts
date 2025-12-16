@@ -82,7 +82,7 @@ This email was sent from the contact form on triya.ai
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
           <p style="color: #666; font-size: 12px;">
             Triya.ai - Transform any camera into AI-powered security<br>
-            UAE<br>
+            Abu Dhabi Global Market, UAE<br>
             <a href="https://triya.ai" style="color: #0066cc;">www.triya.ai</a>
           </p>
         </div>
@@ -104,7 +104,7 @@ The Triya.ai Team
 
 ---
 Triya.ai - Transform any camera into AI-powered security
-UAE
+Abu Dhabi Global Market, UAE
 www.triya.ai
       `,
     });
