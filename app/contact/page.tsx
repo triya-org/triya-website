@@ -56,22 +56,22 @@ export default function ContactPage() {
         title: "Get in touch",
         methods: [
           {
-            icon: Building,
-            title: "Headquarters",
-            description: "Abu Dhabi Global Market",
-            detail: "Al Maryah Island, UAE"
-          },
-          {
             icon: Mail,
-            title: "Email Us",
+            title: "Email",
             description: "For general inquiries",
             detail: "founders@triya.ai"
           },
           {
             icon: Phone,
-            title: "Call Us",
+            title: "Phone",
             description: "",
             detail: "+971-58-680-1200"
+          },
+          {
+            icon: Building,
+            title: "Registered",
+            description: "Abu Dhabi Global Market",
+            detail: "Al Maryah Island, UAE"
           }
         ]
       },
@@ -104,22 +104,22 @@ export default function ContactPage() {
         title: "تواصل معنا",
         methods: [
           {
-            icon: Building,
-            title: "المقر الرئيسي",
-            description: "سوق أبوظبي العالمي",
-            detail: "جزيرة المارية، الإمارات"
-          },
-          {
             icon: Mail,
-            title: "راسلنا",
+            title: "البريد الإلكتروني",
             description: "للاستفسارات العامة",
             detail: "founders@triya.ai"
           },
           {
             icon: Phone,
-            title: "اتصل بنا",
-            description: "الإثنين-الجمعة 9ص-6م",
+            title: "الهاتف",
+            description: "",
             detail: "+971-58-680-1200"
+          },
+          {
+            icon: Building,
+            title: "مسجل",
+            description: "سوق أبوظبي العالمي",
+            detail: "جزيرة المارية، الإمارات"
           }
         ]
       },
