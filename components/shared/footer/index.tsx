@@ -20,7 +20,7 @@ const getContent = (language: "en" | "ar") => ({
     ],
     contactUs: "Contact Us",
     headquarters: "Headquarters",
-    headquartersLocation: "Abu Dhabi Global Market, UAE",
+    headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
     copyright: "© 2025 Triya.ai. All rights reserved.",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service"
@@ -36,7 +36,7 @@ const getContent = (language: "en" | "ar") => ({
     ],
     contactUs: "اتصل بنا",
     headquarters: "المقر الرئيسي",
-    headquartersLocation: "سوق أبوظبي العالمي، الإمارات",
+    headquartersLocation: "سكاي تاور، جزيرة الريم، أبوظبي، الإمارات",
     copyright: "© 2025 Triya.ai. جميع الحقوق محفوظة.",
     privacyPolicy: "سياسة الخصوصية",
     termsOfService: "شروط الخدمة"
