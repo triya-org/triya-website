@@ -115,7 +115,7 @@ export function Footer() {
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 flex-shrink-0" />
                 <span className="hover:text-primary">
-                  +971-58-68-1200
+                  +971-58-680-1200
                 </span>
               </div>
             </div>

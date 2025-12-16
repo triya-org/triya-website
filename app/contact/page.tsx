@@ -65,7 +65,7 @@ export default function ContactPage() {
             icon: Phone,
             title: "Call Us",
             description: "",
-            detail: "+971-58-68-1200"
+            detail: "+971-58-680-1200"
           }
         ]
       },
@@ -107,7 +107,7 @@ export default function ContactPage() {
             icon: Phone,
             title: "اتصل بنا",
             description: "الإثنين-الجمعة 9ص-6م",
-            detail: "+971-58-68-1200"
+            detail: "+971-58-680-1200"
           }
         ]
       },
