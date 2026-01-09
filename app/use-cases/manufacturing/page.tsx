@@ -197,6 +197,7 @@ export default function ManufacturingPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="Manufacturing AI surveillance - PPE detection, safety monitoring, and equipment theft prevention in industrial facilities"
           >
             <source src="/videos/manufacturing_hero_1.mp4" type="video/mp4" />
           </video>

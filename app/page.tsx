@@ -96,6 +96,7 @@ export default function Home() {
             playsInline
             className="h-full w-full object-cover"
             poster="/video-poster.jpg"
+            aria-label="Triya AI surveillance platform in action - showcasing real-time video analytics and edge AI security monitoring"
           >
             <source src="/videos/hero_1.mp4" type="video/mp4" />
           </video>

@@ -1,0 +1,72 @@
+# Robots.txt for Triya.ai - AI Surveillance & Video Analytics Platform
+# https://www.triya.ai
+
+# Allow all crawlers by default
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /404
+Disallow: /privacy
+Disallow: /terms
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /privacy
+Disallow: /terms
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /privacy
+Disallow: /terms
+Crawl-delay: 0
+
+User-agent: Slurp
+Allow: /
+Disallow: /api/
+Disallow: /privacy
+Disallow: /terms
+Crawl-delay: 0
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+Disallow: /privacy
+Disallow: /terms
+Crawl-delay: 0
+
+# Allow image crawlers
+User-agent: Googlebot-Image
+Allow: /
+Allow: /images/
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Sitemap location
+Sitemap: https://www.triya.ai/sitemap.xml
+Sitemap: https://www.triya.ai/sitemap-0.xml
+
+# Host preference (for Yandex)
+Host: www.triya.ai

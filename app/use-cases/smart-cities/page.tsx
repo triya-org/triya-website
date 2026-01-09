@@ -197,6 +197,7 @@ export default function SmartCitiesPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="Smart city AI surveillance system monitoring urban traffic flow, crowd management, and public safety - intelligent cameras for city-wide security and analytics"
           >
             <source src="/videos/smartcity_hero_1.mp4" type="video/mp4" />
           </video>

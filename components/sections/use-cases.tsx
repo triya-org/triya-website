@@ -115,7 +115,7 @@ export function UseCases({ language }: UseCasesProps) {
                   <div className="relative h-64 md:h-auto">
                     <Image
                       src={industry.image}
-                      alt={industry.title}
+                      alt={`${industry.title} AI surveillance - ${industry.description.substring(0, 60)}...`}
                       width={400}
                       height={300}
                       className="absolute inset-0 w-full h-full object-cover"

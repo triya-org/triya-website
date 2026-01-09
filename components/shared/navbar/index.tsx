@@ -103,7 +103,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Image
             src="/triya_ai_new_logo.png"
-            alt="Triya.ai"
+            alt="Triya AI - Edge AI Surveillance Platform with 85% Cost Savings"
             width={885}
             height={210}
             className="h-10 md:h-12 w-auto"
@@ -140,7 +140,7 @@ export function Navbar() {
                     NVIDIA Jetson powered edge computing with sub-500ms latency
                   </ListItem>
                   <ListItem href="/pricing" title="Pricing">
-                    90% cost reduction compared to cloud alternatives
+                    85% cost reduction compared to cloud alternatives
                   </ListItem>
                 </ul>
               </NavigationMenuContent>

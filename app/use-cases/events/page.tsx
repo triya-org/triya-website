@@ -237,6 +237,7 @@ export default function EventsPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="Event security and crowd management using AI surveillance technology - smart cameras monitoring large gatherings, VIP protection, and attendee flow optimization at conferences and exhibitions"
           >
             <source src="/videos/event_hero_4.mp4" type="video/mp4" />
           </video>

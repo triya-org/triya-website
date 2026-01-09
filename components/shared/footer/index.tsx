@@ -64,7 +64,7 @@ export function Footer() {
           <div className="space-y-4">
             <Image
               src="/triya_ai_new_logo.png"
-              alt="Triya.ai"
+              alt="Triya - Intelligent Video Analytics & Security Camera Software"
               width={885}
               height={210}
               className="h-10 w-auto"
