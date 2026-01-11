@@ -15,7 +15,7 @@ export function OrganizationSchema() {
     },
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Office 3122 Tower C2, Al Khatem Tower",
+      "streetAddress": "Office 3122 Tower C2, Al Khatem Tower, ADGM Square",
       "addressLocality": "Abu Dhabi",
       "addressRegion": "Abu Dhabi",
       "postalCode": "0000",
