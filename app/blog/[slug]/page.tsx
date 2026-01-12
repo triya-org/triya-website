@@ -58,7 +58,23 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
 
   // Helper function to parse inline markdown (bold, links)
   const parseInlineMarkdown = (text: string) => {
-    // Handle bold text
+    if (!text) return text;
+    
+    // Handle text with format: **Label:** rest of text
+    if (text.startsWith('**') && text.includes(':**')) {
+      const match = text.match(/^\*\*([^:]+):\*\*(.*)$/);
+      if (match) {
+        const [, label, rest] = match;
+        return (
+          <>
+            <strong className="text-foreground font-semibold">{label}:</strong>
+            {rest}
+          </>
+        );
+      }
+    }
+    
+    // Handle regular bold text
     const parts = text.split(/\*\*(.*?)\*\*/g);
     return parts.map((part, i) => 
       i % 2 === 1 ? <strong key={i} className="text-foreground font-semibold">{part}</strong> : part
@@ -67,187 +83,26 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
 
   // Convert markdown-style content to HTML
   const renderContent = (content: string) => {
-    // Pre-process content to group headings with their content
-    const processedContent = content.replace(/### ([^\n]+)\n\n((?:- [^\n]+\n?)+)/g, (match, heading, list) => {
-      return `### ${heading}\n${list}`;
-    });
+    const sections = content.split('\n\n');
     
-    const sections = processedContent.split('\n\n');
-    
-    // Look-ahead function to check if next section is related
-    const isRelatedContent = (currentSection: string, nextSection: string) => {
-      if (!nextSection) return false;
-      
-      // Check if current is a ### heading and next is a list or content
-      if (currentSection.startsWith('### ')) {
-        return nextSection.startsWith('- ') || 
-               nextSection.startsWith('* ') ||
-               nextSection.startsWith('**') ||
-               (!nextSection.startsWith('#') && !nextSection.match(/^\d\./));
-      }
-      return false;
-    };
-    
-    // Group related sections
-    const groupedSections: string[] = [];
-    let i = 0;
-    while (i < sections.length) {
-      const current = sections[i];
-      const next = sections[i + 1];
-      
-      if (isRelatedContent(current, next)) {
-        // Combine heading with its content
-        let combined = current;
-        let j = i + 1;
-        while (j < sections.length && !sections[j].startsWith('#')) {
-          combined += '\n\n' + sections[j];
-          j++;
-        }
-        groupedSections.push(combined);
-        i = j;
-      } else {
-        groupedSections.push(current);
-        i++;
-      }
-    }
-    
-    return groupedSections.map((section, index) => {
+    return sections.map((section, index) => {
       // Skip empty sections
       if (!section.trim()) return null;
 
-      // Handle ### headings with content
+      // Handle ### headings
       if (section.startsWith('### ')) {
-        const lines = section.split('\n');
-        const heading = lines[0].replace('### ', '');
-        const contentLines = lines.slice(1).filter(line => line.trim());
+        const heading = section.replace('### ', '');
         
-        // If heading has associated content, render as a group
-        if (contentLines.length > 0) {
-          // Check for question format
-          if (heading.includes('?') || heading.startsWith('"')) {
-            const cleanHeading = heading.replace(/["']/g, '');
-            return (
-              <div key={index} className="mb-6 p-5 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 dark:from-blue-950/20 dark:to-indigo-950/10 rounded-xl border border-blue-200/50 dark:border-blue-800/30">
-                <h4 className="font-semibold text-lg mb-3 text-foreground flex items-center gap-2">
-                  <span className="text-blue-600 dark:text-blue-400">❓</span>
-                  {cleanHeading}
-                </h4>
-                <div className="space-y-2 pl-7">
-                  {contentLines.map((line, i) => {
-                    const cleanLine = line.replace(/^[-*]\s*/, '').trim();
-                    if (cleanLine) {
-                      return (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-1">•</span>
-                          <span className="text-base text-muted-foreground">{parseInlineMarkdown(cleanLine)}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
-            );
-          }
-          
-          // Check for Case Study format
-          if (heading.toLowerCase().includes('case study') || heading.toLowerCase().includes('scenario')) {
-            return (
-              <div key={index} className="mb-6 p-5 bg-gradient-to-br from-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:to-pink-950/10 rounded-xl border border-purple-200/50 dark:border-purple-800/30">
-                <h4 className="font-semibold text-lg mb-3 text-foreground flex items-center gap-2">
-                  <span className="text-purple-600 dark:text-purple-400">📊</span>
-                  {heading}
-                </h4>
-                <div className="space-y-2">
-                  {contentLines.map((line, i) => {
-                    const cleanLine = line.replace(/^[-*]\s*/, '').trim();
-                    if (cleanLine) {
-                      // Check if it's a key-value pair
-                      if (cleanLine.includes(':')) {
-                        const [key, ...valueParts] = cleanLine.split(':');
-                        const value = valueParts.join(':').trim();
-                        return (
-                          <div key={i} className="flex flex-col sm:flex-row gap-2">
-                            <span className="font-medium text-sm text-purple-700 dark:text-purple-400 min-w-[150px]">
-                              {parseInlineMarkdown(key)}:
-                            </span>
-                            <span className="text-base text-muted-foreground">{parseInlineMarkdown(value)}</span>
-                          </div>
-                        );
-                      }
-                      return (
-                        <p key={i} className="text-base text-muted-foreground">{parseInlineMarkdown(cleanLine)}</p>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
-            );
-          }
-          
-          // Check for Week/Step format
-          if (heading.toLowerCase().includes('week') || heading.toLowerCase().includes('step')) {
-            const numberMatch = heading.match(/\d+/);
-            const stepNumber = numberMatch ? numberMatch[0] : '';
-            
-            return (
-              <div key={index} className="mb-4 p-4 bg-gradient-to-r from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10 rounded-lg border border-green-200/50 dark:border-green-800/30">
-                <div className="flex items-start gap-3">
-                  {stepNumber && (
-                    <span className="flex-shrink-0 w-8 h-8 bg-green-500/20 text-green-700 dark:text-green-400 rounded-full flex items-center justify-center text-sm font-bold">
-                      {stepNumber}
-                    </span>
-                  )}
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-base mb-2 text-foreground">{heading}</h4>
-                    <div className="space-y-1">
-                      {contentLines.map((line, i) => {
-                        const cleanLine = line.replace(/^[-*]\s*/, '').trim();
-                        if (cleanLine) {
-                          return (
-                            <div key={i} className="text-sm text-muted-foreground">
-                              {parseInlineMarkdown(cleanLine)}
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          
-          // Default format for other ### headings with content
+        // Special styling for case studies
+        if (heading.toLowerCase().includes('case study')) {
           return (
-            <div key={index} className="mb-6">
-              <h3 className="text-xl font-semibold mb-3">{parseInlineMarkdown(heading)}</h3>
-              <div className="space-y-2">
-                {contentLines.map((line, i) => {
-                  const cleanLine = line.replace(/^[-*]\s*/, '').trim();
-                  if (cleanLine) {
-                    if (line.startsWith('-') || line.startsWith('*')) {
-                      return (
-                        <div key={i} className="flex items-start gap-2 ml-4">
-                          <span className="text-muted-foreground mt-1">•</span>
-                          <span className="text-base text-muted-foreground">{parseInlineMarkdown(cleanLine)}</span>
-                        </div>
-                      );
-                    }
-                    return (
-                      <p key={i} className="text-base text-muted-foreground">{parseInlineMarkdown(cleanLine)}</p>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            </div>
+            <h3 key={index} className="text-xl font-bold mt-8 mb-4 flex items-center gap-2">
+              <span className="text-purple-600 dark:text-purple-400">📊</span>
+              {heading}
+            </h3>
           );
         }
         
-        // If no content, render as regular heading
         return <h3 key={index} className="text-xl font-semibold mt-6 mb-3">{parseInlineMarkdown(heading)}</h3>;
       }
       if (section.startsWith('## ')) {
@@ -374,6 +229,60 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       
       // Numbered lists (with special handling for best practices and mistake/solution format)
       if (section.match(/^\d\./)) {
+        const lines = section.split('\n');
+        
+        // Check if this is a multi-line numbered list with sub-items (has indented lines)
+        const hasSubItems = lines.some(line => line.startsWith('   '));
+        
+        if (hasSubItems) {
+          // Complex numbered list with sub-items
+          const items: { number: string; title: string; subItems: string[] }[] = [];
+          let currentItem: { number: string; title: string; subItems: string[] } | null = null;
+          
+          lines.forEach(line => {
+            const numberedMatch = line.match(/^(\d+)\.\s+(.+)/);
+            if (numberedMatch) {
+              // Start of a new numbered item
+              if (currentItem) items.push(currentItem);
+              currentItem = {
+                number: numberedMatch[1],
+                title: numberedMatch[2],
+                subItems: []
+              };
+            } else if (line.trim().startsWith('-') && currentItem) {
+              // Sub-item
+              currentItem.subItems.push(line.trim().substring(1).trim());
+            }
+          });
+          
+          if (currentItem) items.push(currentItem);
+          
+          return (
+            <ol key={index} className="space-y-3 mb-6">
+              {items.map((item) => (
+                <li key={item.number} className="flex gap-3">
+                  <span className="flex-shrink-0 w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
+                    {item.number}
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-medium mb-1">{parseInlineMarkdown(item.title)}</div>
+                    {item.subItems.length > 0 && (
+                      <ul className="space-y-1 mt-2">
+                        {item.subItems.map((subItem, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <span className="text-primary/60 mt-1">•</span>
+                            <span>{parseInlineMarkdown(subItem)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          );
+        }
+        
         const items = section.split('\n').filter(item => item.trim());
         
         // Check for mistake/solution format (contains @@)
@@ -383,6 +292,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           return (
             <div key={index} className="space-y-4 mb-8">
               {items.map((item, i) => {
+                const originalNumber = item.match(/^(\d+)\./)?.[1];
                 const text = item.replace(/^\d+\.\s*/, '');
                 const titleMatch = text.match(/\*\*([^*]+)\*\*/);
                 const title = titleMatch ? titleMatch[1] : '';
@@ -397,7 +307,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                     <div key={i} className="overflow-hidden rounded-xl border border-border/50 bg-card">
                       <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-muted/30 to-muted/10">
                         <span className="flex-shrink-0 w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center text-lg font-bold">
-                          {i + 1}
+                          {originalNumber || (i + 1)}
                         </span>
                         <h4 className="font-semibold text-lg text-foreground pt-2">{title}</h4>
                       </div>
@@ -514,6 +424,37 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             </table>
           </div>
         );
+      }
+      
+      // Handle paragraphs that start with ** (info blocks)
+      if (section.startsWith('**')) {
+        // Check if it's a multi-line section with bold labels
+        const lines = section.split('\n').filter(line => line.trim());
+        
+        if (lines.length > 1) {
+          // Multiple lines starting with ** - render as an info block
+          return (
+            <div key={index} className="mb-4 p-4 bg-muted/10 rounded-lg border border-border/50">
+              {lines.map((line, i) => (
+                <div key={i} className="mb-2 last:mb-0">
+                  {parseInlineMarkdown(line)}
+                </div>
+              ))}
+            </div>
+          );
+        } else {
+          // Single line with ** - render with special formatting
+          const line = lines[0];
+          
+          // Check if it's a label:value format
+          if (line.includes(':**')) {
+            return (
+              <div key={index} className="mb-3 pl-4 border-l-2 border-primary/30">
+                <p className="text-base">{parseInlineMarkdown(line)}</p>
+              </div>
+            );
+          }
+        }
       }
       
       // Regular paragraphs with inline formatting
