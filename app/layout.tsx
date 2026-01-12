@@ -46,6 +46,25 @@ export default function RootLayout({
         <ProductSchema />
         <FAQSchema />
         <LocalBusinessSchema />
+        
+        {/* Hreflang Tags */}
+        <link rel="alternate" hrefLang="en" href="https://www.triya.ai" />
+        <link rel="alternate" hrefLang="ar" href="https://www.triya.ai/ar" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.triya.ai" />
+        
+        {/* Web App Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Resource Hints */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        
+        {/* Theme Color */}
+        <meta name="theme-color" content="#000000" />
+        
+        {/* Apple Touch Icon */}
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className={`${dmSans.variable} font-sans min-h-screen bg-background text-foreground flex flex-col`}>
         <Navbar />

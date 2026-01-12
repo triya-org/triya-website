@@ -4,7 +4,7 @@ export const siteConfig = {
   name: 'Triya',
   domain: 'www.triya.ai',
   url: 'https://www.triya.ai',
-  description: 'Edge AI surveillance platform with 85% cost savings. On-premise video analytics, Arabic-first capabilities, multi-language support for smart cities, retail, manufacturing.',
+  description: 'UAE\'s leading edge AI surveillance platform with 85% cost savings. Serving Dubai, Abu Dhabi, Riyadh, and GCC. On-premise video analytics with Arabic support.',
   keywords: [
     'Triya',
     'Triya AI',
@@ -38,9 +38,9 @@ export const siteConfig = {
 
 export const pageMetadata: Record<string, Metadata> = {
   home: {
-    title: 'Triya | Edge AI Surveillance Platform - 85% Cost Savings',
-    description: 'Triya delivers edge AI surveillance with 85% cost savings. On-premise processing, Arabic-first capabilities, 30+ languages. Transform security for smart cities, retail, manufacturing.',
-    keywords: ['Triya', 'AI surveillance', 'edge AI', 'video analytics', 'security camera software', 'smart surveillance', 'cost-effective security'],
+    title: 'Triya | UAE\'s Leading AI Surveillance Platform - Dubai, Abu Dhabi',
+    description: 'UAE\'s leading edge AI surveillance with 85% cost savings. Serving Dubai, Abu Dhabi, Riyadh. On-premise processing, Arabic support, local installation within 24 hours.',
+    keywords: ['Triya', 'AI surveillance Dubai', 'surveillance system Abu Dhabi', 'UAE security cameras', 'GCC surveillance', 'edge AI platform', 'Arabic surveillance'],
     openGraph: {
       title: 'Triya - Revolutionary Edge AI Surveillance Platform',
       description: 'Save 85% on surveillance costs with Triya\'s edge AI platform. On-premise processing, multi-language support, camera-agnostic solution.',

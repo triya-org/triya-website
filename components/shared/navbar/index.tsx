@@ -20,6 +20,8 @@ import { MobileNav } from "./mobile-nav";
 const getContent = (language: "en" | "ar") => ({
   en: {
     industries: "Industries",
+    blog: "Blog",
+    faq: "FAQ",
     contact: "Contact",
     requestDemo: "Request Demo",
     industryItems: [
@@ -47,6 +49,8 @@ const getContent = (language: "en" | "ar") => ({
   },
   ar: {
     industries: "الصناعات",
+    blog: "المدونة",
+    faq: "الأسئلة الشائعة",
     contact: "اتصل بنا",
     requestDemo: "طلب عرض توضيحي",
     industryItems: [
@@ -164,6 +168,21 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             
+            <NavigationMenuItem>
+              <Link href="/blog" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  {t.blog}
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            
+            <NavigationMenuItem>
+              <Link href="/faq" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  {t.faq}
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
             
             <NavigationMenuItem>
               <Link href="/contact" legacyBehavior passHref>

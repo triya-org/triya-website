@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { RelatedUseCases } from "@/components/shared/related-use-cases";
 
 export default function ManufacturingPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -187,6 +189,8 @@ export default function ManufacturingPage() {
 
   return (
     <>
+      <Breadcrumbs />
+      
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] md:h-[65vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
@@ -356,6 +360,9 @@ export default function ManufacturingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Related Use Cases */}
+      <RelatedUseCases currentCase="manufacturing" />
 
       {/* CTA Section */}
       <section className="py-24">
