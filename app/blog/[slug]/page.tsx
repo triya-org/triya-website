@@ -125,6 +125,405 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       if (section.startsWith('### ')) {
         const heading = section.replace('### ', '');
         
+        // Check for Multi-Point Verification section first
+        if (heading === 'Multi-Point Verification') {
+          // Look for the numbered list in the next sections
+          let introText = '';
+          let numberedItems = [];
+          for (let i = index + 1; i < sections.length; i++) {
+            const nextSection = sections[i];
+            if (!nextSection || nextSection.startsWith('#')) break;
+            
+            // Capture the intro text
+            if (nextSection.includes("AI doesn't just check")) {
+              introText = nextSection;
+              processedIndices.add(i);
+            }
+            // Capture numbered list items (1. through 5.)
+            else if (nextSection.match(/^[1-5]\./)) {
+              const items = nextSection.split('\n').filter(item => item.trim());
+              numberedItems = items;
+              processedIndices.add(i);
+              break;
+            }
+          }
+          
+          if (introText || numberedItems.length > 0) {
+            return (
+              <div key={index} className="mb-6 p-5 bg-gradient-to-br from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10 rounded-xl border border-border/50">
+                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  {heading}
+                </h4>
+                {introText && <p className="mb-4 text-muted-foreground">{introText}</p>}
+                {numberedItems.length > 0 && (
+                  <ol className="list-decimal list-inside space-y-2 ml-4">
+                    {numberedItems.map((item, i) => {
+                      const text = item.replace(/^\d+\.\s*/, '');
+                      return (
+                        <li key={i} className="text-sm text-muted-foreground">
+                          {text}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </div>
+            );
+          }
+        }
+        
+        // Check for Manufacturing Plants and similar industry sections with subsections
+        if (heading === 'Manufacturing Plants' || heading === 'Construction Sites' || 
+            heading === 'Oil & Gas Facilities' || heading === 'Healthcare Facilities') {
+          // Look ahead for subsection content
+          const subsections = {};
+          let caseStudy = null;
+          
+          for (let i = index + 1; i < sections.length; i++) {
+            const nextSection = sections[i];
+            if (!nextSection) continue;
+            if (nextSection.startsWith('###') || nextSection.startsWith('##')) break; // Stop at next heading
+            
+            // Parse subsection with bold header followed by dash list
+            if (nextSection.includes('**') && nextSection.includes(':**')) {
+              const lines = nextSection.split('\n').filter(line => line.trim());
+              const headerLine = lines[0];
+              
+              // Extract header between ** markers
+              const headerMatch = headerLine.match(/\*\*([^:]+):\*\*/);
+              if (headerMatch) {
+                const header = headerMatch[1];
+                const items = [];
+                
+                // Collect dash-prefixed items
+                for (let j = 1; j < lines.length; j++) {
+                  if (lines[j].startsWith('-')) {
+                    items.push(lines[j].replace(/^-\s*/, ''));
+                  }
+                }
+                
+                if (header.includes('Case Study')) {
+                  caseStudy = { title: headerLine.replace(/\*\*/g, ''), items };
+                } else {
+                  subsections[header] = items;
+                }
+                processedIndices.add(i);
+              }
+            }
+          }
+          
+          if (Object.keys(subsections).length > 0 || caseStudy) {
+            const icon = heading.includes('Manufacturing') ? '🏭' : 
+                        heading.includes('Construction') ? '🏗️' :
+                        heading.includes('Oil') ? '⛽' : '🏥';
+            
+            const bgGradient = heading.includes('Manufacturing') ? 'from-indigo-50/30 to-blue-50/20 dark:from-indigo-950/20 dark:to-blue-950/10' :
+                              heading.includes('Construction') ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
+                              heading.includes('Oil') ? 'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10' :
+                              'from-emerald-50/30 to-green-50/20 dark:from-emerald-950/20 dark:to-green-950/10';
+            
+            return (
+              <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
+                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
+                  <span className="text-2xl">{icon}</span>
+                  {heading}
+                </h4>
+                
+                {Object.entries(subsections).map(([header, items], i) => (
+                  <div key={i} className="mb-4">
+                    <p className="font-semibold text-sm mb-2 text-foreground">{header}:</p>
+                    <ul className="space-y-1 ml-4">
+                      {items.map((item, j) => (
+                        <li key={j} className="flex items-start gap-2">
+                          <span className="text-primary/60 mt-1">•</span>
+                          <span className="text-sm text-muted-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                
+                {caseStudy && (
+                  <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                    <p className="font-semibold text-sm mb-2 text-primary">{caseStudy.title}</p>
+                    <ul className="space-y-1">
+                      {caseStudy.items.map((item, j) => (
+                        <li key={j} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary/40">▸</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          }
+        }
+        
+        // Check for any H3 heading followed by dash-separated metrics (Success Stories pattern)
+        if (heading === 'Global Construction Firm' || heading === 'Regional Manufacturing Hub' || heading === 'National Oil Company') {
+          // Look for the metrics in the next section
+          let metricsContent = '';
+          if (index + 1 < sections.length) {
+            const nextSection = sections[index + 1];
+            if (nextSection.startsWith('- **')) {
+              metricsContent = nextSection;
+              processedIndices.add(index + 1);
+            }
+          }
+          
+          // Parse the metrics whether we found content or not - the heading itself might have inline content
+          const metrics = [];
+          
+          if (metricsContent) {
+            const lines = metricsContent.split('\n').filter(l => l.trim());
+            lines.forEach(line => {
+              const cleanLine = line.replace(/^-\s*/, '');
+              const match = cleanLine.match(/\*\*([^:]+):\*\*\s*(.*)/);
+              if (match) {
+                metrics.push({ label: match[1], value: match[2] });
+              }
+            });
+          }
+          
+          // Always render the card for these specific headings
+          const isConstruction = heading.includes('Construction');
+          const isManufacturing = heading.includes('Manufacturing');
+          const isOil = heading.includes('Oil');
+          const icon = isConstruction ? '🏗️' : isManufacturing ? '🏭' : '⛽';
+          const bgGradient = isConstruction ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
+                            isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
+                            'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10';
+          
+          return (
+            <div key={index} className={`mb-6 p-6 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow`}>
+              <h4 className="font-bold text-xl mb-4 text-foreground flex items-center gap-3">
+                <span className="text-3xl">{icon}</span>
+                <span>{heading}</span>
+              </h4>
+              {metrics.length > 0 ? (
+                <div className="grid gap-3">
+                  {metrics.map((metric, i) => {
+                    const isResult = metric.label.toLowerCase().includes('result');
+                    const isSavings = metric.label.toLowerCase().includes('savings');
+                    return (
+                      <div key={i} className={`flex justify-between items-center py-2.5 px-3 rounded-lg ${
+                        isResult ? 'bg-green-50/50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-800/30' :
+                        isSavings ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30' :
+                        'bg-background/50 border border-border/30'
+                      }`}>
+                        <span className={`font-medium text-sm ${
+                          isResult || isSavings ? 'text-foreground' : 'text-muted-foreground'
+                        }`}>{metric.label}</span>
+                        <span className={`font-semibold text-sm ${
+                          isResult ? 'text-green-700 dark:text-green-400' :
+                          isSavings ? 'text-emerald-700 dark:text-emerald-400' :
+                          'text-foreground'
+                        }`}>{metric.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No metrics available</p>
+              )}
+            </div>
+          );
+        }
+        
+        // Check for ROI sections and Investment/Returns patterns
+        if (heading === 'Investment (Medium-sized Facility)' || heading === 'Savings and Returns' || 
+            heading.includes('Investment') && heading.includes('(') || heading.includes('Annual Returns')) {
+          // Look for the metrics in the next section
+          let metricsContent = '';
+          if (index + 1 < sections.length) {
+            const nextSection = sections[index + 1];
+            // Check if next section has dash-lists with AED amounts or bold labels
+            if (nextSection.startsWith('- ') && (nextSection.includes('AED') || nextSection.includes('**'))) {
+              metricsContent = nextSection;
+              processedIndices.add(index + 1);
+            }
+          }
+          
+          if (metricsContent) {
+            const metrics = [];
+            const lines = metricsContent.split('\n').filter(l => l.trim());
+            lines.forEach(line => {
+              const cleanLine = line.replace(/^-\s*/, '');
+              // Check for lines with bold labels like **AI surveillance system:** AED 200,000
+              if (cleanLine.includes('**') && cleanLine.includes(':')) {
+                const match = cleanLine.match(/\*\*([^:*]+)(?:\*\*)?:\s*(?:\*\*)?([^*]+)(?:\*\*)?/);
+                if (match) {
+                  const label = match[1].trim();
+                  const value = match[2].trim();
+                  const isTotal = label.toLowerCase().includes('total');
+                  metrics.push({ label, value, isTotal });
+                }
+              } else {
+                // Regular metric lines
+                const colonIndex = cleanLine.indexOf(':');
+                if (colonIndex > -1) {
+                  const label = cleanLine.substring(0, colonIndex).trim();
+                  const value = cleanLine.substring(colonIndex + 1).trim();
+                  metrics.push({ label, value });
+                }
+              }
+            });
+            
+            const isInvestment = heading.includes('Investment');
+            const icon = isInvestment ? '💰' : '📈';
+            const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
+                              'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
+            
+            return (
+              <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
+                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
+                  <span className="text-2xl">{icon}</span>
+                  {heading}
+                </h4>
+                <div className="grid gap-3">
+                  {metrics.map((metric, i) => {
+                    const isTotal = metric.isTotal || metric.label.includes('Total');
+                    return (
+                      <div key={i} className={`flex justify-between items-center py-2 border-b border-border/30 last:border-0 ${isTotal ? 'font-bold border-t-2 pt-3' : ''}`}>
+                        <span className={`font-medium text-sm ${isTotal ? 'text-foreground' : 'text-muted-foreground'}`}>{metric.label}:</span>
+                        <span className={`text-sm ${isTotal ? 'text-base font-bold' : 'font-semibold text-foreground'}`}>{metric.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+        }
+        
+        // Check for headings followed by numbered lists (like Multi-Point Verification)
+        if (heading === 'Multi-Point Verification' || heading.includes('Verification')) {
+          // Look for numbered list content in the next sections
+          let combinedContent = '';
+          let descriptionText = '';
+          
+          // First check for descriptive text
+          if (index + 1 < sections.length) {
+            const nextSection = sections[index + 1];
+            if (!nextSection.startsWith('#') && !nextSection.match(/^\d\./) && !processedIndices.has(index + 1)) {
+              descriptionText = nextSection;
+              processedIndices.add(index + 1);
+              
+              // Then look for numbered list in the section after that
+              if (index + 2 < sections.length) {
+                const numberedSection = sections[index + 2];
+                if (numberedSection.match(/^\d\./) && !processedIndices.has(index + 2)) {
+                  combinedContent = numberedSection;
+                  processedIndices.add(index + 2);
+                }
+              }
+            } else if (nextSection.match(/^\d\./) && !processedIndices.has(index + 1)) {
+              // Direct numbered list
+              combinedContent = nextSection;
+              processedIndices.add(index + 1);
+            }
+          }
+          
+          if (combinedContent || descriptionText) {
+            return (
+              <div key={index} className="mb-6">
+                <h3 className="text-xl font-semibold mt-6 mb-4 flex items-center gap-2">
+                  <span className="text-blue-500">🔍</span>
+                  {heading}
+                </h3>
+                {descriptionText && (
+                  <p className="mb-4 text-muted-foreground">{parseInlineMarkdown(descriptionText)}</p>
+                )}
+                {combinedContent && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50/30 to-indigo-50/20 dark:from-blue-950/20 dark:to-indigo-950/10 rounded-lg border border-blue-200/30 dark:border-blue-800/20">
+                    <ol className="list-decimal list-inside space-y-2">
+                      {combinedContent.split('\n').filter(line => line.trim()).map((item, i) => {
+                        const text = item.replace(/^\d+\.\s*/, '');
+                        return (
+                          <li key={i} className="text-sm text-muted-foreground">
+                            {parseInlineMarkdown(text)}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            );
+          }
+        }
+        
+        // Check for Manufacturing Plants pattern with Common Hazards and AI Monitoring
+        if (heading === 'Manufacturing Plants' || heading.includes('Manufacturing')) {
+          // Look for the structured content in the next section
+          let structuredContent = '';
+          if (index + 1 < sections.length) {
+            const nextSection = sections[index + 1];
+            if ((nextSection.includes('**Common Hazards:**') || nextSection.includes('**AI Monitoring')) && !processedIndices.has(index + 1)) {
+              structuredContent = nextSection;
+              processedIndices.add(index + 1);
+            }
+          }
+          
+          if (structuredContent) {
+            // Parse the structured content
+            const parts = structuredContent.split('**AI Monitoring Includes:**');
+            const hazardsPart = parts[0].replace('**Common Hazards:**', '').trim();
+            const monitoringPart = parts[1] ? parts[1].trim() : '';
+            
+            const hazardsList = hazardsPart.split('\n').filter(line => line.trim().startsWith('-')).map(line => line.replace(/^-\s*/, '').trim());
+            const monitoringList = monitoringPart.split('\n').filter(line => line.trim().startsWith('-')).map(line => line.replace(/^-\s*/, '').trim());
+            
+            return (
+              <div key={index} className="mb-6">
+                <h3 className="text-xl font-semibold mt-6 mb-4 flex items-center gap-2">
+                  <span className="text-orange-500">🏭</span>
+                  {heading}
+                </h3>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Common Hazards */}
+                  <div className="p-4 bg-gradient-to-br from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10 rounded-lg border border-red-200/30 dark:border-red-800/20">
+                    <h4 className="font-semibold text-base mb-3 text-foreground flex items-center gap-2">
+                      <span className="text-red-500">⚠️</span>
+                      Common Hazards
+                    </h4>
+                    <ul className="space-y-2">
+                      {hazardsList.map((hazard, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-red-400 mt-1">•</span>
+                          <span className="text-sm text-muted-foreground">{parseInlineMarkdown(hazard)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  {/* AI Monitoring */}
+                  {monitoringList.length > 0 && (
+                    <div className="p-4 bg-gradient-to-br from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10 rounded-lg border border-blue-200/30 dark:border-blue-800/20">
+                      <h4 className="font-semibold text-base mb-3 text-foreground flex items-center gap-2">
+                        <span className="text-blue-500">🤖</span>
+                        AI Monitoring Includes
+                      </h4>
+                      <ul className="space-y-2">
+                        {monitoringList.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-blue-400 mt-1">•</span>
+                            <span className="text-sm text-muted-foreground">{parseInlineMarkdown(item)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+        }
+        
         // Check if this is a Q&A format (has quotes - either straight or curly)
         const hasQuotes = heading.includes('"') || heading.includes('"') || heading.includes('"') || heading.includes('"');
         
@@ -230,16 +629,39 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           );
         }
         
-        // Check for ROI Calculator subsections (Small Businesses, Medium Enterprises, Large Organizations)
-        if (heading.includes('Small Businesses') || heading.includes('Medium Enterprises') || heading.includes('Large Organizations')) {
+        // Check for ROI Calculator subsections (various patterns)
+        if (heading.includes('Small Businesses') || heading.includes('Medium Enterprises') || heading.includes('Large Organizations') ||
+            heading.includes('Investment (') || heading.includes('Savings and Returns')) {
           // Collect the metrics from the following paragraphs
           const metrics = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
             
+            // Check if it's a dash-separated list
+            if (nextSection.startsWith('- ')) {
+              const lines = nextSection.split('\n').filter(l => l.trim());
+              lines.forEach(line => {
+                const cleanLine = line.replace(/^-\s*/, '');
+                // Check for bold total lines
+                if (cleanLine.startsWith('**')) {
+                  const match = cleanLine.match(/\*\*([^:]+):\s*([^*]+)\*\*/);
+                  if (match) {
+                    metrics.push({ label: match[1], value: match[2], isTotal: true });
+                  }
+                } else {
+                  // Regular metric lines
+                  const colonIndex = cleanLine.indexOf(':');
+                  if (colonIndex > -1) {
+                    const label = cleanLine.substring(0, colonIndex).trim();
+                    const value = cleanLine.substring(colonIndex + 1).trim();
+                    metrics.push({ label, value });
+                  }
+                }
+              });
+              processedIndices.add(i);
             // Check if it's a metric line (starts with **)
-            if (nextSection.startsWith('**')) {
+            } else if (nextSection.startsWith('**')) {
               const lines = nextSection.split('\n').filter(l => l.trim());
               lines.forEach(line => {
                 const match = line.match(/\*\*([^:]+):\*\*\s*(.*)/);
@@ -254,11 +676,18 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           }
           
           if (metrics.length > 0) {
-            // Determine icon and colors based on business size
+            // Determine icon and colors based on section type
             const isSmall = heading.includes('Small');
             const isMedium = heading.includes('Medium');
-            const icon = isSmall ? '🏪' : isMedium ? '🏢' : '🏙️';
-            const bgGradient = isSmall ? 'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10' : 
+            const isInvestment = heading.includes('Investment');
+            const isSavings = heading.includes('Savings');
+            const icon = isInvestment ? '💰' : 
+                        isSavings ? '📈' :
+                        isSmall ? '🏪' : 
+                        isMedium ? '🏢' : '🏙️';
+            const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
+                              isSavings ? 'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10' :
+                              isSmall ? 'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10' : 
                               isMedium ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
                               'from-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:to-pink-950/10';
             
@@ -274,10 +703,11 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                 <div className="grid gap-3">
                   {metrics.map((metric, i) => {
                     const isSavings = metric.label.includes('Savings');
+                    const isTotal = metric.isTotal || metric.label.includes('Total');
                     return (
-                      <div key={i} className={`flex justify-between items-center py-2 border-b border-border/30 last:border-0 ${isSavings ? 'text-green-600 dark:text-green-400 font-bold' : ''}`}>
-                        <span className={`font-medium text-sm ${isSavings ? '' : 'text-muted-foreground'}`}>{metric.label}:</span>
-                        <span className={`text-sm ${isSavings ? 'text-lg' : 'font-semibold text-foreground'}`}>{metric.value}</span>
+                      <div key={i} className={`flex justify-between items-center py-2 border-b border-border/30 last:border-0 ${isSavings ? 'text-green-600 dark:text-green-400 font-bold' : ''} ${isTotal ? 'font-bold border-t-2 pt-3' : ''}`}>
+                        <span className={`font-medium text-sm ${isSavings || isTotal ? '' : 'text-muted-foreground'}`}>{metric.label}:</span>
+                        <span className={`text-sm ${isSavings ? 'text-lg' : isTotal ? 'text-base font-bold' : 'font-semibold text-foreground'}`}>{metric.value}</span>
                       </div>
                     );
                   })}
@@ -287,16 +717,28 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           }
         }
         
-        // Check for Success Stories subsections (Retail Chain, Manufacturing Plant, Office Complex)
-        if (heading.includes('Retail Chain') || heading.includes('Manufacturing Plant') || heading.includes('Office Complex')) {
+        // Check for Success Stories subsections (various patterns)
+        if (heading.includes('Retail Chain') || heading.includes('Manufacturing Plant') || heading.includes('Office Complex') ||
+            heading.includes('Global Construction Firm') || heading.includes('Regional Manufacturing Hub') || heading.includes('National Oil Company')) {
           // Collect the metrics from the following paragraphs
           const metrics = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
             
+            // Check if it's a dash-separated list with bold labels
+            if (nextSection.startsWith('- **') || nextSection.startsWith('-**')) {
+              const lines = nextSection.split('\n').filter(l => l.trim());
+              lines.forEach(line => {
+                const cleanLine = line.replace(/^-\s*/, '');
+                const match = cleanLine.match(/\*\*([^:]+):\*\*\s*(.*)/);
+                if (match) {
+                  metrics.push({ label: match[1], value: match[2] });
+                }
+              });
+              processedIndices.add(i);
             // Check if it's a metric line (starts with **)
-            if (nextSection.startsWith('**')) {
+            } else if (nextSection.startsWith('**')) {
               const lines = nextSection.split('\n').filter(l => l.trim());
               lines.forEach(line => {
                 const match = line.match(/\*\*([^:]+):\*\*\s*(.*)/);
@@ -314,9 +756,16 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             // Determine icon and colors based on type
             const isRetail = heading.includes('Retail');
             const isManufacturing = heading.includes('Manufacturing');
-            const icon = isRetail ? '🛍️' : isManufacturing ? '🏭' : '🏢';
+            const isConstruction = heading.includes('Construction');
+            const isOil = heading.includes('Oil');
+            const icon = isRetail ? '🛍️' : 
+                        isManufacturing ? '🏭' : 
+                        isConstruction ? '🏗️' :
+                        isOil ? '⛽' : '🏢';
             const bgGradient = isRetail ? 'from-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:to-pink-950/10' : 
                               isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
+                              isConstruction ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
+                              isOil ? 'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10' :
                               'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
             
             return (
@@ -559,6 +1008,129 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             </div>
           );
         }
+      }
+      
+      // Check for Success Stories pattern first (dash list with bold labels like **Sites:** or **Workers:**)
+      if ((section.startsWith('- **Sites:') || section.startsWith('- **Workers:') || section.startsWith('- **Facilities:') || 
+           section.startsWith('- **Operations:') || section.startsWith('- **Result:') || section.startsWith('- **Savings:') ||
+           section.startsWith('- **Coverage:') || section.startsWith('- **Recognition:') || section.startsWith('- **Impact:')) &&
+          section.includes('**')) {
+        // This is a Success Stories metrics section
+        const lines = section.split('\n').filter(l => l.trim());
+        const metrics = lines.map(line => {
+          const cleanLine = line.replace(/^-\s*/, '');
+          const match = cleanLine.match(/\*\*([^:]+):\*\*\s*(.*)/);
+          if (match) {
+            return { label: match[1], value: match[2] };
+          }
+          return null;
+        }).filter(Boolean);
+        
+        // Try to determine which company this belongs to based on the metrics
+        const isConstruction = metrics.some(m => m.label === 'Sites' || (m.label === 'Workers' && m.value.includes('100,000')));
+        const isManufacturing = metrics.some(m => m.label === 'Facilities' || (m.label === 'Workers' && m.value.includes('5,000')));
+        const isOil = metrics.some(m => m.label === 'Operations' || m.label === 'Coverage');
+        
+        const icon = isConstruction ? '🏗️' : isManufacturing ? '🏭' : isOil ? '⛽' : '📊';
+        const title = isConstruction ? 'Global Construction Firm' : 
+                     isManufacturing ? 'Regional Manufacturing Hub' : 
+                     isOil ? 'National Oil Company' : 'Success Story';
+        const bgGradient = isConstruction ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
+                          isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
+                          isOil ? 'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10' :
+                          'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
+        
+        return (
+          <div key={index} className={`mb-6 p-6 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow`}>
+            <h4 className="font-bold text-xl mb-4 text-foreground flex items-center gap-3">
+              <span className="text-3xl">{icon}</span>
+              <span>{title}</span>
+            </h4>
+            <div className="grid gap-3">
+              {metrics.map((metric, i) => {
+                const isResult = metric.label.toLowerCase().includes('result');
+                const isSavings = metric.label.toLowerCase().includes('savings');
+                return (
+                  <div key={i} className={`flex justify-between items-center py-2.5 px-3 rounded-lg ${
+                    isResult ? 'bg-green-50/50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-800/30' :
+                    isSavings ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30' :
+                    'bg-background/50 border border-border/30'
+                  }`}>
+                    <span className={`font-medium text-sm ${
+                      isResult || isSavings ? 'text-foreground' : 'text-muted-foreground'
+                    }`}>{metric.label}</span>
+                    <span className={`font-semibold text-sm ${
+                      isResult ? 'text-green-700 dark:text-green-400' :
+                      isSavings ? 'text-emerald-700 dark:text-emerald-400' :
+                      'text-foreground'
+                    }`}>{metric.value}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+      
+      // Check for ROI/Investment dash lists (like "- AI system deployment: AED 300,000" or "- **AI system:** AED 200,000")
+      if (section.startsWith('- ') && section.includes('AED') && (section.includes(':') || section.includes(':**'))) {
+        const lines = section.split('\n').filter(l => l.trim());
+        const metrics = lines.map(line => {
+          const cleanLine = line.replace(/^-\s*/, '');
+          // Check for bold label lines like **AI surveillance system:** AED 200,000
+          if (cleanLine.includes('**') && cleanLine.includes(':')) {
+            // Handle both patterns: **label:** value and **label: value**
+            const match = cleanLine.match(/\*\*([^:*]+)(?:\*\*)?:\s*(?:\*\*)?([^*]+)(?:\*\*)?/);
+            if (match) {
+              const label = match[1].trim();
+              const value = match[2].trim();
+              const isTotal = label.toLowerCase().includes('total');
+              return { label, value, isTotal };
+            }
+          } else {
+            // Regular metric lines without bold
+            const colonIndex = cleanLine.indexOf(':');
+            if (colonIndex > -1) {
+              const label = cleanLine.substring(0, colonIndex).trim();
+              const value = cleanLine.substring(colonIndex + 1).trim();
+              return { label, value };
+            }
+          }
+          return null;
+        }).filter(Boolean);
+        
+        // Determine if this is Investment or Savings section
+        const isInvestment = metrics.some(m => 
+          m.label.toLowerCase().includes('system') || 
+          m.label.toLowerCase().includes('integration') || 
+          m.label.toLowerCase().includes('training') ||
+          m.label.toLowerCase().includes('setup') ||
+          m.label.toLowerCase().includes('deployment')
+        );
+        const icon = isInvestment ? '💰' : '📈';
+        const title = isInvestment ? 'Investment' : 'Returns';
+        const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
+                          'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
+        
+        return (
+          <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
+            <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
+              <span className="text-2xl">{icon}</span>
+              {title}
+            </h4>
+            <div className="grid gap-3">
+              {metrics.map((metric, i) => {
+                const isTotal = metric.isTotal || metric.label.includes('Total');
+                return (
+                  <div key={i} className={`flex justify-between items-center py-2 border-b border-border/30 last:border-0 ${isTotal ? 'font-bold border-t-2 pt-3' : ''}`}>
+                    <span className={`font-medium text-sm ${isTotal ? 'text-foreground' : 'text-muted-foreground'}`}>{metric.label}:</span>
+                    <span className={`text-sm ${isTotal ? 'text-base font-bold' : 'font-semibold text-foreground'}`}>{metric.value}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
       }
       
       // Lists

@@ -1819,19 +1819,19 @@ Trigger campaigns based on:
 
 ### Investment (50,000 sq ft store)
 
-**AI surveillance system:** AED 200,000
-**Integration costs:** AED 50,000
-**Training:** AED 25,000
-**Total:** AED 275,000
+- **AI surveillance system:** AED 200,000
+- **Integration costs:** AED 50,000
+- **Training:** AED 25,000
+- **Total:** AED 275,000
 
 ### Annual Returns
 
-**Loss prevention:** AED 300,000
-**Labor optimization:** AED 200,000
-**Increased conversion:** AED 400,000
-**Reduced queue abandonment:** AED 150,000
-**Marketing effectiveness:** AED 100,000
-**Total:** AED 1,150,000
+- **Loss prevention:** AED 300,000
+- **Labor optimization:** AED 200,000
+- **Increased conversion:** AED 400,000
+- **Reduced queue abandonment:** AED 150,000
+- **Marketing effectiveness:** AED 100,000
+- **Total:** AED 1,150,000
 
 ### ROI: 318% in Year 1
 
@@ -2185,6 +2185,7 @@ One-click generation of:
 - Monitor and adjust
 
 ### Month 2-3: Maturation
+
 - Gather baseline data
 - Identify patterns
 - Implement improvements
@@ -2193,12 +2194,14 @@ One-click generation of:
 ## ROI Calculation
 
 ### Investment (Medium-sized Facility)
+
 - AI system deployment: AED 300,000
 - Training and setup: AED 50,000
 - First-year operation: AED 60,000
 - **Total Year 1: AED 410,000**
 
 ### Savings and Returns
+
 - Accident reduction (4 prevented): AED 600,000
 - Insurance premium reduction: AED 400,000
 - Compliance violation avoidance: AED 300,000
@@ -2241,18 +2244,21 @@ One-click generation of:
 ## Success Stories
 
 ### Global Construction Firm
+
 - **Sites:** 50 worldwide
 - **Workers:** 100,000+
 - **Result:** 73% reduction in incidents
 - **Savings:** $45 million annually
 
 ### Regional Manufacturing Hub
+
 - **Facilities:** 12 plants
 - **Workers:** 5,000
 - **Result:** Zero fatalities (3 years)
 - **Recognition:** Industry safety award
 
 ### National Oil Company
+
 - **Operations:** Upstream & downstream
 - **Coverage:** 24/7 monitoring
 - **Result:** Best safety record in company history
