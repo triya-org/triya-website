@@ -102,8 +102,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         // Special formatting for certain section headers
         if (text.includes('Hidden Costs') || text.includes('Recording Only')) {
           return (
-            <h2 key={index} className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
-              <span className="text-red-500">⚠️</span>
+            <h2 key={index} className="text-2xl font-bold mt-8 mb-4">
               {parseInlineMarkdown(text)}
             </h2>
           );
@@ -214,10 +213,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           }
           
           if (Object.keys(subsections).length > 0 || caseStudy) {
-            const icon = heading.includes('Manufacturing') ? '🏭' : 
-                        heading.includes('Construction') ? '🏗️' :
-                        heading.includes('Oil') ? '⛽' : '🏥';
-            
             const bgGradient = heading.includes('Manufacturing') ? 'from-indigo-50/30 to-blue-50/20 dark:from-indigo-950/20 dark:to-blue-950/10' :
                               heading.includes('Construction') ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
                               heading.includes('Oil') ? 'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10' :
@@ -225,8 +220,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             
             return (
               <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
-                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-                  <span className="text-2xl">{icon}</span>
+                <h4 className="font-bold text-lg mb-4 text-foreground">
                   {heading}
                 </h4>
                 
@@ -292,15 +286,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           const isConstruction = heading.includes('Construction');
           const isManufacturing = heading.includes('Manufacturing');
           const isOil = heading.includes('Oil');
-          const icon = isConstruction ? '🏗️' : isManufacturing ? '🏭' : '⛽';
           const bgGradient = isConstruction ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
                             isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
                             'from-slate-50/30 to-gray-50/20 dark:from-slate-950/20 dark:to-gray-950/10';
           
           return (
             <div key={index} className={`mb-6 p-6 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow`}>
-              <h4 className="font-bold text-xl mb-4 text-foreground flex items-center gap-3">
-                <span className="text-3xl">{icon}</span>
+              <h4 className="font-bold text-xl mb-4 text-foreground">
                 <span>{heading}</span>
               </h4>
               {metrics.length > 0 ? (
@@ -373,14 +365,12 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             });
             
             const isInvestment = heading.includes('Investment');
-            const icon = isInvestment ? '💰' : '📈';
             const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
                               'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
             
             return (
               <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
-                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-                  <span className="text-2xl">{icon}</span>
+                <h4 className="font-bold text-lg mb-4 text-foreground">
                   {heading}
                 </h4>
                 <div className="grid gap-3">
@@ -479,16 +469,14 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             
             return (
               <div key={index} className="mb-6">
-                <h3 className="text-xl font-semibold mt-6 mb-4 flex items-center gap-2">
-                  <span className="text-orange-500">🏭</span>
+                <h3 className="text-xl font-semibold mt-6 mb-4">
                   {heading}
                 </h3>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Common Hazards */}
                   <div className="p-4 bg-gradient-to-br from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10 rounded-lg border border-red-200/30 dark:border-red-800/20">
-                    <h4 className="font-semibold text-base mb-3 text-foreground flex items-center gap-2">
-                      <span className="text-red-500">⚠️</span>
+                    <h4 className="font-semibold text-base mb-3 text-foreground">
                       Common Hazards
                     </h4>
                     <ul className="space-y-2">
@@ -504,8 +492,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                   {/* AI Monitoring */}
                   {monitoringList.length > 0 && (
                     <div className="p-4 bg-gradient-to-br from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10 rounded-lg border border-blue-200/30 dark:border-blue-800/20">
-                      <h4 className="font-semibold text-base mb-3 text-foreground flex items-center gap-2">
-                        <span className="text-blue-500">🤖</span>
+                      <h4 className="font-semibold text-base mb-3 text-foreground">
                         AI Monitoring Includes
                       </h4>
                       <ul className="space-y-2">
@@ -549,9 +536,8 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           if (answer) {
             return (
               <div key={index} className="mb-6 p-5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 dark:from-blue-950/10 dark:to-indigo-950/5 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl text-blue-500 dark:text-blue-400 mt-1">💬</span>
-                  <div className="flex-1">
+                <div>
+                  <div>
                     <h4 className="font-bold text-lg mb-3 text-foreground">"{question}"</h4>
                     <p className="text-base text-muted-foreground leading-relaxed">{parseInlineMarkdown(answer)}</p>
                   </div>
@@ -562,9 +548,8 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             // No answer found, still show as styled Q&A but without answer
             return (
               <div key={index} className="mb-6 p-5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 dark:from-blue-950/10 dark:to-indigo-950/5 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl text-blue-500 dark:text-blue-400 mt-1">💬</span>
-                  <div className="flex-1">
+                <div>
+                  <div>
                     <h4 className="font-bold text-lg text-foreground">"{question}"</h4>
                   </div>
                 </div>
@@ -622,8 +607,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         // Special styling for case studies
         if (heading.toLowerCase().includes('case study')) {
           return (
-            <h3 key={index} className="text-xl font-bold mt-8 mb-4 flex items-center gap-2">
-              <span className="text-purple-600 dark:text-purple-400">📊</span>
+            <h3 key={index} className="text-xl font-bold mt-8 mb-4">
               {heading}
             </h3>
           );
@@ -681,10 +665,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             const isMedium = heading.includes('Medium');
             const isInvestment = heading.includes('Investment');
             const isSavings = heading.includes('Savings');
-            const icon = isInvestment ? '💰' : 
-                        isSavings ? '📈' :
-                        isSmall ? '🏪' : 
-                        isMedium ? '🏢' : '🏙️';
             const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
                               isSavings ? 'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10' :
                               isSmall ? 'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10' : 
@@ -696,8 +676,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             
             return (
               <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
-                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-                  <span className="text-2xl">{icon}</span>
+                <h4 className="font-bold text-lg mb-4 text-foreground">
                   {heading}
                 </h4>
                 <div className="grid gap-3">
@@ -758,10 +737,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             const isManufacturing = heading.includes('Manufacturing');
             const isConstruction = heading.includes('Construction');
             const isOil = heading.includes('Oil');
-            const icon = isRetail ? '🛍️' : 
-                        isManufacturing ? '🏭' : 
-                        isConstruction ? '🏗️' :
-                        isOil ? '⛽' : '🏢';
             const bgGradient = isRetail ? 'from-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:to-pink-950/10' : 
                               isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
                               isConstruction ? 'from-orange-50/30 to-amber-50/20 dark:from-orange-950/20 dark:to-amber-950/10' :
@@ -770,8 +745,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             
             return (
               <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
-                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-                  <span className="text-2xl">{icon}</span>
+                <h4 className="font-bold text-lg mb-4 text-foreground">
                   {heading}
                 </h4>
                 <div className="grid gap-3">
@@ -818,13 +792,11 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             const borderColor = isInvestment ?
               'border-red-200/50 dark:border-red-800/30' :
               'border-green-200/50 dark:border-green-800/30';
-            const icon = isInvestment ? '💰' : '📈';
             const totalMetric = metrics.find(m => m.label.includes('Total'));
             
             return (
               <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgColor} rounded-xl border ${borderColor}`}>
-                <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-                  <span className="text-2xl">{icon}</span>
+                <h4 className="font-bold text-lg mb-4 text-foreground">
                   {heading}
                 </h4>
                 <div className="space-y-2">
@@ -934,9 +906,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         
         if (cleanItems.length > 0) {
           // Determine icon based on title
-          const icon = title.toLowerCase().includes('financial') ? '💰' : 
-                       title.toLowerCase().includes('reputation') ? '⚠️' : '📊';
-          
           const bgColor = title.toLowerCase().includes('financial') ? 
             'from-amber-50/30 to-orange-50/20 dark:from-amber-950/20 dark:to-orange-950/10' :
             'from-red-50/30 to-pink-50/20 dark:from-red-950/20 dark:to-pink-950/10';
@@ -945,14 +914,9 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             'border-amber-200/50 dark:border-amber-800/30' :
             'border-red-200/50 dark:border-red-800/30';
             
-          const iconColor = title.toLowerCase().includes('financial') ? 
-            'text-amber-600 dark:text-amber-500' :
-            'text-red-600 dark:text-red-500';
-          
           return (
             <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgColor} rounded-xl border ${borderColor}`}>
-              <h4 className="font-semibold text-lg mb-4 text-foreground flex items-center gap-2">
-                <span className={iconColor}>{icon}</span>
+              <h4 className="font-semibold text-lg mb-4 text-foreground">
                 {title}
               </h4>
               <div className="space-y-2">
@@ -1031,7 +995,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         const isManufacturing = metrics.some(m => m.label === 'Facilities' || (m.label === 'Workers' && m.value.includes('5,000')));
         const isOil = metrics.some(m => m.label === 'Operations' || m.label === 'Coverage');
         
-        const icon = isConstruction ? '🏗️' : isManufacturing ? '🏭' : isOil ? '⛽' : '📊';
         const title = isConstruction ? 'Global Construction Firm' : 
                      isManufacturing ? 'Regional Manufacturing Hub' : 
                      isOil ? 'National Oil Company' : 'Success Story';
@@ -1042,8 +1005,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         
         return (
           <div key={index} className={`mb-6 p-6 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow`}>
-            <h4 className="font-bold text-xl mb-4 text-foreground flex items-center gap-3">
-              <span className="text-3xl">{icon}</span>
+            <h4 className="font-bold text-xl mb-4 text-foreground">
               <span>{title}</span>
             </h4>
             <div className="grid gap-3">
@@ -1107,15 +1069,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           m.label.toLowerCase().includes('setup') ||
           m.label.toLowerCase().includes('deployment')
         );
-        const icon = isInvestment ? '💰' : '📈';
         const title = isInvestment ? 'Investment' : 'Returns';
         const bgGradient = isInvestment ? 'from-red-50/30 to-orange-50/20 dark:from-red-950/20 dark:to-orange-950/10' :
                           'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
         
         return (
           <div key={index} className={`mb-6 p-5 bg-gradient-to-br ${bgGradient} rounded-xl border border-border/50`}>
-            <h4 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
-              <span className="text-2xl">{icon}</span>
+            <h4 className="font-bold text-lg mb-4 text-foreground">
               {title}
             </h4>
             <div className="grid gap-3">
@@ -1156,7 +1116,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             const beforeValue = metrics.find(m => m.label === 'Before')?.value || '';
             const isRetail = beforeValue.includes('AED') || beforeValue.includes('losses');
             const isManufacturing = beforeValue.includes('safety') || beforeValue.includes('incidents');
-            const icon = isRetail ? '🛍️' : isManufacturing ? '🏭' : '🏢';
             const bgGradient = isRetail ? 'from-purple-50/30 to-pink-50/20 dark:from-purple-950/20 dark:to-pink-950/10' : 
                               isManufacturing ? 'from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10' :
                               'from-green-50/30 to-emerald-50/20 dark:from-green-950/20 dark:to-emerald-950/10';
@@ -1273,8 +1232,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                       </div>
                       <div className="grid md:grid-cols-2 divide-x divide-border">
                         <div className="p-4 bg-red-50/50 dark:bg-red-950/10">
-                          <div className="flex items-start gap-3">
-                            <span className="text-red-500 mt-1">⚠️</span>
+                          <div>
                             <div>
                               <p className="font-medium text-sm text-red-700 dark:text-red-400 mb-1">Mistake</p>
                               <p className="text-sm text-muted-foreground">{mistakeText}</p>
