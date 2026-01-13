@@ -26,21 +26,13 @@ export default function BlogPage() {
         {articles[0] && (
           <div className="mb-16">
             <Link href={`/blog/${articles[0].slug}`}>
-              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/50 transition-all duration-300">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Image */}
-                  <div className="relative h-[300px] md:h-[400px] bg-gradient-to-br from-primary/20 to-primary/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <span className="inline-block px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm font-medium mb-2">
-                        Featured
-                      </span>
-                    </div>
-                  </div>
+              <div className="group relative overflow-hidden rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
+                <div className="p-8 md:p-12">
+                  <span className="inline-block px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm font-medium mb-4">
+                    Featured
+                  </span>
                   
-                  {/* Content */}
-                  <div className="p-6 md:p-8 flex flex-col justify-center">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         {new Date(articles[0].date).toLocaleDateString('en-US', { 
@@ -74,11 +66,10 @@ export default function BlogPage() {
                       ))}
                     </div>
                     
-                    <div className="mt-6">
-                      <span className="inline-flex items-center text-primary font-medium group-hover:gap-3 transition-all gap-2">
-                        Read Article <ArrowRight className="h-4 w-4" />
-                      </span>
-                    </div>
+                  <div className="mt-6">
+                    <span className="inline-flex items-center text-primary font-medium group-hover:gap-3 transition-all gap-2">
+                      Read Article <ArrowRight className="h-4 w-4" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -91,19 +82,12 @@ export default function BlogPage() {
           {articles.slice(1).map((article) => (
             <Link key={article.slug} href={`/blog/${article.slug}`}>
               <article className="group h-full">
-                <div className="h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-                  {/* Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/5">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-block px-2 py-1 bg-background/90 backdrop-blur text-xs font-medium rounded">
-                        {article.category}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Content */}
+                <div className="h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="flex-1 p-6 flex flex-col">
+                    <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded mb-3 self-start">
+                      {article.category}
+                    </span>
+                    
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
