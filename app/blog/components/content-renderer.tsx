@@ -167,11 +167,36 @@ export const ContentRenderer = React.memo(({ content }: ContentRendererProps) =>
         }
       }
       
-      // Bulleted lists
+      // Bulleted lists (including checklists)
       if (text.startsWith('- ') || text.startsWith('* ') || text.startsWith('• ')) {
         const items = text.split('\n')
           .filter(line => line.trim())
           .map(line => line.replace(/^[-*•]\s*/, '').trim());
+        
+        // Check if this is a checklist (contains ✅ symbols)
+        const isChecklist = items.some(item => item.includes('✅'));
+        
+        if (isChecklist) {
+          return (
+            <ul key={index} className="space-y-2 mb-4">
+              {items.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                  {item.startsWith('✅') ? (
+                    <>
+                      <span className="text-green-500 mt-0.5">✅</span>
+                      <span>{parseInlineMarkdown(item.replace('✅', '').trim())}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground/50 mt-0.5">•</span>
+                      <span>{parseInlineMarkdown(item)}</span>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          );
+        }
         
         return (
           <ul key={index} className="list-disc pl-6 mb-4 space-y-2">

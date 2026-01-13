@@ -1,13 +1,14 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Clock, Share2, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Tag } from 'lucide-react';
 import { getAllArticles, getArticleBySlug } from '../lib/articles';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { RelatedUseCases } from '@/components/shared/related-use-cases';
 import { BlogErrorBoundary } from '../components/error-boundary';
 import { ContentRenderer } from '../components/content-renderer';
 import { generateBlogSchema } from '../lib/blog-schema';
+import { ShareButton } from '../components/share-button';
 
 // Generate static params for all blog articles
 export async function generateStaticParams() {
@@ -55,34 +56,6 @@ export async function generateMetadata({
       canonical: `https://www.triya.ai/blog/${article.slug}`,
     },
   };
-}
-
-// Share functionality component
-function ShareButton({ article }: { article: any }) {
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: article.title,
-          text: article.excerpt,
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.log('Error sharing:', err);
-      }
-    }
-  };
-
-  return (
-    <button
-      onClick={handleShare}
-      className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-      aria-label="Share article"
-    >
-      <Share2 className="h-4 w-4" />
-      <span className="text-sm">Share</span>
-    </button>
-  );
 }
 
 // Main blog article page component

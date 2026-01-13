@@ -78,18 +78,6 @@ export function RelatedUseCases({ currentCase }: RelatedUseCasesProps) {
             </Link>
           ))}
         </div>
-        
-        <div className="text-center mt-12">
-          <p className="text-muted-foreground mb-4">
-            Ready to transform your security operations?
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors gap-2"
-          >
-            Request a Demo <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
       </div>
     </section>
   );
