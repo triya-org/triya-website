@@ -23,6 +23,132 @@ export const ContentRenderer = React.memo(({ content }: ContentRendererProps) =>
     return sections.map((section, index) => {
       const text = section.trim();
       
+      // Check for inline dash-separated lists (e.g., **Header** - item1 - item2)
+      if (text.match(/^\*\*[^*]+\*\*:?\s*-\s*.+\s*-\s*/)) {
+        const headerMatch = text.match(/^\*\*([^*]+)\*\*:?\s*/);
+        if (headerMatch) {
+          const header = headerMatch[1];
+          let itemsText = text.substring(headerMatch[0].length);
+          // Remove leading " - " if present
+          if (itemsText.startsWith(' - ') || itemsText.startsWith('- ')) {
+            itemsText = itemsText.replace(/^-?\s*/, '');
+          }
+          // Split only on " - " (with spaces) to preserve dashes within content like "AES-256" or "2-5 seconds"
+          const items = itemsText.split(/\s+-\s+/).filter(item => item.trim());
+          
+          // Check if it's a checklist with checkmarks
+          const hasCheckmarks = items.some(item => item.includes('✅'));
+          
+          return (
+            <div key={index} className="mb-6 p-5 bg-gradient-to-r from-slate-50/20 to-gray-50/10 dark:from-slate-950/10 dark:to-gray-950/5 rounded-xl border border-border/50">
+              <h4 className="font-bold text-lg mb-4 text-foreground">{header}</h4>
+              <div className={hasCheckmarks ? "grid gap-3 md:grid-cols-2" : "space-y-2"}>
+                {items.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    {hasCheckmarks && item.includes('✅') ? (
+                      <>
+                        <span className="text-green-500 mt-0.5">✅</span>
+                        <span className="text-sm text-muted-foreground">
+                          {parseInlineMarkdown(item.replace('✅', '').trim())}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-primary/60 mt-1">•</span>
+                        <span className="text-sm text-muted-foreground">{parseInlineMarkdown(item)}</span>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+      }
+      
+      // Check for header + list pattern (e.g., **Cloud-Based Analysis:**\n- item1\n- item2)
+      if (text.includes('\n-') && text.match(/^\*\*[^*]+\*\*:?/)) {
+        const lines = text.split('\n');
+        const headerLine = lines[0];
+        const headerMatch = headerLine.match(/^\*\*([^*]+)\*\*:?\s*/);
+        
+        if (headerMatch) {
+          const header = headerMatch[1];
+          const listItems = lines.slice(1)
+            .filter(line => line.trim())
+            .map(line => line.replace(/^-\s*/, '').trim());
+          
+          // Check for special patterns like "Total:" or bold items
+          const hasTotal = listItems.some(item => item.includes('**Total') || item.includes('Total:'));
+          
+          // Check if this is actually an inline list that wasn't properly parsed
+          if (listItems.length === 0 && text.includes(' - ')) {
+            const parts = text.split('\n');
+            const header = parts[0].replace(/^\*\*|\*\*$/g, '').replace(/:$/, '');
+            const itemsLine = parts.slice(1).join(' ');
+            const items = itemsLine.split(/\s+-\s+/).filter(item => item.trim());
+            
+            if (items.length > 0) {
+              return (
+                <div key={index} className="mb-6 p-5 bg-gradient-to-r from-slate-50/20 to-gray-50/10 dark:from-slate-950/10 dark:to-gray-950/5 rounded-xl border border-border/50">
+                  <h4 className="font-bold text-lg mb-4 text-foreground">{header}</h4>
+                  <div className="space-y-2">
+                    {items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="text-primary/60 mt-1">•</span>
+                        <span className="text-sm text-muted-foreground">{parseInlineMarkdown(item)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+          }
+          
+          return (
+            <div key={index} className="mb-6 p-5 bg-gradient-to-r from-slate-50/20 to-gray-50/10 dark:from-slate-950/10 dark:to-gray-950/5 rounded-xl border border-border/50">
+              <h4 className="font-bold text-lg mb-4 text-foreground">{header}</h4>
+              <ul className="space-y-2">
+                {listItems.map((item, i) => {
+                  const isTotal = item.includes('**Total') || item.includes('Total:');
+                  return (
+                    <li key={i} className={`flex items-start gap-2 ${isTotal ? 'font-bold pt-2 border-t border-border/30 mt-2' : ''}`}>
+                      <span className="text-primary/60 mt-1">•</span>
+                      <span className={`text-sm ${isTotal ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {parseInlineMarkdown(item)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        }
+      }
+      
+      // Check for Week/Phase sections (### Week X: Title followed by list items)
+      if ((text.startsWith('### Week ') || text.startsWith('### Phase ')) && text.includes('\n-')) {
+        const lines = text.split('\n');
+        const headerLine = lines[0].substring(4); // Remove "### "
+        const listItems = lines.slice(1)
+          .filter(line => line.trim().startsWith('-'))
+          .map(line => line.replace(/^-\s*/, '').trim());
+        
+        return (
+          <div key={index} className="mb-6 p-5 bg-gradient-to-br from-blue-50/30 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10 rounded-xl border border-border/50">
+            <h3 className="font-bold text-lg mb-3 text-foreground">{headerLine}</h3>
+            <ul className="space-y-2 ml-4">
+              {listItems.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-1">✓</span>
+                  <span className="text-sm text-muted-foreground">{parseInlineMarkdown(item)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+      
       // Headers
       if (text.startsWith('## ')) {
         const headerText = text.substring(3);
