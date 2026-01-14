@@ -80,17 +80,13 @@ A large manufacturing facility in Abu Dhabi Industrial City transformed their su
 
 ## The Hidden Costs You're Not Seeing
 
-### 1. Bandwidth Escalation
-Cloud surveillance consumes massive bandwidth. A single 4K camera streaming 24/7 uses approximately 2TB of data monthly. With UAE business internet costs, this adds up quickly.
+1. Bandwidth Escalation Cloud surveillance consumes massive bandwidth. A single 4K camera streaming 24/7 uses approximately 2TB of data monthly. With UAE business internet costs, this adds up quickly.
 
-### 2. Storage Inflation
-Cloud storage costs increase exponentially with retention requirements. Compliance often requires 90-180 day retention, multiplying storage costs by 3-6x.
+2. Storage Inflation Cloud storage costs increase exponentially with retention requirements. Compliance often requires 90-180 day retention, multiplying storage costs by 3-6x.
 
-### 3. Processing Latency Costs
-Cloud processing introduces 2-5 second delays. In security scenarios, these delays can mean the difference between preventing and merely recording incidents.
+3. Processing Latency Costs Cloud processing introduces 2-5 second delays. In security scenarios, these delays can mean the difference between preventing and merely recording incidents.
 
-### 4. Downtime Losses
-Internet outages mean surveillance outages with cloud systems. Triya's edge AI continues working offline, ensuring zero downtime.
+4. Downtime Losses Internet outages mean surveillance outages with cloud systems. Triya's edge AI continues working offline, ensuring zero downtime.
 
 ## ROI Calculator: See Your Savings
 
@@ -247,17 +243,17 @@ Triya understands variations across the GCC:
 
 ### Arabic-Specific AI Features
 
-1. **Arabic License Plate Recognition**
-   - Reads GCC number plates in Arabic numerals
-   - Recognizes emirate/province identifiers
-   - Handles special diplomatic/royal plates
+**Arabic License Plate Recognition**
+- Reads GCC number plates in Arabic numerals
+- Recognizes emirate/province identifiers
+- Handles special diplomatic/royal plates
 
-2. **Arabic Document Scanning**
+**Arabic Document Scanning**
    - Identifies Arabic ID cards and documents
    - Validates Arabic text in secure areas
    - Archives Arabic signage and notices
 
-3. **Cultural Behavior Analysis**
+**Cultural Behavior Analysis**
    - Respects prayer time patterns
    - Recognizes traditional dress
    - Understands regional crowd dynamics
@@ -300,11 +296,11 @@ Triya doesn't just translate—it understands:
 
 ### Retail Chain Across UAE
 
-"Since implementing Triya's Arabic AI surveillance across our 50 stores, our Arabic-speaking security staff finally feel empowered. Incident response improved by 65%, and our teams actually enjoy using the system." - *Security Director, Major UAE Retailer*
+"Since implementing Triya's Arabic AI surveillance across our 50 stores, our Arabic-speaking security staff finally feel empowered. Incident response improved by 65%, and our teams actually enjoy using the system." - **Security Director, Major UAE Retailer**
 
 ### Smart City Project in Saudi Arabia
 
-"Triya was the only solution that truly understood our need for Arabic-first surveillance. It's not just translated—it thinks in Arabic." - *Project Manager, NEOM Development*
+"Triya was the only solution that truly understood our need for Arabic-first surveillance. It's not just translated—it thinks in Arabic." - **Project Manager, NEOM Development**
 
 ## The Future of Arabic AI Surveillance
 
@@ -512,25 +508,25 @@ With Triya's edge AI platform:
 
 ### How Triya Ensures Complete Privacy
 
-1. **Edge Processing**
+**1. Edge Processing**
    - AI inference on local hardware
    - No cloud dependencies
    - No external API calls
    - Complete offline capability
 
-2. **Encrypted Storage**
+**2. Encrypted Storage**
    - AES-256 encryption at rest
    - Customer-controlled keys
    - Secure key management
    - Encrypted backups
 
-3. **Access Control**
+**3. Access Control**
    - Integration with your Active Directory
    - Role-based permissions
    - Multi-factor authentication
    - Detailed audit logs
 
-4. **Data Lifecycle**
+**4. Data Lifecycle**
    - Automated retention policies
    - Secure deletion procedures
    - No shadow copies
@@ -561,22 +557,22 @@ Triya automatically generates:
 
 ### Competitive Advantages
 
-1. **Trust Building**
+**1. Trust Building**
    - Demonstrate commitment to privacy
    - Win security-conscious contracts
    - Differentiate from competitors
 
-2. **Risk Mitigation**
+**2. Risk Mitigation**
    - No surprise data breaches
    - No foreign legal complications
    - No cloud provider bankruptcies
 
-3. **Cost Predictability**
+**3. Cost Predictability**
    - No escalating cloud storage fees
    - No bandwidth charges
    - No surprise price increases
 
-4. **Operational Freedom**
+**4. Operational Freedom**
    - Customize as needed
    - Integrate with any system
    - Scale without permission
@@ -682,22 +678,25 @@ The UAE has established a comprehensive framework for surveillance systems:
 
 ### Permit Process in UAE
 
-1. **Initial Application**
-   - Submit detailed system specifications
-   - Provide site plans and camera locations
-   - Include data management protocols
-   - Processing time: 5-10 business days
+**1. Initial Application**
 
-2. **Technical Inspection**
-   - On-site evaluation by authorities
-   - Verification of specifications
-   - Security assessment
-   - Timeline: 2-3 days
+- Submit detailed system specifications
+- Provide site plans and camera locations
+- Include data management protocols
+- Processing time: 5-10 business days
 
-3. **Final Approval**
-   - Issued permit valid for 1-2 years
-   - Regular renewal required
-   - Compliance audits may occur
+**2. Technical Inspection**
+
+- On-site evaluation by authorities
+- Verification of specifications
+- Security assessment
+- Timeline: 2-3 days
+
+**3. Final Approval**
+
+- Issued permit valid for 1-2 years
+- Regular renewal required
+- Compliance audits may occur
 
 ## Saudi Arabia Surveillance Regulations
 
@@ -772,15 +771,25 @@ Triya helps organizations achieve:
 
 ## Common Compliance Mistakes to Avoid
 
-1. **Inadequate Signage** @@Mistake: Not posting visible surveillance notices @@Solution: Place clear signage at all entrances in Arabic and English
+**1. Inadequate Signage**
 
-2. **Excessive Retention** @@Mistake: Keeping footage indefinitely @@Solution: Implement automatic deletion after regulatory period
+@@Mistake: Not posting visible surveillance notices @@Solution: Place clear signage at all entrances in Arabic and English
 
-3. **Unauthorized Access** @@Mistake: Sharing login credentials @@Solution: Individual user accounts with role-based access
+**2. Excessive Retention**
 
-4. **Missing Documentation** @@Mistake: No record of system changes @@Solution: Maintain detailed change logs and approval records
+@@Mistake: Keeping footage indefinitely @@Solution: Implement automatic deletion after regulatory period
 
-5. **Ignoring Updates** @@Mistake: Not updating systems per new regulations @@Solution: Regular compliance reviews and system updates
+**3. Unauthorized Access**
+
+@@Mistake: Sharing login credentials @@Solution: Individual user accounts with role-based access
+
+**4. Missing Documentation**
+
+@@Mistake: No record of system changes @@Solution: Maintain detailed change logs and approval records
+
+**5. Ignoring Updates**
+
+@@Mistake: Not updating systems per new regulations @@Solution: Regular compliance reviews and system updates
 
 ## Cost of Non-Compliance
 
@@ -921,7 +930,7 @@ Let's analyze a typical 100-camera deployment:
 - Average incidents discovered late: 12/month
 - Average loss per late discovery: AED 25,000
 - Monthly losses: AED 300,000
-- Annual losses: AED 3.6 million
+- **Annual losses: AED 3.6 million**
 
 **Real-Time AI System:**
 - Incidents prevented: 10/month
@@ -1095,16 +1104,16 @@ Let's analyze a typical 100-camera deployment:
 
 ## Common Objections Addressed
 
-### "Real-time seems expensive"
+"Real-time seems expensive"
 Initial investment is 20% higher, but ROI achieved in 3-4 months through prevented losses.
 
-### "Too many false alerts"
+"Too many false alerts"
 Modern AI achieves 95%+ accuracy with proper configuration and learning.
 
-### "Our team can't handle the technology"
+"Our team can't handle the technology"
 Intuitive interfaces require minimal training—easier than reviewing footage.
 
-### "We've never had major incidents"
+"We've never had major incidents"
 Most organizations discover 40% more incidents after implementing real-time detection.
 
 ## The Future is Already Here
@@ -1339,35 +1348,15 @@ Triya's AI surveillance provides:
 ### Calculate Your Pain Score
 
 Rate each statement (0-10):
-- We have too many false alarms □
-- Incidents are discovered too late □
-- Security costs keep increasing □
-- We lack security insights □
-- Compliance is difficult □
+- We have too many false alarms
+- Incidents are discovered too late
+- Security costs keep increasing
+- We lack security insights
+- Compliance is difficult
 
 **Score 20+:** Upgrade immediately
 **Score 10-19:** Plan upgrade within 6 months
 **Score <10:** Review again in 1 year
-
-### ROI Calculator
-
-**Your Current Annual Costs:**
-1. Security staff: ______
-2. Incident losses: ______
-3. Compliance effort: ______
-4. False alarm response: ______
-5. Insurance premiums: ______
-**Total: ______**
-
-**AI System Annual Cost:**
-1. Software license: ______
-2. Reduced staff needs: ______
-3. Prevented losses: ______
-4. Automation savings: ______
-5. Insurance discount: ______
-**Total Savings: ______**
-
-**Typical ROI: 250-400% in Year 1**
 
 ## Common Upgrade Concerns Addressed
 
@@ -1674,8 +1663,7 @@ AI measures:
 - Conversion from viewing
 - Demographic breakdown
 
-**Example Finding:** 
-"End-cap display generates 2,000 views but only 0.5% conversion. Side aisle display gets 400 views but 8% conversion."
+**Example Finding:** "End-cap display generates 2,000 views but only 0.5% conversion. Side aisle display gets 400 views but 8% conversion."
 **Action:** Relocate products for 4x sales increase
 
 ### Promotion Performance

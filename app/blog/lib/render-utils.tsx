@@ -3,10 +3,24 @@ import { parseInlineMarkdown } from './markdown-utils';
 
 // Memoized component for rendering numbered lists
 export const NumberedList = React.memo(({ items, title }: { items: string[], title?: string }) => {
-  const numberedItems = items.map((item, index) => ({
-    number: index + 1,
-    text: item
-  }));
+  const numberedItems = items.map((item, index) => {
+    // Handle items that start with **Title** followed by content
+    let processedText = item;
+    let boldTitle = null;
+    
+    // Check if item starts with bold text
+    const boldMatch = item.match(/^\*\*([^*]+)\*\*\s*(.*)/);
+    if (boldMatch) {
+      boldTitle = boldMatch[1];
+      processedText = boldMatch[2];
+    }
+    
+    return {
+      number: index + 1,
+      boldTitle,
+      text: processedText
+    };
+  });
 
   return (
     <div className="mb-6">
@@ -21,7 +35,12 @@ export const NumberedList = React.memo(({ items, title }: { items: string[], tit
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold mr-3 mt-0.5 shrink-0">
               {item.number}
             </span>
-            <span className="text-muted-foreground">{parseInlineMarkdown(item.text)}</span>
+            <span className="text-muted-foreground">
+              {item.boldTitle && (
+                <><strong className="text-foreground font-semibold">{item.boldTitle}</strong> </>
+              )}
+              {parseInlineMarkdown(item.text)}
+            </span>
           </li>
         ))}
       </ol>
