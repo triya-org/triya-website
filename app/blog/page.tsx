@@ -1,11 +1,11 @@
-import { getAllArticles } from './lib/articles';
+import { getAllArticlesMetadata } from './lib/articles-metadata';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Clock, Calendar } from 'lucide-react';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 
 export default function BlogPage() {
-  const articles = getAllArticles();
+  const articles = getAllArticlesMetadata();
 
   return (
     <>

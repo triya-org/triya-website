@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Clock, Tag } from 'lucide-react';
-import { getAllArticles, getArticleBySlug } from '../lib/articles';
+import { getAllArticlesMetadata, getArticleBySlug as getArticleBySlugAsync } from '../lib/articles-metadata';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { BlogErrorBoundary } from '../components/error-boundary';
 import { ContentRenderer } from '../components/content-renderer';
@@ -11,7 +11,7 @@ import { ShareButton } from '../components/share-button';
 
 // Generate static params for all blog articles
 export async function generateStaticParams() {
-  const articles = getAllArticles();
+  const articles = getAllArticlesMetadata();
   return articles.map((article) => ({
     slug: article.slug,
   }));
@@ -23,7 +23,7 @@ export async function generateMetadata({
 }: { 
   params: { slug: string } 
 }): Promise<Metadata> {
-  const article = getArticleBySlug(params.slug);
+  const article = await getArticleBySlugAsync(params.slug);
   
   if (!article) {
     return {
@@ -58,12 +58,12 @@ export async function generateMetadata({
 }
 
 // Main blog article page component
-export default function BlogArticlePage({ 
+export default async function BlogArticlePage({ 
   params 
 }: { 
   params: { slug: string } 
 }) {
-  const article = getArticleBySlug(params.slug);
+  const article = await getArticleBySlugAsync(params.slug);
 
   if (!article) {
     notFound();
