@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ArrowLeft, Calendar, Clock, Tag } from 'lucide-react';
 import { getAllArticles, getArticleBySlug } from '../lib/articles';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
-import { RelatedUseCases } from '@/components/shared/related-use-cases';
 import { BlogErrorBoundary } from '../components/error-boundary';
 import { ContentRenderer } from '../components/content-renderer';
 import { generateBlogSchema } from '../lib/blog-schema';
@@ -189,10 +188,6 @@ export default function BlogArticlePage({
             </div>
           </div>
 
-          {/* Related use cases */}
-          <div className="mt-16 max-w-6xl mx-auto">
-            <RelatedUseCases currentSlug={params.slug} />
-          </div>
         </div>
       </article>
     </>

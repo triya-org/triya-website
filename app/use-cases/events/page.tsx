@@ -21,7 +21,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { RelatedUseCases } from "@/components/shared/related-use-cases";
 
 export default function EventsPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -443,7 +442,6 @@ export default function EventsPage() {
       </section>
 
       {/* Related Use Cases */}
-      <RelatedUseCases currentCase="events" />
       
       {/* CTA Section */}
       <section className="py-24">

@@ -18,9 +18,6 @@ import {
   CheckCircle2,
   Clock
 } from "lucide-react";
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { RelatedUseCases } from "@/components/shared/related-use-cases";
-
 export default function RetailPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
 
@@ -360,9 +357,6 @@ export default function RetailPage() {
         </div>
       </section>
 
-      {/* Related Use Cases */}
-      <RelatedUseCases currentCase="retail" />
-      
       {/* CTA Section */}
       <section className="py-24 bg-primary/5">
         <div className="container">

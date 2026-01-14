@@ -15,6 +15,9 @@ export function Breadcrumbs() {
   // Don't show breadcrumbs on homepage
   if (pathname === "/" || pathname === "") return null;
   
+  // Don't show breadcrumbs on use-cases pages (no use-cases index page exists)
+  if (pathname.includes("/use-cases/")) return null;
+  
   // Generate breadcrumb items from pathname
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [

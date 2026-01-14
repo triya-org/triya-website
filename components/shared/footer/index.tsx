@@ -150,14 +150,7 @@ export function Footer() {
           </div>
         </div>
         
-        {/* Service Areas */}
-        <div className="mt-12 pt-8 border-t text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Serving: Abu Dhabi • Dubai • Sharjah • Riyadh • Jeddah • Doha • Kuwait City • Muscat • Manama
-          </p>
-        </div>
-        
-        <div className="mt-8 border-t pt-8">
+        <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-muted-foreground">
               {t.copyright}
