@@ -18,7 +18,7 @@ export function OrganizationSchema() {
       "streetAddress": "Office 3122 Tower C2, Al Khatem Tower, ADGM Square",
       "addressLocality": "Abu Dhabi",
       "addressRegion": "Abu Dhabi",
-      "postalCode": "0000",
+      "postalCode": "",
       "addressCountry": "AE"
     },
     "contactPoint": {
@@ -200,7 +200,7 @@ export function LocalBusinessSchema() {
       "streetAddress": "Office 3122 Tower C2, Al Khatem Tower, ADGM Square",
       "addressLocality": "Abu Dhabi",
       "addressRegion": "Abu Dhabi",
-      "postalCode": "0000",
+      "postalCode": "",
       "addressCountry": "AE"
     },
     "geo": {
