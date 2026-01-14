@@ -348,7 +348,7 @@ export const ContentRenderer = React.memo(({ content }: ContentRendererProps) =>
       if ((section.startsWith('- **Sites:') || section.startsWith('- **Workers:') || 
            section.startsWith('- **Facilities:') || section.startsWith('- **Operations:')) &&
           section.includes('**')) {
-        const metrics = [];
+        const metrics: { label: string; value: string }[] = [];
         const lines = section.split('\n');
         
         lines.forEach(line => {
@@ -402,7 +402,7 @@ export const ContentRenderer = React.memo(({ content }: ContentRendererProps) =>
             }
           }
           return null;
-        }).filter(Boolean);
+        }).filter((m): m is { label: string; value: string; isTotal?: boolean } => m !== null);
         
         if (metrics.length > 0) {
           const isInvestment = metrics.some(m => 
@@ -609,7 +609,7 @@ export const ContentRenderer = React.memo(({ content }: ContentRendererProps) =>
               };
             }
             return null;
-          }).filter(Boolean);
+          }).filter((m): m is { label: string; value: string; isTotal?: boolean } => m !== null);
           
           if (metrics.length > 0) {
             return (

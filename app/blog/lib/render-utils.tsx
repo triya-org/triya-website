@@ -54,7 +54,7 @@ export const QASection = React.memo(({ question, answer }: { question: string, a
   <div className="mb-6 p-5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 dark:from-blue-950/10 dark:to-indigo-950/5 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
     <div>
       <div>
-        <h4 className="font-bold text-lg mb-3 text-foreground">"{question}"</h4>
+        <h4 className="font-bold text-lg mb-3 text-foreground">&ldquo;{question}&rdquo;</h4>
         <p className="text-muted-foreground leading-relaxed">{parseInlineMarkdown(answer)}</p>
       </div>
     </div>

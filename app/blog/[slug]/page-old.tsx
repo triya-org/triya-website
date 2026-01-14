@@ -128,7 +128,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         if (heading === 'Multi-Point Verification') {
           // Look for the numbered list in the next sections
           let introText = '';
-          let numberedItems = [];
+          let numberedItems: string[] = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
@@ -176,8 +176,8 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         if (heading === 'Manufacturing Plants' || heading === 'Construction Sites' || 
             heading === 'Oil & Gas Facilities' || heading === 'Healthcare Facilities') {
           // Look ahead for subsection content
-          const subsections = {};
-          let caseStudy = null;
+          const subsections: Record<string, string[]> = {};
+          let caseStudy: { title: string; items: string[] } | null = null;
           
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
@@ -269,7 +269,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           }
           
           // Parse the metrics whether we found content or not - the heading itself might have inline content
-          const metrics = [];
+          const metrics: { label: string; value: string; isTotal?: boolean }[] = [];
           
           if (metricsContent) {
             const lines = metricsContent.split('\n').filter(l => l.trim());
@@ -340,7 +340,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           }
           
           if (metricsContent) {
-            const metrics = [];
+            const metrics: { label: string; value: string; isTotal?: boolean }[] = [];
             const lines = metricsContent.split('\n').filter(l => l.trim());
             lines.forEach(line => {
               const cleanLine = line.replace(/^-\s*/, '');
@@ -538,7 +538,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
               <div key={index} className="mb-6 p-5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 dark:from-blue-950/10 dark:to-indigo-950/5 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
                 <div>
                   <div>
-                    <h4 className="font-bold text-lg mb-3 text-foreground">"{question}"</h4>
+                    <h4 className="font-bold text-lg mb-3 text-foreground">&ldquo;{question}&rdquo;</h4>
                     <p className="text-base text-muted-foreground leading-relaxed">{parseInlineMarkdown(answer)}</p>
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
               <div key={index} className="mb-6 p-5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 dark:from-blue-950/10 dark:to-indigo-950/5 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
                 <div>
                   <div>
-                    <h4 className="font-bold text-lg text-foreground">"{question}"</h4>
+                    <h4 className="font-bold text-lg text-foreground">&ldquo;{question}&rdquo;</h4>
                   </div>
                 </div>
               </div>
@@ -617,7 +617,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         if (heading.includes('Small Businesses') || heading.includes('Medium Enterprises') || heading.includes('Large Organizations') ||
             heading.includes('Investment (') || heading.includes('Savings and Returns')) {
           // Collect the metrics from the following paragraphs
-          const metrics = [];
+          const metrics: { label: string; value: string; isTotal?: boolean }[] = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
@@ -700,7 +700,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         if (heading.includes('Retail Chain') || heading.includes('Manufacturing Plant') || heading.includes('Office Complex') ||
             heading.includes('Global Construction Firm') || heading.includes('Regional Manufacturing Hub') || heading.includes('National Oil Company')) {
           // Collect the metrics from the following paragraphs
-          const metrics = [];
+          const metrics: { label: string; value: string; isTotal?: boolean }[] = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
@@ -764,7 +764,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         // Check for Investment and Returns sections (for ROI Breakdown)
         if (heading.includes('Investment') || heading.includes('Annual Returns')) {
           // Look for metrics in the next sections
-          const metrics = [];
+          const metrics: { label: string; value: string; isTotal?: boolean }[] = [];
           for (let i = index + 1; i < sections.length; i++) {
             const nextSection = sections[i];
             if (!nextSection || nextSection.startsWith('#')) break;
@@ -988,7 +988,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             return { label: match[1], value: match[2] };
           }
           return null;
-        }).filter(Boolean);
+        }).filter((m): m is { label: string; value: string } => m !== null);
         
         // Try to determine which company this belongs to based on the metrics
         const isConstruction = metrics.some(m => m.label === 'Sites' || (m.label === 'Workers' && m.value.includes('100,000')));
@@ -1059,7 +1059,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             }
           }
           return null;
-        }).filter(Boolean);
+        }).filter((m): m is { label: string; value: string; isTotal?: boolean } => m !== null);
         
         // Determine if this is Investment or Savings section
         const isInvestment = metrics.some(m => 
@@ -1109,7 +1109,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
               return { label: match[1], value: match[2] };
             }
             return null;
-          }).filter(Boolean);
+          }).filter((m): m is { label: string; value: string; isTotal?: boolean } => m !== null);
           
           if (metrics.length > 0) {
             // Try to determine the type from context

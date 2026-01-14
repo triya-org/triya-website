@@ -78,12 +78,7 @@ export default function BlogArticlePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
       />
       
-      <Breadcrumbs 
-        items={[
-          { name: 'Blog', href: '/blog' },
-          { name: article.title }
-        ]}
-      />
+      <Breadcrumbs />
       
       <article className="min-h-screen py-12">
         <div className="container mx-auto px-4 sm:px-6">
@@ -102,11 +97,6 @@ export default function BlogArticlePage({
               <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded">
                 {article.category}
               </span>
-              {article.featured && (
-                <span className="px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm font-medium rounded">
-                  Featured
-                </span>
-              )}
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
