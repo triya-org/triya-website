@@ -1,6 +1,7 @@
 'use client';
 
-import { Share2 } from 'lucide-react';
+import { Share2, Check } from 'lucide-react';
+import { useState } from 'react';
 
 interface ShareButtonProps {
   article: {
@@ -10,6 +11,8 @@ interface ShareButtonProps {
 }
 
 export function ShareButton({ article }: ShareButtonProps) {
+  const [copied, setCopied] = useState(false);
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -21,6 +24,11 @@ export function ShareButton({ article }: ShareButtonProps) {
       } catch (err) {
         console.log('Error sharing:', err);
       }
+    } else {
+      // Fallback: copy link to clipboard
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -30,8 +38,17 @@ export function ShareButton({ article }: ShareButtonProps) {
       className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
       aria-label="Share article"
     >
-      <Share2 className="h-4 w-4" />
-      <span className="text-sm">Share</span>
+      {copied ? (
+        <>
+          <Check className="h-4 w-4" />
+          <span className="text-sm">Copied!</span>
+        </>
+      ) : (
+        <>
+          <Share2 className="h-4 w-4" />
+          <span className="text-sm">Share</span>
+        </>
+      )}
     </button>
   );
 }
