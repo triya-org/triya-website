@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, ChevronLeft, Home } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface BreadcrumbItem {
   label: string;
@@ -11,6 +12,41 @@ interface BreadcrumbItem {
 
 export function Breadcrumbs() {
   const pathname = usePathname();
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "ar";
+    if (savedLang) {
+      setLanguage(savedLang);
+    }
+  }, []);
+  
+  // Translations
+  const translations = {
+    en: {
+      home: "Home",
+      blog: "Blog",
+      faq: "FAQ",
+      contact: "Contact",
+      "use-cases": "Use Cases",
+      "smart-cities": "Smart Cities",
+      about: "About",
+      pricing: "Pricing"
+    },
+    ar: {
+      home: "الرئيسية",
+      blog: "المدونة",
+      faq: "الأسئلة الشائعة",
+      contact: "اتصل بنا",
+      "use-cases": "حالات الاستخدام",
+      "smart-cities": "المدن الذكية",
+      about: "من نحن",
+      pricing: "الأسعار"
+    }
+  };
+
+  // Select appropriate chevron icon based on language
+  const ChevronIcon = language === "ar" ? ChevronLeft : ChevronRight;
   
   // Don't show breadcrumbs on homepage
   if (pathname === "/" || pathname === "") return null;
@@ -21,7 +57,7 @@ export function Breadcrumbs() {
   // Generate breadcrumb items from pathname
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [
-      { label: "Home", href: "/" }
+      { label: translations[language].home, href: "/" }
     ];
     
     const segments = pathname.split("/").filter(Boolean);
@@ -30,16 +66,13 @@ export function Breadcrumbs() {
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       
-      // Format the label (capitalize, replace hyphens)
-      let label = segment
-        .split("-")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-      
-      // Special cases for better labels
-      if (segment === "faq") label = "FAQ";
-      if (segment === "use-cases") label = "Use Cases";
-      if (segment === "smart-cities") label = "Smart Cities";
+      // Try to get translation first
+      let label = translations[language][segment as keyof typeof translations.en] || 
+        // If no translation, format the label (capitalize, replace hyphens)
+        segment
+          .split("-")
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
       
       items.push({
         label,
@@ -73,17 +106,17 @@ export function Breadcrumbs() {
       
       <nav aria-label="Breadcrumb" className="py-3 px-4 sm:px-6 bg-muted/30">
         <div className="container mx-auto">
-          <ol className="flex items-center space-x-2 text-sm">
+          <ol className={`flex items-center text-sm ${language === "ar" ? "gap-2" : "space-x-2"}`}>
             {breadcrumbs.map((item, index) => (
               <li key={item.href} className="flex items-center">
                 {index > 0 && (
-                  <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" />
+                  <ChevronIcon className="h-4 w-4 mx-2 text-muted-foreground" />
                 )}
                 
                 {index === breadcrumbs.length - 1 ? (
                   // Current page (not clickable)
                   <span className="text-foreground font-medium">
-                    {index === 0 && <Home className="h-4 w-4 inline mr-1" />}
+                    {index === 0 && <Home className={`h-4 w-4 inline ${language === "ar" ? "ml-1" : "mr-1"}`} />}
                     {item.label}
                   </span>
                 ) : (
@@ -92,7 +125,7 @@ export function Breadcrumbs() {
                     href={item.href}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {index === 0 && <Home className="h-4 w-4 inline mr-1" />}
+                    {index === 0 && <Home className={`h-4 w-4 inline ${language === "ar" ? "ml-1" : "mr-1"}`} />}
                     {item.label}
                   </Link>
                 )}
