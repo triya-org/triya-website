@@ -1,7 +1,7 @@
 'use client';
 
 import { Share2, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ShareButtonProps {
   article: {
@@ -12,6 +12,27 @@ interface ShareButtonProps {
 
 export function ShareButton({ article }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "ar";
+    if (savedLang) {
+      setLanguage(savedLang);
+    }
+  }, []);
+
+  const translations = {
+    en: {
+      share: "Share",
+      copied: "Copied!"
+    },
+    ar: {
+      share: "مشاركة",
+      copied: "تم النسخ!"
+    }
+  };
+
+  const t = translations[language];
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -41,12 +62,12 @@ export function ShareButton({ article }: ShareButtonProps) {
       {copied ? (
         <>
           <Check className="h-4 w-4" />
-          <span className="text-sm">Copied!</span>
+          <span className="text-sm">{t.copied}</span>
         </>
       ) : (
         <>
           <Share2 className="h-4 w-4" />
-          <span className="text-sm">Share</span>
+          <span className="text-sm">{t.share}</span>
         </>
       )}
     </button>
