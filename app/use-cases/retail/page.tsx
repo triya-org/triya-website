@@ -18,7 +18,6 @@ import {
   CheckCircle2,
   Clock
 } from "lucide-react";
-
 export default function RetailPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
 
@@ -197,6 +196,7 @@ export default function RetailPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="AI surveillance demonstration for retail security and loss prevention - smart cameras monitoring retail environment to prevent shoplifting, optimize customer flow, and enhance shopping experience"
           >
             <source src="/videos/retail_hero_1.mp4" type="video/mp4" />
           </video>

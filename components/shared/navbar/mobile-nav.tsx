@@ -23,6 +23,8 @@ const getNavItems = (language: "en" | "ar") => ({
         { title: "Event Management", href: "/use-cases/events" },
       ],
     },
+    { title: "Blog", href: "/blog" },
+    { title: "FAQ", href: "/faq" },
     { title: "Contact", href: "/contact" },
   ],
   ar: [
@@ -35,6 +37,8 @@ const getNavItems = (language: "en" | "ar") => ({
         { title: "إدارة الفعاليات", href: "/use-cases/events" },
       ],
     },
+    { title: "المدونة", href: "/blog" },
+    { title: "الأسئلة الشائعة", href: "/faq" },
     { title: "اتصل بنا", href: "/contact" },
   ]
 }[language]);

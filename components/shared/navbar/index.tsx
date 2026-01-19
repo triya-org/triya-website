@@ -20,6 +20,8 @@ import { MobileNav } from "./mobile-nav";
 const getContent = (language: "en" | "ar") => ({
   en: {
     industries: "Industries",
+    blog: "Blog",
+    faq: "FAQ",
     contact: "Contact",
     requestDemo: "Request Demo",
     industryItems: [
@@ -47,6 +49,8 @@ const getContent = (language: "en" | "ar") => ({
   },
   ar: {
     industries: "الصناعات",
+    blog: "المدونة",
+    faq: "الأسئلة الشائعة",
     contact: "اتصل بنا",
     requestDemo: "طلب عرض توضيحي",
     industryItems: [
@@ -103,7 +107,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Image
             src="/triya_ai_new_logo.png"
-            alt="Triya.ai"
+            alt="Triya AI - Edge AI Surveillance Platform with 85% Cost Savings"
             width={885}
             height={210}
             className="h-10 md:h-12 w-auto"
@@ -140,7 +144,7 @@ export function Navbar() {
                     NVIDIA Jetson powered edge computing with sub-500ms latency
                   </ListItem>
                   <ListItem href="/pricing" title="Pricing">
-                    90% cost reduction compared to cloud alternatives
+                    85% cost reduction compared to cloud alternatives
                   </ListItem>
                 </ul>
               </NavigationMenuContent>
@@ -164,6 +168,21 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             
+            <NavigationMenuItem>
+              <Link href="/blog" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  {t.blog}
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            
+            <NavigationMenuItem>
+              <Link href="/faq" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  {t.faq}
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
             
             <NavigationMenuItem>
               <Link href="/contact" legacyBehavior passHref>

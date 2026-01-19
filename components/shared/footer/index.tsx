@@ -18,6 +18,12 @@ const getContent = (language: "en" | "ar") => ({
       { title: "Event Management", href: "/use-cases/events" },
       { title: "Smart Cities", href: "/use-cases/smart-cities" },
     ],
+    resources: "Resources",
+    resourceItems: [
+      { title: "Blog", href: "/blog" },
+      { title: "FAQ", href: "/faq" },
+      { title: "Contact", href: "/contact" },
+    ],
     contactUs: "Contact Us",
     headquarters: "Headquarters",
     headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
@@ -33,6 +39,12 @@ const getContent = (language: "en" | "ar") => ({
       { title: "التجزئة", href: "/use-cases/retail" },
       { title: "إدارة الفعاليات", href: "/use-cases/events" },
       { title: "المدن الذكية", href: "/use-cases/smart-cities" },
+    ],
+    resources: "الموارد",
+    resourceItems: [
+      { title: "المدونة", href: "/blog" },
+      { title: "الأسئلة الشائعة", href: "/faq" },
+      { title: "اتصل بنا", href: "/contact" },
     ],
     contactUs: "اتصل بنا",
     headquarters: "المقر الرئيسي",
@@ -64,7 +76,7 @@ export function Footer() {
           <div className="space-y-4">
             <Image
               src="/triya_ai_new_logo.png"
-              alt="Triya.ai"
+              alt="Triya - Intelligent Video Analytics & Security Camera Software"
               width={885}
               height={210}
               className="h-10 w-auto"
@@ -98,6 +110,22 @@ export function Footer() {
             </nav>
           </div>
           
+          {/* Resources */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">{t.resources}</h4>
+            <nav className="flex flex-col space-y-2">
+              {t.resourceItems.map((resource) => (
+                <Link 
+                  key={resource.href}
+                  href={resource.href} 
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {resource.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          
           {/* Contact */}
           <div className="space-y-4">
             <h4 className="font-semibold">{t.contactUs}</h4>
@@ -122,7 +150,7 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-12 border-t pt-8">
+        <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
             <p className="text-sm text-muted-foreground">
               {t.copyright}

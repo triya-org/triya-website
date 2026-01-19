@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function ManufacturingPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -187,6 +188,8 @@ export default function ManufacturingPage() {
 
   return (
     <>
+      <Breadcrumbs />
+      
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] md:h-[65vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
@@ -197,6 +200,7 @@ export default function ManufacturingPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="Manufacturing AI surveillance - PPE detection, safety monitoring, and equipment theft prevention in industrial facilities"
           >
             <source src="/videos/manufacturing_hero_1.mp4" type="video/mp4" />
           </video>

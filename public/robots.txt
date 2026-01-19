@@ -1,0 +1,29 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /404
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+
+# Googlebot-Image
+User-agent: Googlebot-Image
+Allow: /
+
+# AhrefsBot
+User-agent: AhrefsBot
+Disallow: /
+
+# SemrushBot
+User-agent: SemrushBot
+Disallow: /
+
+# Host
+Host: https://www.triya.ai
+
+# Sitemaps
+Sitemap: https://www.triya.ai/sitemap.xml

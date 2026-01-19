@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Map
 } from "lucide-react";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function SmartCitiesPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -197,6 +198,7 @@ export default function SmartCitiesPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
+            aria-label="Smart city AI surveillance system monitoring urban traffic flow, crowd management, and public safety - intelligent cameras for city-wide security and analytics"
           >
             <source src="/videos/smartcity_hero_1.mp4" type="video/mp4" />
           </video>
@@ -356,6 +358,8 @@ export default function SmartCitiesPage() {
         </div>
       </section>
 
+      {/* Related Use Cases */}
+      
       {/* CTA Section */}
       <section className="py-24">
         <div className="container">

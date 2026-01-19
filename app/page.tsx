@@ -23,6 +23,7 @@ export default function Home() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
   const [mounted, setMounted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const { trackRequestDemo, trackWatchVideo } = useAnalytics();
 
   useEffect(() => {
@@ -32,6 +33,16 @@ export default function Home() {
     if (savedLang) {
       setLanguage(savedLang);
     }
+    
+    // Lazy load video when user is likely to see it
+    const loadVideo = () => {
+      setVideoLoaded(true);
+    };
+    
+    // Load video after initial render
+    const timer = setTimeout(loadVideo, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleLanguage = () => {
@@ -44,9 +55,9 @@ export default function Home() {
   const content = {
     en: {
       hero: {
-        title: "Transform any camera into a",
-        titleHighlight: "privacy-first, AI-powered security & analytics solution",
-        subtitle: "",
+        title: "UAE's Leading",
+        titleHighlight: "Edge AI Surveillance Platform",
+        subtitle: "Transform any camera into an intelligent security system. 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
         cta1: "Request Demo",
         cta2: "Watch Video"
       },
@@ -54,9 +65,9 @@ export default function Home() {
     },
     ar: {
       hero: {
-        title: "حوّل أي كاميرا إلى",
-        titleHighlight: "حل أمني وتحليلي مدعوم بالذكاء الاصطناعي مع الحفاظ على الخصوصية",
-        subtitle: "",
+        title: "منصة الإمارات الرائدة",
+        titleHighlight: "للمراقبة بالذكاء الاصطناعي",
+        subtitle: "حوّل أي كاميرا إلى نظام أمني ذكي. توفير 85% من التكاليف. نخدم دبي وأبوظبي ومنطقة الخليج.",
         cta1: "طلب عرض توضيحي",
         cta2: "شاهد الفيديو"
       },
@@ -89,16 +100,19 @@ export default function Home() {
       <section className="relative min-h-[100dvh] md:h-[75vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
         <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="h-full w-full object-cover"
-            poster="/video-poster.jpg"
-          >
-            <source src="/videos/hero_1.mp4" type="video/mp4" />
-          </video>
+          {videoLoaded && (
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="h-full w-full object-cover"
+              poster="/video-poster.jpg"
+              aria-label="Triya AI surveillance platform in action - showcasing real-time video analytics and edge AI security monitoring"
+            >
+              <source src="/videos/hero_1.mp4" type="video/mp4" />
+            </video>
+          )}
           {/* Dark overlay for better text visibility */}
           <div className="absolute inset-0 bg-black/50" />
         </div>
