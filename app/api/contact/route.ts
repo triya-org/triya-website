@@ -11,11 +11,8 @@ export async function POST(request: Request) {
     console.log('Contact form submission:', { name, email, company, phone });
     console.log('Resend API Key exists:', !!process.env.RESEND_API_KEY);
 
-    // Send email using Resend
-    // Note: The 'from' email must be verified in Resend dashboard
-    // For now, using onboarding@resend.dev which works for testing
     const { data, error } = await resend.emails.send({
-      from: 'Triya.ai Contact Form <onboarding@resend.dev>',
+      from: 'Triya.ai Contact Form <noreply@triya.ai>',
       to: ['admin@triya.ai'],
       replyTo: email,
       subject: `New Contact Form Submission from ${name}`,
@@ -64,7 +61,7 @@ This email was sent from the contact form on triya.ai
 
     // Also send a confirmation email to the user
     await resend.emails.send({
-      from: 'Triya.ai <onboarding@resend.dev>',
+      from: 'Triya.ai <noreply@triya.ai>',
       to: [email],
       subject: 'Thank you for contacting Triya.ai',
       html: `
