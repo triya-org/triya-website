@@ -5,7 +5,7 @@ import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { pageMetadata } from "@/app/lib/seo-config";
-import { OrganizationSchema, ProductSchema, FAQSchema, LocalBusinessSchema } from "@/app/components/structured-data";
+import { OrganizationSchema, LocalBusinessSchema } from "@/app/components/structured-data";
 
 const dmSans = localFont({
   src: "../public/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf",
@@ -43,8 +43,6 @@ export default function RootLayout({
       <head>
         <GoogleAnalytics />
         <OrganizationSchema />
-        <ProductSchema />
-        <FAQSchema />
         <LocalBusinessSchema />
         
         {/* Hreflang Tags */}
