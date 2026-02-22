@@ -515,10 +515,10 @@ export const articlesMetadata: ArticleMetadata[] = [
     keywords: ["hotel surveillance ai", "hospitality security dubai", "ai guest experience", "tourism surveillance uae"],
   },
   {
-    slug: "future-of-ai-surveillance-2025",
+    slug: "future-of-ai-surveillance-2026",
     title: {
-      en: "The Future of AI Surveillance: Key Trends Shaping 2025 and Beyond",
-      ar: "مستقبل المراقبة بالذكاء الاصطناعي: أبرز الاتجاهات التي تشكّل عام 2025 وما بعده"
+      en: "The Future of AI Surveillance: Key Trends Shaping 2026 and Beyond",
+      ar: "مستقبل المراقبة بالذكاء الاصطناعي: أبرز الاتجاهات التي تشكّل عام 2026 وما بعده"
     },
     excerpt: {
       en: "Explore the key technology trends shaping the future of AI surveillance, from edge computing and generative AI to privacy-preserving techniques and 5G networks.",
@@ -536,11 +536,11 @@ export const articlesMetadata: ArticleMetadata[] = [
       ar: "اتجاهات الصناعة"
     },
     tags: {
-      en: ["Future Trends", "AI 2025", "Edge Computing", "Generative AI"],
-      ar: ["اتجاهات المستقبل", "الذكاء الاصطناعي 2025", "الحوسبة الطرفية", "الذكاء الاصطناعي التوليدي"]
+      en: ["Future Trends", "AI 2026", "Edge Computing", "Generative AI"],
+      ar: ["اتجاهات المستقبل", "الذكاء الاصطناعي 2026", "الحوسبة الطرفية", "الذكاء الاصطناعي التوليدي"]
     },
-    metaDescription: "The future of AI surveillance in 2025 and beyond. Edge AI, generative analytics, privacy-preserving techniques, 5G impact, and key predictions for the GCC region.",
-    keywords: ["future ai surveillance 2025", "ai surveillance trends", "edge ai future", "surveillance technology predictions"],
+    metaDescription: "The future of AI surveillance in 2026 and beyond. Edge AI, generative analytics, privacy-preserving techniques, 5G impact, and key predictions for the GCC region.",
+    keywords: ["future ai surveillance 2026", "ai surveillance trends", "edge ai future", "surveillance technology predictions"],
   }
 ];
 
