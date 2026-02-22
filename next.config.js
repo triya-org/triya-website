@@ -66,6 +66,11 @@ const nextConfig = {
         destination: '/contact',
         permanent: false,
       },
+      {
+        source: '/ar',
+        destination: '/',
+        permanent: true,
+      },
     ];
   },
 }
