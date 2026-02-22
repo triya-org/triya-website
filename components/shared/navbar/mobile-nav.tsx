@@ -17,29 +17,29 @@ const getNavItems = (language: "en" | "ar") => ({
     {
       title: "Industries",
       items: [
-        { title: "Manufacturing", href: "/use-cases/manufacturing" },
-        { title: "Retail", href: "/use-cases/retail" },
-        { title: "Smart Cities", href: "/use-cases/smart-cities" },
-        { title: "Event Management", href: "/use-cases/events" },
+        { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+        { title: "Retail", href: "/use-cases/retail/" },
+        { title: "Smart Cities", href: "/use-cases/smart-cities/" },
+        { title: "Event Management", href: "/use-cases/events/" },
       ],
     },
-    { title: "Blog", href: "/blog" },
-    { title: "FAQ", href: "/faq" },
-    { title: "Contact", href: "/contact" },
+    { title: "Blog", href: "/blog/" },
+    { title: "FAQ", href: "/faq/" },
+    { title: "Contact", href: "/contact/" },
   ],
   ar: [
     {
       title: "الصناعات",
       items: [
-        { title: "التصنيع", href: "/use-cases/manufacturing" },
-        { title: "التجزئة", href: "/use-cases/retail" },
-        { title: "المدن الذكية", href: "/use-cases/smart-cities" },
-        { title: "إدارة الفعاليات", href: "/use-cases/events" },
+        { title: "التصنيع", href: "/use-cases/manufacturing/" },
+        { title: "التجزئة", href: "/use-cases/retail/" },
+        { title: "المدن الذكية", href: "/use-cases/smart-cities/" },
+        { title: "إدارة الفعاليات", href: "/use-cases/events/" },
       ],
     },
-    { title: "المدونة", href: "/blog" },
-    { title: "الأسئلة الشائعة", href: "/faq" },
-    { title: "اتصل بنا", href: "/contact" },
+    { title: "المدونة", href: "/blog/" },
+    { title: "الأسئلة الشائعة", href: "/faq/" },
+    { title: "اتصل بنا", href: "/contact/" },
   ]
 }[language]);
 
@@ -127,7 +127,7 @@ export function MobileNav() {
               {language === "en" ? "العربية" : "English"}
             </Button>
             <Button className="w-full" asChild>
-              <Link href="/contact">{t.requestDemo}</Link>
+              <Link href="/contact/">{t.requestDemo}</Link>
             </Button>
           </div>
         </nav>

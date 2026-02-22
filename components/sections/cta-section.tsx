@@ -80,13 +80,13 @@ export function CTASection({ language }: CTASectionProps) {
           {/* CTAs */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" className="gap-2 px-8" asChild>
-              <Link href="/contact">
+              <Link href="/contact/">
                 <Calendar className="h-5 w-5" />
                 {t.cta1}
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="gap-2 px-8" asChild>
-              <Link href="/contact">
+              <Link href="/contact/">
                 {t.cta2}
                 <ArrowRight className="h-5 w-5" />
               </Link>

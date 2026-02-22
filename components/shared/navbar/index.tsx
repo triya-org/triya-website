@@ -27,22 +27,22 @@ const getContent = (language: "en" | "ar") => ({
     industryItems: [
       {
         title: "Manufacturing",
-        href: "/use-cases/manufacturing",
+        href: "/use-cases/manufacturing/",
         description: "PPE compliance and safety monitoring for industrial facilities",
       },
       {
         title: "Retail",
-        href: "/use-cases/retail",
+        href: "/use-cases/retail/",
         description: "Theft prevention and customer analytics for stores",
       },
       {
         title: "Smart Cities",
-        href: "/use-cases/smart-cities",
+        href: "/use-cases/smart-cities/",
         description: "Traffic management and public safety solutions",
       },
       {
         title: "Event Management",
-        href: "/use-cases/events",
+        href: "/use-cases/events/",
         description: "Crowd analytics and security for major events",
       },
     ]
@@ -56,22 +56,22 @@ const getContent = (language: "en" | "ar") => ({
     industryItems: [
       {
         title: "التصنيع",
-        href: "/use-cases/manufacturing",
+        href: "/use-cases/manufacturing/",
         description: "الامتثال لمعدات الحماية الشخصية ومراقبة السلامة للمرافق الصناعية",
       },
       {
         title: "التجزئة",
-        href: "/use-cases/retail",
+        href: "/use-cases/retail/",
         description: "منع السرقة وتحليلات العملاء للمتاجر",
       },
       {
         title: "المدن الذكية",
-        href: "/use-cases/smart-cities",
+        href: "/use-cases/smart-cities/",
         description: "إدارة حركة المرور وحلول السلامة العامة",
       },
       {
         title: "إدارة الفعاليات",
-        href: "/use-cases/events",
+        href: "/use-cases/events/",
         description: "تحليلات الحشود والأمن للأحداث الكبرى",
       },
     ]
@@ -169,7 +169,7 @@ export function Navbar() {
             </NavigationMenuItem>
             
             <NavigationMenuItem>
-              <Link href="/blog" legacyBehavior passHref>
+              <Link href="/blog/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.blog}
                 </NavigationMenuLink>
@@ -177,7 +177,7 @@ export function Navbar() {
             </NavigationMenuItem>
             
             <NavigationMenuItem>
-              <Link href="/faq" legacyBehavior passHref>
+              <Link href="/faq/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.faq}
                 </NavigationMenuLink>
@@ -185,7 +185,7 @@ export function Navbar() {
             </NavigationMenuItem>
             
             <NavigationMenuItem>
-              <Link href="/contact" legacyBehavior passHref>
+              <Link href="/contact/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.contact}
                 </NavigationMenuLink>
@@ -200,7 +200,7 @@ export function Navbar() {
               {language === "en" ? "العربية" : "English"}
             </Button>
             <Button asChild onClick={() => trackRequestDemo('Navbar')}>
-              <Link href="/contact">{t.requestDemo}</Link>
+              <Link href="/contact/">{t.requestDemo}</Link>
             </Button>
           </div>
           <MobileNav />

@@ -235,7 +235,7 @@ export default function RetailPage() {
               variants={fadeInUp}
             >
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90" asChild>
-                <Link href="/contact">
+                <Link href="/contact/">
                   {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

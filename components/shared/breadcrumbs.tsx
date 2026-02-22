@@ -76,7 +76,7 @@ export function Breadcrumbs() {
       
       items.push({
         label,
-        href: currentPath
+        href: `${currentPath}/`
       });
     });
     

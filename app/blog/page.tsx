@@ -62,7 +62,7 @@ export default function BlogPage() {
         {/* Featured Article */}
         {articles[0] && (
           <div className="mb-16">
-            <Link href={`/blog/${articles[0].slug}`}>
+            <Link href={`/blog/${articles[0].slug}/`}>
               <div className="group relative overflow-hidden rounded-2xl bg-card border-2 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
                 <div className="p-8 md:p-12">
                   <span className="inline-block px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm font-medium mb-4">
@@ -117,7 +117,7 @@ export default function BlogPage() {
         {/* Article Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {articles.slice(1).map((article) => (
-            <Link key={article.slug} href={`/blog/${article.slug}`}>
+            <Link key={article.slug} href={`/blog/${article.slug}/`}>
               <article className="group h-full">
                 <div className="h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="flex-1 p-6 flex flex-col">
@@ -177,7 +177,7 @@ export default function BlogPage() {
             {t.ctaSubtitle}
           </p>
           <Link
-            href="/contact"
+            href="/contact/"
             className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors gap-2"
           >
             {t.ctaButton} <ArrowIcon className="h-4 w-4" />

@@ -54,7 +54,7 @@ export const pageMetadata: Record<string, Metadata> = {
       images: ['/og-image.png'],
     },
     alternates: {
-      canonical: 'https://www.triya.ai',
+      canonical: 'https://www.triya.ai/',
     },
   },
   about: {
@@ -68,7 +68,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/about',
+      canonical: 'https://www.triya.ai/about/',
     },
   },
   contact: {
@@ -82,7 +82,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/contact',
+      canonical: 'https://www.triya.ai/contact/',
     },
   },
   smartCities: {
@@ -96,7 +96,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/use-cases/smart-cities',
+      canonical: 'https://www.triya.ai/use-cases/smart-cities/',
     },
   },
   retail: {
@@ -110,7 +110,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/use-cases/retail',
+      canonical: 'https://www.triya.ai/use-cases/retail/',
     },
   },
   manufacturing: {
@@ -124,7 +124,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/use-cases/manufacturing',
+      canonical: 'https://www.triya.ai/use-cases/manufacturing/',
     },
   },
   events: {
@@ -138,7 +138,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/use-cases/events',
+      canonical: 'https://www.triya.ai/use-cases/events/',
     },
   },
   privacy: {
@@ -152,7 +152,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/privacy',
+      canonical: 'https://www.triya.ai/privacy/',
     },
   },
   terms: {
@@ -166,7 +166,7 @@ export const pageMetadata: Record<string, Metadata> = {
       type: 'website',
     },
     alternates: {
-      canonical: 'https://www.triya.ai/terms',
+      canonical: 'https://www.triya.ai/terms/',
     },
   },
 };

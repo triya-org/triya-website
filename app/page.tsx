@@ -156,7 +156,7 @@ export default function Home() {
                 asChild
                 onClick={() => trackRequestDemo('Hero Section')}
               >
-                <Link href="/contact">
+                <Link href="/contact/">
                   {t.hero.cta1} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

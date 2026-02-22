@@ -47,7 +47,7 @@ export default function RootLayout({
         
         {/* Hreflang Tags */}
         <link rel="alternate" hrefLang="en" href="https://www.triya.ai" />
-        <link rel="alternate" hrefLang="ar" href="https://www.triya.ai/ar" />
+        <link rel="alternate" hrefLang="ar" href="https://www.triya.ai/ar/" />
         <link rel="alternate" hrefLang="x-default" href="https://www.triya.ai" />
         
         {/* Web App Manifest */}

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Frequently Asked Questions - Triya AI Surveillance',
     description: 'Get answers about Triya\'s 85% cost-saving AI surveillance platform. Installation, pricing, and support in UAE.',
-    url: 'https://www.triya.ai/faq',
+    url: 'https://www.triya.ai/faq/',
     type: 'website',
     images: ['/og-image.png'],
   },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://www.triya.ai/faq',
+    canonical: 'https://www.triya.ai/faq/',
   },
 };
 

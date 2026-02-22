@@ -245,7 +245,7 @@ export default function AboutPage() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.cta.title}</h2>
             <p className="text-xl text-muted-foreground mb-8">{t.cta.description}</p>
             <Button size="lg" className="gap-2" asChild>
-              <Link href="/contact">
+              <Link href="/contact/">
                 {t.cta.button}
                 <Mail className="h-4 w-4" />
               </Link>

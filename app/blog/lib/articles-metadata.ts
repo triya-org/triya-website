@@ -325,7 +325,7 @@ export function generateArticleSchema(article: Article | ArticleMetadata) {
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://www.triya.ai/blog/${article.slug}`
+      "@id": `https://www.triya.ai/blog/${article.slug}/`
     },
     "keywords": article.keywords.join(", "),
     "articleSection": article.category
