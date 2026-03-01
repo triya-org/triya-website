@@ -29,7 +29,7 @@ export function generateBlogSchema(article: any) {
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://www.triya.ai/blog/${article.slug}`
+      "@id": `https://www.triya.ai/blog/${article.slug}/`
     },
     "keywords": (typeof article.tags === 'object' ? article.tags.en : article.tags).join(", "),
     "articleSection": category,

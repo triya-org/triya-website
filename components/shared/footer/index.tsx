@@ -13,16 +13,16 @@ const getContent = (language: "en" | "ar") => ({
     description: "Transform any camera into a privacy-first, AI-powered security & analytics solution",
     industries: "Industries",
     industryItems: [
-      { title: "Manufacturing", href: "/use-cases/manufacturing" },
-      { title: "Retail", href: "/use-cases/retail" },
-      { title: "Event Management", href: "/use-cases/events" },
-      { title: "Smart Cities", href: "/use-cases/smart-cities" },
+      { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+      { title: "Retail", href: "/use-cases/retail/" },
+      { title: "Event Management", href: "/use-cases/events/" },
+      { title: "Smart Cities", href: "/use-cases/smart-cities/" },
     ],
     resources: "Resources",
     resourceItems: [
-      { title: "Blog", href: "/blog" },
-      { title: "FAQ", href: "/faq" },
-      { title: "Contact", href: "/contact" },
+      { title: "Blog", href: "/blog/" },
+      { title: "FAQ", href: "/faq/" },
+      { title: "Contact", href: "/contact/" },
     ],
     contactUs: "Contact Us",
     headquarters: "Headquarters",
@@ -35,16 +35,16 @@ const getContent = (language: "en" | "ar") => ({
     description: "حوّل أي كاميرا إلى حل أمني وتحليلي مدعوم بالذكاء الاصطناعي ويحمي الخصوصية",
     industries: "الصناعات",
     industryItems: [
-      { title: "التصنيع", href: "/use-cases/manufacturing" },
-      { title: "التجزئة", href: "/use-cases/retail" },
-      { title: "إدارة الفعاليات", href: "/use-cases/events" },
-      { title: "المدن الذكية", href: "/use-cases/smart-cities" },
+      { title: "التصنيع", href: "/use-cases/manufacturing/" },
+      { title: "التجزئة", href: "/use-cases/retail/" },
+      { title: "إدارة الفعاليات", href: "/use-cases/events/" },
+      { title: "المدن الذكية", href: "/use-cases/smart-cities/" },
     ],
     resources: "الموارد",
     resourceItems: [
-      { title: "المدونة", href: "/blog" },
-      { title: "الأسئلة الشائعة", href: "/faq" },
-      { title: "اتصل بنا", href: "/contact" },
+      { title: "المدونة", href: "/blog/" },
+      { title: "الأسئلة الشائعة", href: "/faq/" },
+      { title: "اتصل بنا", href: "/contact/" },
     ],
     contactUs: "اتصل بنا",
     headquarters: "المقر الرئيسي",
@@ -156,10 +156,10 @@ export function Footer() {
               {t.copyright}
             </p>
             <div className="flex space-x-6">
-              <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/privacy/" className="text-sm text-muted-foreground hover:text-primary">
                 {t.privacyPolicy}
               </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/terms/" className="text-sm text-muted-foreground hover:text-primary">
                 {t.termsOfService}
               </Link>
             </div>

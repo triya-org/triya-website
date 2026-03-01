@@ -183,7 +183,7 @@ export default function PrivacyPage() {
                 {/* 12. Updates to this Policy */}
                 <h2 className="text-2xl font-bold mb-4">12. Updates to this Policy</h2>
                 <p className="mb-6">
-                  This Policy may be updated periodically. Updates are posted at <a href="https://www.triya.ai/privacy" className="text-primary hover:underline">https://www.triya.ai/privacy</a> with notice for material changes.
+                  This Policy may be updated periodically. Updates are posted at <a href="https://www.triya.ai/privacy/" className="text-primary hover:underline">https://www.triya.ai/privacy</a> with notice for material changes.
                 </p>
 
                 {/* 13. Contact Information */}

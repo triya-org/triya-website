@@ -49,7 +49,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
       <div className="container mx-auto px-4 sm:px-6">
         {/* Back to blog link */}
         <Link 
-          href="/blog" 
+          href="/blog/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
         >
           <BackArrow className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
               {article.tags[language].map((tag: string) => (
                 <Link
                   key={tag}
-                  href={`/blog?tag=${encodeURIComponent(tag)}`}
+                  href={`/blog/?tag=${encodeURIComponent(tag)}`}
                   className="px-3 py-1 bg-muted hover:bg-muted/80 rounded-md text-sm transition-colors"
                 >
                   {tag}
@@ -127,13 +127,13 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/contact"
+                href="/contact/"
                 className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
               >
                 {t.requestDemo}
               </Link>
               <Link
-                href="/faq"
+                href="/faq/"
                 className="inline-flex items-center justify-center px-6 py-3 bg-background border border-border rounded-lg hover:bg-muted transition-colors font-medium"
               >
                 {t.viewFaq}

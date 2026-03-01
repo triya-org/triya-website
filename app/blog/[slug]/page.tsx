@@ -48,7 +48,7 @@ export async function generateMetadata({
       images: ['/og-image.png'],
     },
     alternates: {
-      canonical: `https://www.triya.ai/blog/${article.slug}`,
+      canonical: `https://www.triya.ai/blog/${article.slug}/`,
     },
   };
 }

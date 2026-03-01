@@ -8,6 +8,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
 import { UseCases } from "@/components/sections/use-cases";
 import { CTASection } from "@/components/sections/cta-section";
+import { ProductSchema } from "@/app/components/structured-data";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import {
   Dialog,
@@ -83,6 +84,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
+      <ProductSchema />
       {/* Language Toggle */}
       <div className="fixed top-20 right-4 z-50">
         <Button
@@ -154,7 +156,7 @@ export default function Home() {
                 asChild
                 onClick={() => trackRequestDemo('Hero Section')}
               >
-                <Link href="/contact">
+                <Link href="/contact/">
                   {t.hero.cta1} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

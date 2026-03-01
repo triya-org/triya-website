@@ -19,19 +19,19 @@ export default function NotFound() {
         <div className="mb-8 p-6 bg-muted/30 rounded-lg">
           <h3 className="font-semibold mb-4">Were you looking for?</h3>
           <div className="grid sm:grid-cols-2 gap-3 text-left">
-            <Link href="/contact" className="flex items-center gap-2 text-primary hover:underline">
+            <Link href="/contact/" className="flex items-center gap-2 text-primary hover:underline">
               <ArrowLeft className="h-4 w-4 rotate-180" />
               Request a Demo
             </Link>
-            <Link href="/faq" className="flex items-center gap-2 text-primary hover:underline">
+            <Link href="/faq/" className="flex items-center gap-2 text-primary hover:underline">
               <ArrowLeft className="h-4 w-4 rotate-180" />
               Frequently Asked Questions
             </Link>
-            <Link href="/use-cases/smart-cities" className="flex items-center gap-2 text-primary hover:underline">
+            <Link href="/use-cases/smart-cities/" className="flex items-center gap-2 text-primary hover:underline">
               <ArrowLeft className="h-4 w-4 rotate-180" />
               Smart Cities Solutions
             </Link>
-            <Link href="/blog" className="flex items-center gap-2 text-primary hover:underline">
+            <Link href="/blog/" className="flex items-center gap-2 text-primary hover:underline">
               <ArrowLeft className="h-4 w-4 rotate-180" />
               Read Our Blog
             </Link>
@@ -47,7 +47,7 @@ export default function NotFound() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/contact" className="gap-2">
+            <Link href="/contact/" className="gap-2">
               <Search className="h-4 w-4" />
               Contact Support
             </Link>
@@ -58,7 +58,7 @@ export default function NotFound() {
         <div className="mt-12 text-sm text-muted-foreground">
           <p>
             If you believe this is an error, please{' '}
-            <Link href="/contact" className="text-primary hover:underline">
+            <Link href="/contact/" className="text-primary hover:underline">
               contact us
             </Link>{' '}
             with the URL you were trying to reach.

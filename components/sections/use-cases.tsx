@@ -143,7 +143,7 @@ export function UseCases({ language }: UseCasesProps) {
                         </ul>
                       </CardContent>
                     </div>
-                    <Link href={`/use-cases/${industry.slug}`}>
+                    <Link href={`/use-cases/${industry.slug}/`}>
                       <Button variant="outline" className="w-full group/btn">
                         {t.cta}
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />

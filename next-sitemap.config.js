@@ -38,9 +38,7 @@ module.exports = {
         disallow: '/',
       },
     ],
-    additionalSitemaps: [
-      'https://www.triya.ai/sitemap.xml',
-    ],
+    additionalSitemaps: [],
   },
   transform: async (config, path) => {
     // Custom priority for different pages

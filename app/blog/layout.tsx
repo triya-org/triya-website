@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Triya Blog - AI Surveillance Insights',
     description: 'Expert insights on edge AI surveillance technology for the Middle East market.',
-    url: 'https://www.triya.ai/blog',
+    url: 'https://www.triya.ai/blog/',
     type: 'website',
     images: ['/og-image.png'],
   },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://www.triya.ai/blog',
+    canonical: 'https://www.triya.ai/blog/',
   },
 };
 
