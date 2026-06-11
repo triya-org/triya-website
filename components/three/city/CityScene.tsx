@@ -4,8 +4,20 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import {
+  mulberry32,
+  window01,
+  paint,
+  mergeSafe,
+  popCellKey,
+  popEase,
+  setPopKey,
+  bakePopKeys,
+  addPopGrow,
+  makePopDepthMaterial,
+  type PopShaderStore,
+} from "@/components/three/lib/popGrow";
 
 /* ============================================================
    The Living City v3 — Triya's clay-miniature world, detailed.
@@ -41,31 +53,8 @@ const CLAY_SOFT = new THREE.Color("#E8A381");
 const DORMANT = new THREE.Color("#BDB6A2");
 const INK = new THREE.Color("#3D3A33");
 
-function mulberry32(seed: number) {
-  return () => {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
-function window01(p: number, a: number, b: number) {
-  return THREE.MathUtils.clamp((p - a) / (b - a), 0, 1);
-}
 
-function paint(geo: THREE.BufferGeometry, color: THREE.Color) {
-  const n = geo.attributes.position.count;
-  const arr = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    arr[i * 3] = color.r;
-    arr[i * 3 + 1] = color.g;
-    arr[i * 3 + 2] = color.b;
-  }
-  geo.setAttribute("color", new THREE.BufferAttribute(arr, 3));
-  return geo;
-}
 
 /**
  * Bake a per-object "pop key" into every vertex (attribute aPop) so the
@@ -73,75 +62,8 @@ function paint(geo: THREE.BufferGeometry, color: THREE.Color) {
  * wave. Keyed by quantized footprint anchor, so a building and everything
  * standing on it (mast, AC, windows) rise together.
  */
-const POP_GAP = 0.85; // must match pgap in the grow shader
-function popCellKey(x: number, z: number) {
-  const qx = Math.round(x / 3);
-  const qz = Math.round(z / 3);
-  return (Math.abs(Math.sin(qx * 12.9898 + qz * 78.233)) * 43758.5453) % 1;
-}
-/** JS mirror of the shader grow ease — instanced hardware must ride the
-    exact curve of the building/pole it stands on */
-function popEase(pop: number, key: number) {
-  const pk = THREE.MathUtils.clamp(pop * (1 + POP_GAP) - key * POP_GAP, 0, 1);
-  return 1 - Math.pow(1 - pk, 3);
-}
-function setPopKey(g: THREE.BufferGeometry, key: number) {
-  const n = g.attributes.position.count;
-  g.setAttribute("aPop", new THREE.BufferAttribute(new Float32Array(n).fill(key), 1));
-}
-function bakePopKeys(geos: THREE.BufferGeometry[]) {
-  const c = new THREE.Vector3();
-  geos.forEach((g) => {
-    if (g.attributes.aPop) return; // explicitly keyed at creation
-    g.computeBoundingBox();
-    g.boundingBox!.getCenter(c);
-    setPopKey(g, popCellKey(c.x, c.z));
-  });
-}
 
-/** patch a material so aPop/uPop scale vertices from the ground up */
-function addPopGrow(
-  mat: THREE.Material,
-  store: { current: { uniforms: { uPop: { value: number } } }[] },
-) {
-  mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uPop = { value: 1 };
-    shader.vertexShader = shader.vertexShader
-      .replace(
-        "#include <common>",
-        "#include <common>\nattribute float aPop;\nuniform float uPop;",
-      )
-      .replace(
-        "#include <begin_vertex>",
-        `#include <begin_vertex>
-        {
-          float pgap = 0.85;
-          float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
-          float pe = 1.0 - pow(1.0 - pk, 3.0);
-          transformed.y *= pe;
-        }`,
-      );
-    store.current.push(shader as never);
-  };
-}
 
-/**
- * Safe merge: mergeGeometries returns NULL if the inputs mix indexed and
- * non-indexed geometries (e.g. icosahedron canopies vs. box buildings).
- * Normalize everything to non-indexed first so the merge always succeeds.
- */
-function mergeSafe(geos: THREE.BufferGeometry[]): THREE.BufferGeometry | null {
-  if (!geos.length) return null;
-  const normalized = geos.map((g) => {
-    if (!g.index) return g;
-    const ni = g.toNonIndexed();
-    g.dispose();
-    return ni;
-  });
-  const merged = mergeGeometries(normalized, false);
-  normalized.forEach((g) => g.dispose());
-  return merged;
-}
 
 export function CityScene({ progressRef, entryRef, quality = "high" }: CitySceneProps) {
   const { scene, gl } = useThree();
@@ -907,7 +829,12 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   }, [city]);
 
   /* pop-grow shader handles (uPop driven by entry progress each frame) */
-  const popShaders = useRef<{ uniforms: { uPop: { value: number } } }[]>([]);
+  const popShaders = useRef<PopShaderStore["current"]>([]);
+  // shadows must telescope with the pop growth (depth pass gets the same chunk)
+  const popDepth = useMemo(
+    () => makePopDepthMaterial({ current: popShaders.current } as never),
+    [],
+  );
   const popMat = (m: THREE.MeshStandardMaterial | null) => {
     if (m && !m.userData.popped) {
       m.userData.popped = true;
@@ -1364,7 +1291,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
 
       {/* buildings + rooftop furniture */}
       {city.buildings && (
-        <mesh geometry={city.buildings} castShadow={high} receiveShadow={high}>
+        <mesh geometry={city.buildings} castShadow={high} receiveShadow={high} customDepthMaterial={popDepth}>
           <meshStandardMaterial ref={popMat} vertexColors roughness={0.92} />
         </mesh>
       )}
@@ -1392,14 +1319,14 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
 
       {/* trees */}
       {city.greens && (
-        <mesh geometry={city.greens} castShadow={high}>
+        <mesh geometry={city.greens} castShadow={high} customDepthMaterial={popDepth}>
           <meshStandardMaterial ref={popMat} vertexColors roughness={1} />
         </mesh>
       )}
 
       {/* streetlight poles */}
       {city.poles && (
-        <mesh geometry={city.poles} castShadow={high}>
+        <mesh geometry={city.poles} castShadow={high} customDepthMaterial={popDepth}>
           <meshStandardMaterial ref={popMat} vertexColors roughness={0.9} />
         </mesh>
       )}
