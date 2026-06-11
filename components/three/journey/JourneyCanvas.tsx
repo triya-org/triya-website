@@ -42,6 +42,9 @@ export function JourneyCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: Jo
       camera={{ position: [-30, 9, 34], fov: 38, near: 0.5, far: 240 }}
       dpr={[1, 1.75]}
       gl={{ antialias: false, powerPreference: "high-performance" }}
+      onCreated={({ gl }) => {
+        gl.toneMappingExposure = 1.0;
+      }}
     >
       {/* NO <SoftShadows> here: drei patches three's GLOBAL shader chunks,
           and the Living City's instance already applies PCSS to every
@@ -50,10 +53,10 @@ export function JourneyCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: Jo
       <JourneyScene progressRef={progressRef} entryRef={entryRef} dir={dir} />
       <EffectComposer multisampling={4}>
         <Bloom mipmapBlur intensity={0.75} luminanceThreshold={1} luminanceSmoothing={0.15} />
-        <BrightnessContrast brightness={0.04} contrast={0.05} />
-        <HueSaturation saturation={0.12} />
-        <Vignette eskil={false} offset={0.3} darkness={0.2} />
-        <Noise premultiply opacity={0.13} />
+        <BrightnessContrast brightness={0.02} contrast={0.06} />
+        <HueSaturation saturation={0.1} />
+        <Vignette eskil={false} offset={0.3} darkness={0.15} />
+        <Noise premultiply opacity={0.08} />
       </EffectComposer>
     </Canvas>
   );

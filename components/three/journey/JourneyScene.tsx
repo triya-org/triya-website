@@ -46,12 +46,15 @@ export const FRACTIONS = {
 const PAPER = "#FAF9F5";
 const CLAY = "#D97757";
 
-/* per-industry light script (key color/intensity lerped across turns) */
+/* per-industry light script (key color/intensity lerped across turns).
+   Colors stay NEAR-NEUTRAL: a warm key × warm hemi × ACES multiplies the
+   pastel chorus into khaki mud — the industry mood lives in a gentle tint,
+   the albedos do the talking. */
 const LIGHTS = [
-  { color: new THREE.Color("#FFF8EC"), intensity: 1.6 }, // Manufacturing noon
-  { color: new THREE.Color("#FFEFD8"), intensity: 1.65 }, // Retail warm
-  { color: new THREE.Color("#FFE9C9"), intensity: 1.6 }, // Smart Cities golden
-  { color: new THREE.Color("#FFD9B0"), intensity: 0.9 }, // Events dusk
+  { color: new THREE.Color("#FFF9EE"), intensity: 1.5 }, // Manufacturing noon
+  { color: new THREE.Color("#FFF2DF"), intensity: 1.55 }, // Retail warm
+  { color: new THREE.Color("#FFEBD2"), intensity: 1.45 }, // Smart Cities golden
+  { color: new THREE.Color("#FFDEBC"), intensity: 1.1 }, // Events dusk
 ];
 
 /* eased quarter-turn: 15% anticipation / 60% action / 25% settle */
@@ -87,7 +90,16 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     pmrem.dispose();
     return tex;
   }, [gl]);
-  useEffect(() => () => envMap.dispose(), [envMap]);
+  // Soft neutral fill on EVERY standard material — without this the shadowed
+  // faces fall to the hemisphere alone and the whole maquette crushes brown.
+  useEffect(() => {
+    scene.environment = envMap;
+    scene.environmentIntensity = 0.26;
+    return () => {
+      scene.environment = null;
+      envMap.dispose();
+    };
+  }, [scene, envMap]);
 
   /* ---------- industry sets (built once) ---------- */
   const sets = useMemo(() => buildAllSets(), []);
@@ -524,8 +536,8 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     }
     if (hemiRef.current) {
       // fill rides the grade so dusk reads as DUSK, not dimmer noon
-      const k = THREE.MathUtils.lerp(from.intensity, to.intensity, lt) / 1.6;
-      hemiRef.current.intensity = 0.5 + 0.3 * k;
+      const k = THREE.MathUtils.lerp(from.intensity, to.intensity, lt) / 1.55;
+      hemiRef.current.intensity = 0.3 + 0.18 * k;
     }
     // Events string lights ignite through Turn-3's settle (clock-staggered
     // feel via the eased window), then hold lit
@@ -745,13 +757,14 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
 
   return (
     <group>
-      {/* lighting: static ortho shadow box sized to the plinth (never moves) */}
-      <hemisphereLight ref={hemiRef} args={["#FFF8EC", "#E8D2C2", 0.8]} />
+      {/* lighting: static ortho shadow box sized to the plinth (never moves).
+          Hemi ground is CREAM, not terracotta — warm bounce was the mud. */}
+      <hemisphereLight ref={hemiRef} args={["#FFFBF0", "#EFE7D8", 0.6]} />
       <directionalLight
         ref={keyLightRef}
         position={[26, 22, 14]}
-        intensity={1.6}
-        color="#FFF8EC"
+        intensity={1.55}
+        color="#FFFBF4"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-20}
@@ -769,16 +782,26 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
       </mesh>
       <mesh position={[0, -0.05, 0]} receiveShadow>
         <cylinderGeometry args={[14.5, 14.9, 0.6, 64]} />
-        <meshStandardMaterial color="#F3EFE4" roughness={1} />
+        <meshStandardMaterial color="#F7F3E9" roughness={1} />
       </mesh>
       {/* crisp cream rim — the maquette reads as a museum object */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.262, 0]}>
         <ringGeometry args={[13.9, 14.5, 64]} />
-        <meshStandardMaterial color="#E8E4D8" roughness={1} />
+        <meshStandardMaterial color="#E3DDCB" roughness={1} />
       </mesh>
 
       {/* THE TURNTABLE — everything industry-specific lives in here */}
       <group ref={plinthGroup}>
+        {/* inscribed turntable rings — dress the dead disc, and they rotate
+            with the plinth so the quarter-turns read even at the rim */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.265, 0]}>
+          <ringGeometry args={[10.7, 10.78, 96]} />
+          <meshStandardMaterial color="#DCD5C0" roughness={1} />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.265, 0]}>
+          <ringGeometry args={[12.55, 12.6, 96, 1, 0, Math.PI * 1.5]} />
+          <meshStandardMaterial color="#D9CDB4" roughness={1} />
+        </mesh>
         {setOrder.map((key, i) => {
           const set = sets[key];
           return (
