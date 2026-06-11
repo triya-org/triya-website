@@ -9,6 +9,7 @@ import {
   Vignette,
   Noise,
   BrightnessContrast,
+  HueSaturation,
 } from "@react-three/postprocessing";
 import { CityScene } from "./CityScene";
 
@@ -63,6 +64,7 @@ export function CityCanvas({ progressRef, entryRef }: CityCanvasProps) {
             luminanceSmoothing={0.15}
           />
           <BrightnessContrast brightness={0} contrast={0.06} />
+          <HueSaturation saturation={0.14} />
           <Vignette eskil={false} offset={0.28} darkness={0.32} />
           <Noise premultiply opacity={0.5} />
         </EffectComposer>

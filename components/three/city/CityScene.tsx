@@ -131,8 +131,32 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const baseCream = new THREE.Color("#EFEAE0");
     const trunkCol = new THREE.Color("#A8A293");
     const mossCol = new THREE.Color("#8A937B"); // greyed moss, sits quieter
+    const blossomCol = new THREE.Color("#E5AFA3"); // spring blossom canopies
     const winDark = new THREE.Color("#BFB4A0"); // warm, sits in the clay family
     const winLit = new THREE.Color("#FFE2B8"); // warm cream glow, not yellow
+
+    /* curated warm-pastel facade palette (weighted — sand/cream dominate,
+       color punctuates; clay stays the SIGNAL, these are the chorus) */
+    const FACADES: [string, number][] = [
+      ["#EDE4D3", 22], // warm sand (workhorse)
+      ["#E9D8C0", 16], // pale ochre
+      ["#E5C1A5", 13], // apricot
+      ["#DFAE92", 11], // terracotta blush
+      ["#D9BCAD", 10], // rose taupe
+      ["#CFD3BC", 10], // dusty sage
+      ["#E8CFC8", 8], // shell pink
+      ["#C3CCC9", 6], // dusty blue-grey (rare, cool relief)
+      ["#E2D6E0", 4], // faded lilac (rarest)
+    ];
+    const FACADE_TOTAL = FACADES.reduce((a, [, w]) => a + w, 0);
+    const pickFacade = () => {
+      let r = rand() * FACADE_TOTAL;
+      for (const [hex, w] of FACADES) {
+        r -= w;
+        if (r <= 0) return hex;
+      }
+      return FACADES[0][0];
+    };
 
     /** window grid on all four facades of a tower */
     const addWindows = (x: number, z: number, w: number, h: number, d: number) => {
@@ -218,6 +242,17 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
             paint(path, new THREE.Color("#EFEADF"));
             parkGeos.push(path);
           }
+          // wildflowers dotted across the lawn
+          const FLOWERS = ["#D97757", "#E5B864", "#E5AFA3", "#F5EFE2"];
+          for (let f = 0; f < 26; f++) {
+            const fx = px + (rand() - 0.5) * 7.6;
+            const fz = pz + (rand() - 0.5) * 7.6;
+            if (Math.abs(fx - px) < 0.8 || Math.abs(fz - pz) < 0.8) continue;
+            const bloom = new THREE.SphereGeometry(0.09 + rand() * 0.05, 6, 5);
+            bloom.translate(fx, 0.12, fz);
+            paint(bloom, col.set(FLOWERS[Math.floor(rand() * FLOWERS.length)]));
+            treeGeos.push(bloom);
+          }
           for (let k = 0; k < 7; k++) {
             const tx = px + (rand() - 0.5) * 7;
             const tz = pz + (rand() - 0.5) * 7;
@@ -230,7 +265,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
             const canopy = new THREE.IcosahedronGeometry(0.9 + rand() * 0.55, 1);
             canopy.scale(1, 0.85, 1);
             canopy.translate(tx, th + 0.75, tz);
-            col.copy(mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
+            col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
             paint(canopy, col);
             treeGeos.push(canopy);
           }
@@ -258,7 +293,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
                 const canopy = new THREE.IcosahedronGeometry(0.85 + rand() * 0.5, 1);
                 canopy.scale(1, 0.85, 1);
                 canopy.translate(x, th + 0.7, z);
-                col.copy(mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
+                col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
                 paint(canopy, col);
                 treeGeos.push(canopy);
               }
@@ -271,10 +306,11 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
             const w = 2.7 + rand() * 1.3;
             const d = 2.7 + rand() * 1.3;
 
+            // pastel facade, blushing gently toward clay with height
             const t = THREE.MathUtils.clamp((h - 4) / 18, 0, 1);
-            col.copy(baseCream).lerp(CLAY_SOFT, t * 0.6 + rand() * 0.06);
-            // per-building albedo jitter — clay is never one flat value
-            col.offsetHSL((rand() - 0.5) * 0.012, (rand() - 0.5) * 0.05, (rand() - 0.5) * 0.05);
+            col.set(pickFacade()).lerp(CLAY_SOFT, t * 0.25);
+            // per-building albedo jitter — never one flat value
+            col.offsetHSL((rand() - 0.5) * 0.012, (rand() - 0.5) * 0.06, (rand() - 0.5) * 0.05);
 
             // ~12% of the low-rises are cylindrical (silhouette variety)
             if (h < 9 && rand() < 0.12) {
@@ -292,6 +328,20 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
               podium.translate(x, ph / 2, z);
               paint(podium, col.clone().lerp(baseCream, 0.3));
               buildingGeos.push(podium);
+              // street-level awning — a small canopy in an accent color
+              if (rand() < 0.65) {
+                const AWNINGS = ["#D97757", "#A8B89A", "#E5B864", "#C2613F", "#9FB4C7"];
+                const aw = new THREE.BoxGeometry(w * 0.85, 0.07, 0.55);
+                const side = rand() > 0.5 ? 1 : -1;
+                if (rand() > 0.5) {
+                  aw.translate(x, 1.65, z + side * (d * 1.25) * 0.5 + side * 0.2);
+                } else {
+                  aw.rotateY(Math.PI / 2);
+                  aw.translate(x + side * (w * 1.25) * 0.5 + side * 0.2, 1.65, z);
+                }
+                paint(aw, new THREE.Color(AWNINGS[Math.floor(rand() * AWNINGS.length)]));
+                buildingGeos.push(aw);
+              }
             }
 
             const body = new RoundedBoxGeometry(w, h, d, 2, 0.14);
@@ -629,8 +679,19 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         bypass: buildOrbit([1.45, -J], [0, 1], 7.9, 297, 63, [1.45, J]),
       },
     ];
-    // no pure-black cars — dark warm grey so they catch the key light
-    const carColors = ["#FFFFFF", "#E8E4D8", "#D97757", "#5C574E", "#F2C9B2", "#C2613F"];
+    // a cheerful fleet — no pure black; pastels echo the facades
+    const carColors = [
+      "#FFFFFF",
+      "#E8E4D8",
+      "#D97757",
+      "#5C574E",
+      "#F2C9B2",
+      "#C2613F",
+      "#A8B89A", // sage
+      "#9FB4C7", // dusty blue
+      "#E5C97B", // butter
+      "#E5AFA3", // blossom pink
+    ];
     type Car = {
       route: (typeof carRoutes)[number];
       offset: number;
@@ -1063,11 +1124,12 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       {/* clay-miniature lighting: strong low warm key (~30° elevation) with
           soft shadows, quiet fill — key:fill ≈ 3:1 so faces read keyed/
           filled/shadowed instead of uniformly lit */}
-      <hemisphereLight args={["#FFFBF2", "#D8C8B8", 0.5]} />
+      {/* golden hour: warm low key, blush-tinted fill and shadow bounce */}
+      <hemisphereLight args={["#FFF4E4", "#E2C4B4", 0.55]} />
       <directionalLight
-        position={[48, 34, 22]}
-        intensity={1.7}
-        color="#FFEFD8"
+        position={[48, 30, 22]}
+        intensity={1.75}
+        color="#FFE3BC"
         castShadow={high}
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-58}
