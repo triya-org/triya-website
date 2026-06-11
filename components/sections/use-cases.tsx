@@ -114,7 +114,7 @@ export function UseCases({ language }: UseCasesProps) {
           {t.industries.map((industry, index) => {
             const Icon = industry.icon;
             return (
-              <Card key={index} className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+              <Card key={index} className="card-lift overflow-hidden group">
                 <div className="grid md:grid-cols-2 h-full">
                   <div className="relative h-64 md:h-auto">
                     <Image

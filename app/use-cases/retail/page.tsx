@@ -222,7 +222,7 @@ export default function RetailPage() {
               variants={fadeInUp}
             >
               {t.hero.title}{" "}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
+              <span className="text-clay-400">{t.hero.titleHighlight}</span>
             </motion.h1>
             <motion.p 
               className="text-xl text-gray-200 mb-8"
@@ -265,7 +265,7 @@ export default function RetailPage() {
                 const Icon = challenge.icon;
                 return (
                   <motion.div key={index} variants={fadeInUp}>
-                    <Card className="h-full">
+                    <Card className="card-lift h-full border-ink-900/10 shadow-none">
                       <CardHeader>
                         <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center mb-4">
                           <Icon className="h-6 w-6 text-destructive" />
@@ -306,7 +306,7 @@ export default function RetailPage() {
             <div className="grid gap-8 md:grid-cols-2">
               {t.solution.features.map((feature, index) => (
                 <motion.div key={index} variants={fadeInUp}>
-                  <Card className="h-full">
+                  <Card className="card-lift h-full border-ink-900/10 shadow-none">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
                         <div>

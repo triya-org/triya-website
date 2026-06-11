@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Reveal } from "@/components/scroll/Reveal";
+import { CountUp } from "@/components/scroll/CountUp";
 
 interface CTASectionProps {
   language: "en" | "ar";
@@ -61,19 +62,19 @@ export function CTASection({ language }: CTASectionProps) {
           {/* Stats */}
           <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat1}</div>
+              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat1} /></div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat1Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat2}</div>
+              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat2} /></div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat2Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat3}</div>
+              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat3} /></div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat3Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat4}</div>
+              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat4} /></div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat4Label}</div>
             </div>
           </div>

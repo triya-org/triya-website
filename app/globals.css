@@ -187,4 +187,68 @@ html.lenis body {
   [dir="rtl"] .t-caption {
     letter-spacing: 0; /* never letter-space Arabic */
   }
+
+  /* ============ micro-interactions (site-wide) ============ */
+
+  /* nav links: clay underline slides in from the start edge */
+  .nav-underline {
+    position: relative;
+  }
+  .nav-underline::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0.15em;
+    bottom: -2px;
+    height: 2px;
+    border-radius: 1px;
+    background: hsl(var(--clay-400));
+    transform: scaleX(0);
+    transform-origin: var(--underline-origin, left);
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [dir="rtl"] .nav-underline::after {
+    --underline-origin: right;
+  }
+  .nav-underline:hover::after,
+  .nav-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* buttons: tactile press + lift */
+  .btn-tactile {
+    transition:
+      transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 200ms ease;
+  }
+  .btn-tactile:hover {
+    transform: translateY(-2px);
+  }
+  .btn-tactile:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  /* cards: lift + clay border breathe */
+  .card-lift {
+    transition:
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 320ms ease,
+      box-shadow 320ms ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -12px rgb(31 30 27 / 0.14);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-underline::after,
+    .btn-tactile,
+    .card-lift {
+      transition: none;
+    }
+    .btn-tactile:hover,
+    .btn-tactile:active,
+    .card-lift:hover {
+      transform: none;
+    }
+  }
 }

@@ -46,6 +46,7 @@ export function CinematicHero({
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
+  const lensRef = useRef<HTMLSpanElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const watchRef = useRef<HTMLDivElement>(null);
@@ -67,24 +68,47 @@ export function CinematicHero({
       });
       const titleTargets = isArabic ? split.words : split.chars;
 
-      const tl = gsap.timeline({ defaults: { ease: "power4.out" }, delay: 0.15 });
+      // If the first-visit preloader is running, hold the entrance and play
+      // it the moment the curtain starts lifting (triya:intro-done) — the
+      // signature char-drop must never finish hidden under the curtain.
+      const introActive =
+        typeof window !== "undefined" && window.__triyaIntroActive;
+      const tl = gsap.timeline({
+        defaults: { ease: "power4.out" },
+        delay: introActive ? 0 : 0.15,
+        paused: !!introActive,
+      });
+      if (introActive) {
+        const play = () => tl.play(0.0);
+        window.addEventListener("triya:intro-done", play, { once: true });
+      }
 
       tl.from(eyebrowRef.current, { y: 18, opacity: 0, duration: 0.5 })
+        // gsap.com-style per-char drop: scrambled order, playful overshoot,
+        // a touch of per-char rotation (editorial dose, not chaos)
         .from(
           titleTargets,
           {
-            yPercent: 120,
+            yPercent: 130,
             opacity: 0,
-            rotateX: isArabic ? 0 : -80,
-            stagger: isArabic ? 0.06 : 0.016,
-            duration: 0.9,
+            rotation: isArabic ? 0 : () => gsap.utils.random(-10, 10),
+            duration: 0.7,
+            ease: "back.out(1.5)",
+            stagger: isArabic ? 0.07 : { each: 0.04, from: "random" as const },
           },
           "-=0.25",
         )
         .from(
           highlightRef.current,
-          { yPercent: 80, opacity: 0, duration: 0.9 },
-          "-=0.55",
+          { yPercent: 90, opacity: 0, duration: 0.8, ease: "back.out(1.3)" },
+          "-=0.45",
+        )
+        // the recording light: drops in (same easing family as the chars —
+        // bounce.out was the one cartoon ease in a calm-premium phrase)
+        .from(
+          lensRef.current,
+          { y: -56, opacity: 0, duration: 0.55, ease: "back.out(2.4)" },
+          "-=0.3",
         )
         .from(subRef.current, { y: 24, opacity: 0, duration: 0.7 }, "-=0.45")
         .from(
@@ -101,6 +125,18 @@ export function CinematicHero({
         yoyo: true,
         ease: "sine.inOut",
         duration: 1.2,
+      });
+
+      // recording-light idle pulse — slow and quiet (it lives next to
+      // display type forever; notification-badge amplitude would grate)
+      gsap.to(lensRef.current, {
+        scale: 1.08,
+        opacity: 0.85,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        duration: 1.7,
+        delay: 2.6,
       });
 
       // Scroll-scrubbed exit: content fades out COMPLETELY within the first
@@ -173,6 +209,7 @@ export function CinematicHero({
           </p>
 
           <h1
+            data-animated-hero
             className="t-display-1 mb-6 text-cream-50"
             style={{ perspective: "800px" }}
           >
@@ -180,8 +217,13 @@ export function CinematicHero({
               {content.title}
             </span>{" "}
             <span ref={highlightRef} className="inline-block text-clay-400">
-              {content.titleHighlight}
+              {content.titleHighlight.replace(/[.。]\s*$/, "")}
             </span>
+            {/* the recording light — stands in for the full stop */}
+            <span
+              ref={lensRef}
+              className="ms-3 inline-block h-[0.16em] w-[0.16em] rounded-full bg-clay-400 align-baseline"
+            />
           </h1>
 
           {content.subtitle && (

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ArrowLeft, Clock, Calendar } from 'lucide-react';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
+import { Reveal } from '@/components/scroll/Reveal';
 
 export default function BlogPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -115,7 +116,7 @@ export default function BlogPage() {
         )}
 
         {/* Article Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Reveal stagger className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {articles.slice(1).map((article) => (
             <Link key={article.slug} href={`/blog/${article.slug}/`}>
               <article className="group h-full">
@@ -166,7 +167,7 @@ export default function BlogPage() {
               </article>
             </Link>
           ))}
-        </div>
+        </Reveal>
 
         {/* CTA Section */}
         <div className="mt-16 text-center p-8 bg-muted/30 rounded-lg">

@@ -27,7 +27,7 @@ const getContent = (language: "en" | "ar") => ({
     contactUs: "Contact Us",
     headquarters: "Headquarters",
     headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
-    copyright: "© 2025 Triya.ai. All rights reserved.",
+    copyright: "© 2026 Triya.ai. All rights reserved.",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service"
   },
@@ -49,7 +49,7 @@ const getContent = (language: "en" | "ar") => ({
     contactUs: "اتصل بنا",
     headquarters: "المقر الرئيسي",
     headquartersLocation: "سكاي تاور، جزيرة الريم، أبوظبي، الإمارات",
-    copyright: "© 2025 Triya.ai. جميع الحقوق محفوظة.",
+    copyright: "© 2026 Triya.ai. جميع الحقوق محفوظة.",
     privacyPolicy: "سياسة الخصوصية",
     termsOfService: "شروط الخدمة"
   }
@@ -76,13 +76,12 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Company Info */}
           <div className="space-y-4">
-            <Image
-              src="/triya_ai_new_logo.png"
-              alt="Triya - Intelligent Video Analytics & Security Camera Software"
-              width={885}
-              height={210}
-              className="h-10 w-auto"
-            />
+            <div className="flex items-baseline" aria-label="Triya">
+              <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
+                TRIYA
+              </span>
+              <span className="ms-1.5 inline-block h-2 w-2 rounded-full bg-clay-400" />
+            </div>
             <p className="text-sm text-muted-foreground">
               {t.description}
             </p>

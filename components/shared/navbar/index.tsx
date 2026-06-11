@@ -104,15 +104,13 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Image
-            src="/triya_ai_new_logo.png"
-            alt="Triya AI - Edge AI Surveillance Platform with 85% Cost Savings"
-            width={885}
-            height={210}
-            className="h-10 md:h-12 w-auto"
-            priority
-          />
+        {/* wordmark — the brand's one logo (matches the preloader): TRIYA
+            in the display face + the clay recording dot */}
+        <Link href="/" className="mr-6 flex items-baseline" aria-label="Triya — home">
+          <span className="font-display text-2xl font-semibold tracking-tight text-ink-900 md:text-[1.7rem]">
+            TRIYA
+          </span>
+          <span className="ms-1.5 inline-block h-2 w-2 rounded-full bg-clay-400 md:h-2.5 md:w-2.5" />
         </Link>
         
         <NavigationMenu className="mx-6 hidden md:flex">
@@ -170,7 +168,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/blog/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
                   {t.blog}
                 </NavigationMenuLink>
               </Link>
@@ -178,7 +176,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/faq/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
                   {t.faq}
                 </NavigationMenuLink>
               </Link>
@@ -186,7 +184,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/contact/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
                   {t.contact}
                 </NavigationMenuLink>
               </Link>

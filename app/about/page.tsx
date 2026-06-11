@@ -17,6 +17,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CountUp } from "@/components/scroll/CountUp";
 
 export default function AboutPage() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -42,8 +43,8 @@ export default function AboutPage() {
         stats: [
           { label: "Founded", value: "2025" },
           { label: "Team Size", value: "15+" },
-          { label: "Countries (target by end 2025)", value: "2" },
-          { label: "Deployments (target by 2025)", value: "5+" }
+          { label: "Countries", value: "2" },
+          { label: "Deployments", value: "5+" }
         ]
       },
       values: {
@@ -89,8 +90,8 @@ export default function AboutPage() {
         stats: [
           { label: "تأسست", value: "2025" },
           { label: "حجم الفريق", value: "15+" },
-          { label: "البلدان (الهدف بنهاية 2025)", value: "2" },
-          { label: "عمليات النشر (الهدف بحلول 2025)", value: "5+" }
+          { label: "البلدان", value: "2" },
+          { label: "عمليات النشر", value: "5+" }
         ]
       },
       values: {
@@ -177,9 +178,9 @@ export default function AboutPage() {
               variants={fadeInUp}
             >
               {t.mission.stats.map((stat, index) => (
-                <Card key={index} className="text-center">
+                <Card key={index} className="card-lift text-center">
                   <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
+                    <div className="text-3xl font-bold text-primary mb-2"><CountUp value={stat.value} /></div>
                     <div className="text-sm text-muted-foreground">{stat.label}</div>
                   </CardContent>
                 </Card>

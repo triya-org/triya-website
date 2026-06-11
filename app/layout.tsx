@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
+import { Preloader } from "@/components/transition/Preloader";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { pageMetadata } from "@/app/lib/seo-config";
 import { OrganizationSchema, LocalBusinessSchema } from "@/app/components/structured-data";
@@ -91,6 +92,7 @@ export default function RootLayout({
       <body
         className={`${generalSans.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} ${plexArabic.variable} font-sans min-h-screen bg-background text-foreground flex flex-col`}
       >
+        <Preloader />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

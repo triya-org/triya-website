@@ -264,7 +264,7 @@ export default function EventsPage() {
               variants={fadeInUp}
             >
               {t.hero.title}{" "}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
+              <span className="text-clay-400">{t.hero.titleHighlight}</span>
             </motion.h1>
             <motion.p 
               className="text-xl text-gray-200 mb-8"
@@ -327,7 +327,7 @@ export default function EventsPage() {
             {/* Challenges & Solutions */}
             <div className="grid gap-8 lg:grid-cols-2">
               <motion.div variants={fadeInUp}>
-                <Card className="h-full">
+                <Card className="card-lift h-full border-ink-900/10 shadow-none">
                   <CardHeader>
                     <CardTitle className="text-2xl flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-destructive" />
@@ -348,7 +348,7 @@ export default function EventsPage() {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className="h-full">
+                <Card className="card-lift h-full border-ink-900/10 shadow-none">
                   <CardHeader>
                     <CardTitle className="text-2xl flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary" />
@@ -390,7 +390,7 @@ export default function EventsPage() {
                 const Icon = feature.icon;
                 return (
                   <motion.div key={index} variants={fadeInUp}>
-                    <Card className="h-full">
+                    <Card className="card-lift h-full border-ink-900/10 shadow-none">
                       <CardHeader>
                         <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                           <Icon className="h-6 w-6 text-primary" />

@@ -142,7 +142,7 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
                 {/* editorial panel: 1px border on paper, no shadow, bare clay
                     stroke icon, no redundant badge (design-system: borders
                     over elevation, clay used sparingly) */}
-                <div className="group h-full rounded-lg border border-ink-900/10 bg-cream-100/60 p-6 transition-colors hover:border-clay-400/60">
+                <div className="card-lift group h-full rounded-lg border border-ink-900/10 bg-cream-100/60 p-6 hover:border-clay-400/60">
                   <Icon className="mb-5 h-5 w-5 text-clay-500" strokeWidth={1.75} />
                   <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
                   <p className="text-base leading-relaxed text-muted-foreground">
