@@ -490,12 +490,41 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
 
     const roads = mergeSafe([...roadGeos, ...parkGeos]);
 
-    /* car fleet state */
+    /* car fleet state. Each route carries a Bézier plaza-bypass: cars bow
+       smoothly around the roundabout edge instead of driving through the
+       hub. Different bow depths per avenue (9 vs 10.4) keep the four
+       corridors from intersecting each other. */
+    const J = 13; // hand-off point between lane straight and bypass curve
+    const mkBypass = (pts: [number, number][]) => {
+      const [a, b, c, d] = pts.map(([x, z]) => new THREE.Vector3(x, 0.46, z));
+      const curve = new THREE.CubicBezierCurve3(a, b, c, d);
+      return { curve, len: curve.getLength() };
+    };
     const carRoutes = [
-      { axis: "x" as const, lane: 1.45, dir: 1 },
-      { axis: "x" as const, lane: -1.45, dir: -1 },
-      { axis: "z" as const, lane: 1.45, dir: -1 },
-      { axis: "z" as const, lane: -1.45, dir: 1 },
+      {
+        axis: "x" as const,
+        lane: -1.45,
+        dir: 1,
+        bypass: mkBypass([[-J, -1.45], [-4, -9], [4, -9], [J, -1.45]]),
+      },
+      {
+        axis: "x" as const,
+        lane: 1.45,
+        dir: -1,
+        bypass: mkBypass([[J, 1.45], [4, 9], [-4, 9], [-J, 1.45]]),
+      },
+      {
+        axis: "z" as const,
+        lane: 1.45,
+        dir: -1,
+        bypass: mkBypass([[1.45, J], [10.4, 4], [10.4, -4], [1.45, -J]]),
+      },
+      {
+        axis: "z" as const,
+        lane: -1.45,
+        dir: 1,
+        bypass: mkBypass([[-1.45, -J], [-10.4, -4], [-10.4, 4], [-1.45, J]]),
+      },
     ];
     // no pure-black cars — dark warm grey so they catch the key light
     const carColors = ["#FFFFFF", "#E8E4D8", "#D97757", "#5C574E", "#F2C9B2", "#C2613F"];
@@ -527,7 +556,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         if (Math.abs(s) < 9 || Math.abs(Math.abs(s) - 16.5) < 2.5) continue;
         if (rand() < 0.45) continue; // irregular occupancy
         const onXAve = rand() > 0.5;
-        const side = rand() > 0.5 ? 2.15 : -2.15;
+        // curbside (drive lanes are at ±1.45; a car is ~0.78 wide, so the
+        // parked lane needs ≥0.9 of separation to never get clipped)
+        const side = rand() > 0.5 ? 2.42 : -2.42;
         cars.push({
           route: carRoutes[0],
           offset: 0,
@@ -697,6 +728,8 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   const lookCur = useMemo(() => new THREE.Vector3(0, 0, 0), []);
   const posCur = useMemo(() => new THREE.Vector3(0, 52, 92), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const carPos = useMemo(() => new THREE.Vector3(), []);
+  const carTan = useMemo(() => new THREE.Vector3(), []);
 
   /* Beat-aligned pacing: the spline is arc-length uniform and the exit leg
      is ~42% of total length, so without remapping the camera climbs out
@@ -824,16 +857,40 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
           px = c.parked.x;
           pz = c.parked.z;
           ry = c.parked.ry;
-        } else if (c.route.axis === "x") {
-          const s = ((c.offset + t * c.speed) % span) - span / 2;
-          px = c.route.dir > 0 ? s : -s;
-          pz = c.route.lane; // the lane IS the lane — never flipped by direction
-          ry = c.route.dir > 0 ? 0 : Math.PI;
         } else {
-          const s = ((c.offset + t * c.speed) % span) - span / 2;
-          px = c.route.lane;
-          pz = c.route.dir > 0 ? s : -s;
-          ry = c.route.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+          // path = lane straight → Bézier plaza-bypass → lane straight
+          const J = 13;
+          const half = span / 2;
+          const L1 = half - J;
+          const T = 2 * L1 + c.route.bypass.len;
+          const d = (c.offset + t * c.speed) % T;
+          const baseRy =
+            c.route.axis === "x"
+              ? c.route.dir > 0
+                ? 0
+                : Math.PI
+              : c.route.dir > 0
+                ? -Math.PI / 2
+                : Math.PI / 2;
+          if (d < L1) {
+            const coord = c.route.dir > 0 ? -half + d : half - d;
+            px = c.route.axis === "x" ? coord : c.route.lane;
+            pz = c.route.axis === "x" ? c.route.lane : coord;
+            ry = baseRy;
+          } else if (d < L1 + c.route.bypass.len) {
+            const u = (d - L1) / c.route.bypass.len;
+            c.route.bypass.curve.getPointAt(u, carPos);
+            c.route.bypass.curve.getTangentAt(u, carTan);
+            px = carPos.x;
+            pz = carPos.z;
+            ry = Math.atan2(-carTan.z, carTan.x);
+          } else {
+            const q = d - L1 - c.route.bypass.len;
+            const coord = c.route.dir > 0 ? J + q : -J - q;
+            px = c.route.axis === "x" ? coord : c.route.lane;
+            pz = c.route.axis === "x" ? c.route.lane : coord;
+            ry = baseRy;
+          }
         }
 
         dummy.position.set(px, 0.46, pz);
