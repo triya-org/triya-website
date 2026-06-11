@@ -243,6 +243,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
             // keep the avenue corridors CLEAR — the camera flies down them
             // and the boulevards must read from above
             if (Math.abs(x) < 4.8 || Math.abs(z) < 4.8) continue;
+            // open square around the roundabout: the orbiting traffic needs
+            // a clear annulus — no buildings hugging the plaza corners
+            if (Math.hypot(x, z) < 11.5) continue;
 
             if (rand() < 0.22) {
               if (rand() < 0.6) {
@@ -494,7 +497,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
        smoothly around the roundabout edge instead of driving through the
        hub. Different bow depths per avenue (9 vs 10.4) keep the four
        corridors from intersecting each other. */
-    const J = 13; // hand-off point between lane straight and bypass curve
+    // J = where steering begins — well BEFORE the circle, so the turn-in is
+    // gentle and the bows stay inside the cleared roundabout annulus
+    const J = 15;
     const mkBypass = (pts: [number, number][]) => {
       const [a, b, c, d] = pts.map(([x, z]) => new THREE.Vector3(x, 0.46, z));
       const curve = new THREE.CubicBezierCurve3(a, b, c, d);
@@ -505,25 +510,25 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         axis: "x" as const,
         lane: -1.45,
         dir: 1,
-        bypass: mkBypass([[-J, -1.45], [-4, -9], [4, -9], [J, -1.45]]),
+        bypass: mkBypass([[-J, -1.45], [-4.5, -8.6], [4.5, -8.6], [J, -1.45]]),
       },
       {
         axis: "x" as const,
         lane: 1.45,
         dir: -1,
-        bypass: mkBypass([[J, 1.45], [4, 9], [-4, 9], [-J, 1.45]]),
+        bypass: mkBypass([[J, 1.45], [4.5, 8.6], [-4.5, 8.6], [-J, 1.45]]),
       },
       {
         axis: "z" as const,
         lane: 1.45,
         dir: -1,
-        bypass: mkBypass([[1.45, J], [10.4, 4], [10.4, -4], [1.45, -J]]),
+        bypass: mkBypass([[1.45, J], [9.8, 4.5], [9.8, -4.5], [1.45, -J]]),
       },
       {
         axis: "z" as const,
         lane: -1.45,
         dir: 1,
-        bypass: mkBypass([[-1.45, -J], [-10.4, -4], [-10.4, 4], [-1.45, J]]),
+        bypass: mkBypass([[-1.45, -J], [-9.8, -4.5], [-9.8, 4.5], [-1.45, J]]),
       },
     ];
     // no pure-black cars — dark warm grey so they catch the key light
@@ -553,7 +558,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     // parked cars along the avenue curbs (skip crosswalks + plaza)
     if (high) {
       for (let s = -range + 2; s <= range - 2; s += 5.5) {
-        if (Math.abs(s) < 9 || Math.abs(Math.abs(s) - 16.5) < 2.5) continue;
+        // keep curbs clear of the roundabout steering zone (|s| < 17) and
+        // the crosswalks
+        if (Math.abs(s) < 17 || Math.abs(Math.abs(s) - 16.5) < 2.5) continue;
         if (rand() < 0.45) continue; // irregular occupancy
         const onXAve = rand() > 0.5;
         // curbside (drive lanes are at ±1.45; a car is ~0.78 wide, so the
@@ -859,7 +866,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
           ry = c.parked.ry;
         } else {
           // path = lane straight → Bézier plaza-bypass → lane straight
-          const J = 13;
+          const J = 15;
           const half = span / 2;
           const L1 = half - J;
           const T = 2 * L1 + c.route.bypass.len;
