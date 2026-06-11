@@ -352,12 +352,13 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       }
     }
 
-    /* plaza furniture: ring of planters around the hub */
+    /* plaza furniture: planters decorate the CENTRAL ISLAND (radius 4.4),
+       never the orbit lane — the carriageway ring must stay clear */
     if (high) {
       for (let k = 0; k < 8; k++) {
         const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
-        const px = Math.cos(a) * 6.5;
-        const pz = Math.sin(a) * 6.5;
+        const px = Math.cos(a) * 4.4;
+        const pz = Math.sin(a) * 4.4;
         const tub = new RoundedBoxGeometry(0.85, 0.5, 0.85, 1, 0.08);
         tub.translate(px, 0.25, pz);
         paint(tub, new THREE.Color("#CFC8B6"));
@@ -420,6 +421,16 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const sideCol = new THREE.Color("#F1ECDF");
     const dashCol = new THREE.Color("#FBF8F1");
     const gridCol = new THREE.Color("#E8E2D2");
+
+    // roundabout carriageway: a road-toned annulus matching the orbit lane
+    // (bows ride radius ~6.8–7.7), so traffic visibly circles ON road
+    {
+      const ringRoad = new THREE.RingGeometry(6.0, 8.6, 64);
+      ringRoad.rotateX(-Math.PI / 2);
+      ringRoad.translate(0, 0.013, 0);
+      paint(ringRoad, roadCol);
+      roadGeos.push(ringRoad);
+    }
 
     // main avenues
     for (const horizontal of [true, false]) {
@@ -993,9 +1004,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         </mesh>
       )}
 
-      {/* plaza */}
+      {/* plaza island (the garden core inside the carriageway ring) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]} receiveShadow={high}>
-        <circleGeometry args={[7.2, 48]} />
+        <circleGeometry args={[5.6, 48]} />
         <meshStandardMaterial color="#F3EEE3" roughness={1} />
       </mesh>
       <mesh ref={hubRingRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
