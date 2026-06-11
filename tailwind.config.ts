@@ -23,6 +23,29 @@ const config: Config = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        /* Triya design-system raw scales (use sparingly; semantic first) */
+        clay: {
+          100: "hsl(var(--clay-100))",
+          200: "hsl(var(--clay-200))",
+          300: "hsl(var(--clay-300))",
+          400: "hsl(var(--clay-400))",
+          500: "hsl(var(--clay-500))",
+          600: "hsl(var(--clay-600))",
+        },
+        cream: {
+          50: "hsl(var(--cream-50))",
+          100: "hsl(var(--cream-100))",
+          200: "hsl(var(--cream-200))",
+          300: "hsl(var(--cream-300))",
+          400: "hsl(var(--cream-400))",
+        },
+        ink: {
+          300: "hsl(var(--ink-300))",
+          500: "hsl(var(--ink-500))",
+          700: "hsl(var(--ink-700))",
+          800: "hsl(var(--ink-800))",
+          900: "hsl(var(--ink-900))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -58,7 +81,15 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-dm-sans)", "Noto Sans Arabic", "sans-serif"],
+        sans: ["var(--font-sans-brand)", "var(--font-arabic)", "sans-serif"],
+        display: [
+          "var(--font-display)",
+          "var(--font-sans-brand)",
+          "var(--font-arabic)",
+          "sans-serif",
+        ],
+        mono: ["var(--font-mono-brand)", "monospace"],
+        arabic: ["var(--font-arabic)", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

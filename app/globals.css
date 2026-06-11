@@ -2,81 +2,189 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Lenis smooth-scroll (see components/scroll/SmoothScroll.tsx) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 @layer base {
+  /* ============================================================
+     Triya.AI Design System — cream + clay (locked Jun 2026)
+     Editorial cream paper, ink type, clay #D97757 as the ONE
+     signal colour. Borders over shadows. Sans-led, no serif.
+     HSL triplets derived from colors_and_type.css hexes.
+     ============================================================ */
   :root {
-    --background: 30 41% 98%;
-    --foreground: 30 41% 10%;
-    --card: 30 41% 96%;
-    --card-foreground: 30 41% 10%;
-    --popover: 30 41% 96%;
-    --popover-foreground: 30 41% 10%;
-    --primary: 25 50% 35%;
-    --primary-foreground: 30 41% 98%;
-    --secondary: 30 41% 90%;
-    --secondary-foreground: 30 41% 10%;
-    --muted: 30 41% 90%;
-    --muted-foreground: 30 41% 40%;
-    --accent: 25 50% 35%;
-    --accent-foreground: 30 41% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 30 41% 98%;
-    --border: 30 41% 85%;
-    --input: 30 41% 85%;
-    --ring: 25 50% 35%;
+    /* Raw palette */
+    --cream-50: 48 33% 97%;   /* #FAF9F5 page bg */
+    --cream-100: 48 25% 92%;  /* #F0EEE6 alt section bg */
+    --cream-200: 45 26% 88%;  /* #E8E4D8 card subtle / divider */
+    --cream-300: 46 22% 81%;  /* #D9D4C4 border / hairline */
+    --cream-400: 44 17% 69%;  /* #BDB6A2 */
+    --clay-100: 24 79% 93%;   /* #FBE9DD */
+    --clay-200: 22 71% 82%;   /* #F2C9B2 */
+    --clay-300: 20 69% 71%;   /* #E8A381 */
+    --clay-400: 15 63% 60%;   /* #D97757 the brand accent */
+    --clay-500: 16 52% 50%;   /* #C2613F hover / focused */
+    --clay-600: 16 56% 39%;   /* #9C4A2C pressed / eyebrows */
+    --ink-900: 45 7% 11%;     /* #1F1E1B primary type, dark surfaces */
+    --ink-800: 50 7% 16%;     /* #2C2B26 */
+    --ink-700: 42 9% 22%;     /* #3D3A33 */
+    --ink-500: 42 9% 39%;     /* #6B665A muted text */
+    --ink-300: 43 11% 62%;    /* #A8A293 */
+
+    /* Semantic tokens (Tailwind reads these) */
+    --background: var(--cream-50);
+    --foreground: var(--ink-900);
+    --card: var(--cream-50);
+    --card-foreground: var(--ink-900);
+    --popover: var(--cream-50);
+    --popover-foreground: var(--ink-900);
+    --primary: var(--clay-400);
+    --primary-foreground: var(--cream-50);
+    --secondary: var(--cream-100);
+    --secondary-foreground: var(--ink-900);
+    --muted: var(--cream-100);
+    --muted-foreground: var(--ink-500);
+    --accent: var(--clay-400);
+    --accent-foreground: var(--cream-50);
+    --destructive: 10 50% 47%; /* #B5503C brick, in family with clay */
+    --destructive-foreground: var(--cream-50);
+    --border: var(--cream-300);
+    --input: var(--cream-300);
+    --ring: var(--clay-400);
     --radius: 0.5rem;
   }
-  
+
   .font-sans {
-    font-family: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-family: var(--font-sans-brand), var(--font-arabic), ui-sans-serif,
+      system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      "Noto Sans", sans-serif;
   }
 
+  /* Dark surface — warm charcoal chassis, same clay accent (used for the
+     ink footer and any dark marketing band; the product app shares it). */
   .dark {
-    --background: 30 41% 10%;
-    --foreground: 30 41% 98%;
-    --card: 30 41% 14%;
-    --card-foreground: 30 41% 98%;
-    --popover: 30 41% 14%;
-    --popover-foreground: 30 41% 98%;
-    --primary: 25 50% 45%;
-    --primary-foreground: 30 41% 10%;
-    --secondary: 30 41% 20%;
-    --secondary-foreground: 30 41% 98%;
-    --muted: 30 41% 20%;
-    --muted-foreground: 30 41% 60%;
-    --accent: 25 50% 45%;
-    --accent-foreground: 30 41% 10%;
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 30 41% 98%;
-    --border: 30 41% 20%;
-    --input: 30 41% 20%;
-    --ring: 25 50% 45%;
+    --background: var(--ink-900);
+    --foreground: var(--cream-100);
+    --card: var(--ink-800);
+    --card-foreground: var(--cream-100);
+    --popover: var(--ink-800);
+    --popover-foreground: var(--cream-100);
+    --primary: var(--clay-400);
+    --primary-foreground: var(--ink-900);
+    --secondary: 43 7% 19%;   /* #34322D */
+    --secondary-foreground: var(--cream-100);
+    --muted: 43 7% 19%;
+    --muted-foreground: var(--ink-300);
+    --accent: var(--clay-400);
+    --accent-foreground: var(--ink-900);
+    --destructive: 12 67% 60%; /* #DD6B57 */
+    --destructive-foreground: var(--cream-50);
+    --border: 45 6% 27%;       /* #4A4842 */
+    --input: 45 6% 27%;
+    --ring: var(--clay-400);
   }
-  
+
   * {
     box-sizing: border-box;
   }
-  
+
   html {
     height: 100%;
   }
-  
+
   body {
     min-height: 100%;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-weight: 400;
   }
-  
+
+  /* Headings use the display face (General Sans), tight tracking. */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
+    font-family: var(--font-display), var(--font-sans-brand), var(--font-arabic),
+      ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
-  
+
+  /* Arabic: IBM Plex Sans Arabic carries everything (incl. headings —
+     General Sans has no Arabic glyphs, so the fallback chain handles it). */
+  [dir="rtl"] body,
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3,
+  [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
+    font-family: var(--font-arabic), var(--font-sans-brand), sans-serif;
+    letter-spacing: 0; /* never letter-space Arabic */
+  }
+
   .font-medium {
     font-weight: 500;
   }
-  
+
   .font-semibold {
     font-weight: 600;
   }
 }
 
+@layer components {
+  /* Semantic type styles from the design system. */
+  .t-display-1 {
+    font-family: var(--font-display), var(--font-arabic), sans-serif;
+    font-weight: 600;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+  .t-display-2 {
+    font-family: var(--font-display), var(--font-arabic), sans-serif;
+    font-weight: 600;
+    font-size: clamp(2.25rem, 5.5vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+  .t-display-1 em,
+  .t-display-2 em {
+    font-style: normal;
+    color: hsl(var(--clay-500));
+  }
+  .t-eyebrow {
+    font-family: var(--font-mono-brand), monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: hsl(var(--clay-600));
+  }
+  .t-lead {
+    font-size: clamp(1.125rem, 1.4vw, 1.375rem);
+    font-weight: 400;
+    line-height: 1.65;
+    color: hsl(var(--ink-700));
+  }
+  .t-caption {
+    font-family: var(--font-mono-brand), monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    color: hsl(var(--ink-500));
+    text-transform: uppercase;
+  }
+  [dir="rtl"] .t-eyebrow,
+  [dir="rtl"] .t-caption {
+    letter-spacing: 0; /* never letter-space Arabic */
+  }
+}
