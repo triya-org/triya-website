@@ -532,42 +532,97 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
 
     const roads = mergeSafe([...roadGeos, ...parkGeos]);
 
-    /* car fleet state. Each route carries a Bézier plaza-bypass: cars bow
-       smoothly around the roundabout edge instead of driving through the
-       hub. Different bow depths per avenue (9 vs 10.4) keep the four
-       corridors from intersecting each other. */
-    // J = where steering begins — well BEFORE the circle, so the turn-in is
-    // gentle and the bows stay inside the cleared roundabout annulus
-    const J = 15;
-    const mkBypass = (pts: [number, number][]) => {
-      const [a, b, c, d] = pts.map(([x, z]) => new THREE.Vector3(x, 0.46, z));
-      const curve = new THREE.CubicBezierCurve3(a, b, c, d);
-      return { curve, len: curve.getLength() };
+    /* car fleet state. Roundabout traversal done PROPERLY: each route is
+       lane-straight → short tangent merge → a TRUE CIRCULAR ARC riding the
+       carriageway (radius inside the 6.0–8.6 ring road) → merge out → lane.
+       Cars never touch plaza pavement. All traffic circulates CCW like a
+       real roundabout; x-avenue uses the inner orbit lane (6.7) and
+       z-avenue the outer (7.9), so the two never share a corridor. */
+    const J = 11.5; // lane hand-off — cars stay on the avenue until here
+    const D2R = Math.PI / 180;
+    const Y = 0.46;
+    /** circular arc (CCW, a0→a1 degrees) as bezier segments on a CurvePath */
+    const addArc = (path: THREE.CurvePath<THREE.Vector3>, R: number, a0: number, a1: number) => {
+      if (a1 < a0) a1 += 360;
+      const n = Math.ceil((a1 - a0) / 80);
+      for (let i = 0; i < n; i++) {
+        const s0 = (a0 + ((a1 - a0) * i) / n) * D2R;
+        const s1 = (a0 + ((a1 - a0) * (i + 1)) / n) * D2R;
+        const k = (4 / 3) * Math.tan((s1 - s0) / 4) * R;
+        const p0 = new THREE.Vector3(R * Math.cos(s0), Y, R * Math.sin(s0));
+        const p3 = new THREE.Vector3(R * Math.cos(s1), Y, R * Math.sin(s1));
+        const t0 = new THREE.Vector3(-Math.sin(s0), 0, Math.cos(s0));
+        const t1 = new THREE.Vector3(-Math.sin(s1), 0, Math.cos(s1));
+        path.add(
+          new THREE.CubicBezierCurve3(
+            p0,
+            p0.clone().addScaledVector(t0, k),
+            p3.clone().addScaledVector(t1, -k),
+            p3,
+          ),
+        );
+      }
+    };
+    /** full orbit path: merge-in cubic + carriageway arc + merge-out cubic */
+    const buildOrbit = (
+      pIn: [number, number],
+      fwd: [number, number],
+      R: number,
+      eIn: number,
+      eOut: number,
+      pOut: [number, number],
+    ) => {
+      const path = new THREE.CurvePath<THREE.Vector3>();
+      const P0 = new THREE.Vector3(pIn[0], Y, pIn[1]);
+      const F = new THREE.Vector3(fwd[0], 0, fwd[1]);
+      const E = new THREE.Vector3(R * Math.cos(eIn * D2R), Y, R * Math.sin(eIn * D2R));
+      const Et = new THREE.Vector3(-Math.sin(eIn * D2R), 0, Math.cos(eIn * D2R));
+      path.add(
+        new THREE.CubicBezierCurve3(
+          P0,
+          P0.clone().addScaledVector(F, 2),
+          E.clone().addScaledVector(Et, -1.7),
+          E,
+        ),
+      );
+      addArc(path, R, eIn, eOut);
+      const X = new THREE.Vector3(R * Math.cos(eOut * D2R), Y, R * Math.sin(eOut * D2R));
+      const Xt = new THREE.Vector3(-Math.sin(eOut * D2R), 0, Math.cos(eOut * D2R));
+      const P3 = new THREE.Vector3(pOut[0], Y, pOut[1]);
+      path.add(
+        new THREE.CubicBezierCurve3(
+          X,
+          X.clone().addScaledVector(Xt, 1.7),
+          P3.clone().addScaledVector(F, -2),
+          P3,
+        ),
+      );
+      return { curve: path, len: path.getLength() };
     };
     const carRoutes = [
       {
         axis: "x" as const,
         lane: -1.45,
         dir: 1,
-        bypass: mkBypass([[-J, -1.45], [-4.5, -8.6], [4.5, -8.6], [J, -1.45]]),
+        bypass: buildOrbit([-J, -1.45], [1, 0], 6.7, 207, 333, [J, -1.45]),
       },
       {
         axis: "x" as const,
         lane: 1.45,
         dir: -1,
-        bypass: mkBypass([[J, 1.45], [4.5, 8.6], [-4.5, 8.6], [-J, 1.45]]),
+        bypass: buildOrbit([J, 1.45], [-1, 0], 6.7, 27, 153, [-J, 1.45]),
       },
       {
         axis: "z" as const,
         lane: 1.45,
         dir: -1,
-        bypass: mkBypass([[1.45, J], [9.8, 4.5], [9.8, -4.5], [1.45, -J]]),
+        bypass: buildOrbit([1.45, J], [0, -1], 7.9, 117, 243, [1.45, -J]),
       },
       {
         axis: "z" as const,
         lane: -1.45,
         dir: 1,
-        bypass: mkBypass([[-1.45, -J], [-9.8, -4.5], [-9.8, 4.5], [-1.45, J]]),
+        bypass: buildOrbit([-1.45, -J], [0, 1], 7.9, 297, 63, [-1.45, J]),
       },
     ];
     // no pure-black cars — dark warm grey so they catch the key light
@@ -904,8 +959,8 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
           pz = c.parked.z;
           ry = c.parked.ry;
         } else {
-          // path = lane straight → Bézier plaza-bypass → lane straight
-          const J = 15;
+          // path = lane straight → merge + carriageway arc + merge → straight
+          const J = 11.5;
           const half = span / 2;
           const L1 = half - J;
           const T = 2 * L1 + c.route.bypass.len;
