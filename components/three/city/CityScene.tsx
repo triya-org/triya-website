@@ -112,6 +112,21 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   }, []);
   useEffect(() => () => wheelGeo.dispose(), [wheelGeo]);
 
+  /* CCTV bullet body: tapered cylinder along local +Z (front slightly wider,
+     like a lens hood) and its dark glass face disc */
+  const bulletGeo = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.15, 0.115, 0.52, 12);
+    g.rotateX(Math.PI / 2);
+    return g;
+  }, []);
+  useEffect(() => () => bulletGeo.dispose(), [bulletGeo]);
+  const camFaceGeo = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.135, 0.135, 0.035, 12);
+    g.rotateX(Math.PI / 2);
+    return g;
+  }, []);
+  useEffect(() => () => camFaceGeo.dispose(), [camFaceGeo]);
+
   /* ================= procedural city build (once) ================= */
   const city = useMemo(() => {
     const rand = mulberry32(20260611);
@@ -125,7 +140,10 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const treeGeos: THREE.BufferGeometry[] = [];
     const poleGeos: THREE.BufferGeometry[] = [];
     const lampPositions: THREE.Vector3[] = [];
-    const nodeCandidates: { pos: THREE.Vector3; h: number }[] = [];
+    const nodeCandidates: { pos: THREE.Vector3; h: number; roofIdx: number }[] = [];
+    // rooftop furniture (AC/antennas) is deferred until cameras are placed —
+    // a camera and an AC unit must never share a roof (they interpenetrate)
+    const roofs: { x: number; z: number; w: number; d: number; topY: number }[] = [];
 
     const col = new THREE.Color();
     const baseCream = new THREE.Color("#EFEAE0");
@@ -357,11 +375,20 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
               col.lerp(CLAY_SOFT, 0.15);
               paint(crown, col);
               buildingGeos.push(crown);
-              addRoof(x, z, w * 0.62, h + ch, d * 0.62);
-              nodeCandidates.push({ pos: new THREE.Vector3(x, h + ch, z), h: h + ch });
+              roofs.push({ x, z, w: w * 0.62, d: d * 0.62, topY: h + ch });
+              nodeCandidates.push({
+                pos: new THREE.Vector3(x, h + ch, z),
+                h: h + ch,
+                roofIdx: roofs.length - 1,
+              });
             } else {
-              addRoof(x, z, w, h, d);
-              if (h > 7) nodeCandidates.push({ pos: new THREE.Vector3(x, h, z), h });
+              roofs.push({ x, z, w, d, topY: h });
+              if (h > 7)
+                nodeCandidates.push({
+                  pos: new THREE.Vector3(x, h, z),
+                  h,
+                  roofIdx: roofs.length - 1,
+                });
             }
           }
         }
@@ -424,23 +451,44 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       }
     }
 
-    /* CCTV camera units on the tallest rooftops: mast + tilted body + glowing
-       lens. The "node" position is the LENS; arcs emanate from it. */
+    /* CCTV camera units on the tallest rooftops — the ICONIC silhouette:
+       white bullet body on an L-bracket mast, pitched down at the street.
+       The "node" position is the LENS; arcs emanate from it. */
     nodeCandidates.sort((a, b) => b.h - a.h);
     const nodes: THREE.Vector3[] = [];
     const nodeYaws: number[] = [];
+    const cameraRoofs = new Set<number>();
     nodeCandidates.slice(0, high ? 30 : 16).forEach((c) => {
+      cameraRoofs.add(c.roofIdx);
       const pos = c.pos
         .clone()
-        .add(new THREE.Vector3((rand() - 0.5) * 1.2, 0.42, (rand() - 0.5) * 1.2));
+        .add(new THREE.Vector3((rand() - 0.5) * 1.2, 0.46, (rand() - 0.5) * 1.2));
       nodes.push(pos);
       // each camera faces roughly toward the plaza core, with scatter
-      nodeYaws.push(Math.atan2(-pos.x, -pos.z) + (rand() - 0.5) * 0.5);
-      // mast from rooftop up to the body
-      const mast = new THREE.CylinderGeometry(0.035, 0.05, 0.42, 6);
-      mast.translate(pos.x, pos.y - 0.3, pos.z);
+      const yaw = Math.atan2(-pos.x, -pos.z) + (rand() - 0.5) * 0.5;
+      nodeYaws.push(yaw);
+      // mast set BEHIND the body + L-bracket arm reaching forward to it
+      const mx = pos.x - Math.sin(yaw) * 0.5;
+      const mz = pos.z - Math.cos(yaw) * 0.5;
+      const roofY = pos.y - 0.46;
+      const mast = new THREE.CylinderGeometry(0.04, 0.055, 0.68, 6);
+      mast.translate(mx, roofY + 0.34, mz);
       paint(mast, trunkCol);
       poleGeos.push(mast);
+      const arm = new THREE.BoxGeometry(0.06, 0.06, 0.42);
+      arm.rotateY(yaw);
+      arm.translate(
+        pos.x - Math.sin(yaw) * 0.32,
+        pos.y + 0.16,
+        pos.z - Math.cos(yaw) * 0.32,
+      );
+      paint(arm, trunkCol);
+      poleGeos.push(arm);
+    });
+
+    // rooftop furniture only on roofs WITHOUT a camera (no interpenetration)
+    roofs.forEach((r, i) => {
+      if (!cameraRoofs.has(i)) addRoof(r.x, r.z, r.w, r.topY, r.d);
     });
 
     const buildings = mergeSafe(buildingGeos);
@@ -836,18 +884,22 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     mesh.instanceMatrix.needsUpdate = true;
   };
 
-  /** static camera bodies: yaw toward the hub, pitched down at the street */
-  const setupCamBodies = (mesh: THREE.InstancedMesh | null) => {
+  /** static camera units: yaw toward the hub, pitched down at the street.
+      offset = body-local +Z distance from the lens (node) position */
+  const PITCH = 0.5;
+  const placeCamParts = (mesh: THREE.InstancedMesh | null, offset: number) => {
     if (!mesh) return;
     dummy.rotation.order = "YXZ";
+    const cp = Math.cos(PITCH);
+    const sp = Math.sin(PITCH);
     city.nodes.forEach((n, i) => {
       const yaw = city.nodeYaws[i];
-      dummy.position.set(
-        n.x - Math.sin(yaw) * 0.26,
-        n.y,
-        n.z - Math.cos(yaw) * 0.26,
-      );
-      dummy.rotation.set(0.34, yaw, 0);
+      // local +Z (front) in world, after yaw then downward pitch
+      const fx = Math.sin(yaw) * cp;
+      const fy = -sp;
+      const fz = Math.cos(yaw) * cp;
+      dummy.position.set(n.x - fx * offset, n.y - fy * offset, n.z - fz * offset);
+      dummy.rotation.set(PITCH, yaw, 0);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
@@ -856,6 +908,8 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     dummy.rotation.order = "XYZ";
     dummy.rotation.set(0, 0, 0);
   };
+  const setupCamBodies = (m: THREE.InstancedMesh | null) => placeCamParts(m, 0.27);
+  const setupCamFaces = (m: THREE.InstancedMesh | null) => placeCamParts(m, 0.02);
 
   const setupBodies = (mesh: THREE.InstancedMesh | null) => {
     if (!mesh) return;
@@ -1258,15 +1312,24 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         <meshStandardMaterial color="#2C2B26" roughness={0.9} />
       </instancedMesh>
 
-      {/* CCTV camera bodies (static, aimed at the streets) */}
+      {/* CCTV bullet bodies — white, the iconic silhouette */}
       <instancedMesh
         ref={setupCamBodies}
         args={[undefined, undefined, city.nodes.length]}
         frustumCulled={false}
         castShadow={high}
+        geometry={bulletGeo}
       >
-        <boxGeometry args={[0.34, 0.28, 0.55]} />
-        <meshStandardMaterial color="#3D3A33" roughness={0.6} fog={false} />
+        <meshStandardMaterial color="#F6F2E8" roughness={0.45} fog={false} />
+      </instancedMesh>
+      {/* dark glass faces */}
+      <instancedMesh
+        ref={setupCamFaces}
+        args={[undefined, undefined, city.nodes.length]}
+        frustumCulled={false}
+        geometry={camFaceGeo}
+      >
+        <meshStandardMaterial color="#2C2B26" roughness={0.25} fog={false} />
       </instancedMesh>
 
       {/* CCTV lenses — the glowing nodes of the network */}
@@ -1275,7 +1338,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         args={[undefined, undefined, city.nodes.length]}
         frustumCulled={false}
       >
-        <sphereGeometry args={[0.13, 12, 12]} />
+        <sphereGeometry args={[0.085, 12, 12]} />
         <meshStandardMaterial
           ref={nodeMatRef}
           color="#FFFFFF"
