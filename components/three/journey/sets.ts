@@ -5,6 +5,7 @@ import {
   paint,
   mergeSafe,
   bakeAngularPop,
+  bakeDropHeights,
 } from "@/components/three/lib/popGrow";
 
 /* ============================================================
@@ -43,9 +44,10 @@ const c = new THREE.Color();
 function finish(
   groups: Record<keyof IndustrySet, THREE.BufferGeometry[]>,
 ): IndustrySet {
-  (Object.keys(groups) as (keyof IndustrySet)[]).forEach((k) =>
-    bakeAngularPop(groups[k], SEAM),
-  );
+  (Object.keys(groups) as (keyof IndustrySet)[]).forEach((k) => {
+    bakeAngularPop(groups[k], SEAM);
+    bakeDropHeights(groups[k]); // rigid slide — props never deform
+  });
   return {
     structures: mergeSafe(groups.structures),
     windowsDark: mergeSafe(groups.windowsDark),
@@ -161,7 +163,8 @@ export function buildRetail(): IndustrySet {
   box(G.structures, 14.5, 0.3, 0.3, 0, 3.7, 5.2, SAND);
   // back + side walls
   box(G.structures, 16, 4.2, 0.35, 0, 2.1, -5.3, APRICOT);
-  box(G.structures, 0.35, 4.2, 10.8, -7.9, 2.1, 0, SAND);
+  // east wall only — the camera-side (west) face stays OPEN (dollhouse
+  // cutaway: the aisles, queue and tills must be visible from the hold)
   box(G.structures, 0.35, 4.2, 10.8, 7.9, 2.1, 0, SAND);
   // gondola rows (pastel shelving)
   const rowCols = [APRICOT, SAGE, ROSE, BLUSH];
@@ -238,10 +241,13 @@ export function buildSmartCities(): IndustrySet {
       // a few windows
       for (let wi = 0; wi < 4; wi++) {
         const lit = rand() < 0.25;
-        const g = new THREE.PlaneGeometry(0.4, 0.55);
-        g.translate(bx - w / 4 + (wi % 2) * (w / 2), 1 + Math.floor(wi / 2) * 1.2, bz + w / 2 + 0.02);
-        paint(g, c.set(lit ? WIN_LIT : WIN_DARK));
-        (lit ? G.windowsLit : G.windowsDark).push(g);
+        for (const sz of [1, -1]) {
+          const g = new THREE.PlaneGeometry(0.4, 0.55);
+          if (sz < 0) g.rotateY(Math.PI);
+          g.translate(bx - w / 4 + (wi % 2) * (w / 2), 1 + Math.floor(wi / 2) * 1.2, bz + sz * (w / 2 + 0.02));
+          paint(g, c.set(lit ? WIN_LIT : WIN_DARK));
+          (lit ? G.windowsLit : G.windowsDark).push(g);
+        }
       }
     }
   });
@@ -294,6 +300,14 @@ export function buildEvents(): IndustrySet {
     box(G.props, 0.3, 2.6, 0.3, -8.5, 1.3, gz + 0.9, LILAC, 0, 0.05);
     box(G.props, 0.3, 0.35, 2.1, -8.5, 2.75, gz, BLUSH, 0, 0.05);
   }
+  // VIP corridor: held negative space outlined by a cream-300 hairline
+  for (const [w_, d_, x_, z_] of [
+    [4.6, 0.06, -3.5, 5.6],
+    [4.6, 0.06, -3.5, 7.2],
+    [0.06, 1.66, -5.8, 6.4],
+    [0.06, 1.66, -1.2, 6.4],
+  ] as const)
+    box(G.props, w_, 0.16, d_, x_, 0.14, z_, CREAM300);
   // barrier ribbons guiding to gates
   for (let r = 0; r < 4; r++)
     box(G.props, 5.5, 0.5, 0.08, -6.2, 0.45, -4.6 + r * 2.4, CREAM300);

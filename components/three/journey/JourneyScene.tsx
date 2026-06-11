@@ -6,10 +6,11 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import {
   window01,
-  addPopGrow,
-  makePopDepthMaterial,
+  addPopSlide,
+  makeSlideDepthMaterial,
   type PopShaderStore,
 } from "@/components/three/lib/popGrow";
+import { buildMurmuration } from "./murmuration";
 import { buildAllSets, type IndustrySet } from "./sets";
 
 /* ============================================================
@@ -104,14 +105,14 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     [],
   );
   const depthMats = useMemo(
-    () => popStores.map((st) => makePopDepthMaterial(st)),
+    () => popStores.map((st) => makeSlideDepthMaterial(st)),
     [popStores],
   );
   const setGroupRefs = useRef<(THREE.Group | null)[]>([]);
   const popMat = (idx: number) => (m: THREE.MeshStandardMaterial | null) => {
     if (m && !m.userData.popped) {
       m.userData.popped = true;
-      addPopGrow(m, popStores[idx]);
+      addPopSlide(m, popStores[idx]);
     }
   };
 
@@ -151,7 +152,7 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     [bulletGeo, faceGeo, mastGeo],
   );
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const PITCH = 0.42;
+  const PITCH = 0.5;
   const placeRing = (mesh: THREE.InstancedMesh | null, offset: number, geoY = 0) => {
     if (!mesh) return;
     dummy.rotation.order = "YXZ";
@@ -229,10 +230,10 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
      dot floats over the subject, arc goes to the nearest rim lens (world). */
   const VIGNETTES = useMemo(
     () => [
-      { dot: new THREE.Vector3(-4.2, 2.6, -0.5) }, // M: bare-headed worker zone
-      { dot: new THREE.Vector3(-2.2, 2.4, 3.0) }, // R: queue at counter
-      { dot: new THREE.Vector3(0.8, 2.0, 0.8) }, // SC: stalled car
-      { dot: new THREE.Vector3(-8.0, 3.4, 0.0) }, // E: swelling gate
+      { dot: new THREE.Vector3(-1.2, 2.9, -0.5) }, // M: bare-headed worker zone
+      { dot: new THREE.Vector3(0.8, 2.7, 3.0) }, // R: queue at counter
+      { dot: new THREE.Vector3(3.8, 2.3, 0.8) }, // SC: stalled car
+      { dot: new THREE.Vector3(-5.0, 3.7, 0.0) }, // E: swelling gate
     ],
     [],
   );
@@ -257,8 +258,8 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
 
   /* ---------- actor pools (time-driven ambience) ---------- */
   const capsGeo = useMemo(() => {
-    const g = new THREE.CapsuleGeometry(0.16, 0.42, 3, 8);
-    g.translate(0, 0.45, 0);
+    const g = new THREE.CapsuleGeometry(0.2, 0.55, 3, 8);
+    g.translate(0, 0.52, 0);
     return g;
   }, []);
   const boxGeo = useMemo(() => new THREE.BoxGeometry(0.5, 0.42, 0.5), []);
@@ -271,6 +272,14 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
   );
   const capsRef = useRef<THREE.InstancedMesh>(null);
   const boxesRef = useRef<THREE.InstancedMesh>(null);
+  const hatsRef = useRef<THREE.InstancedMesh>(null);
+  const armUpperRef = useRef<THREE.Mesh>(null);
+  const armForeRef = useRef<THREE.Mesh>(null);
+  const hatGeo = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.27, 0.3, 0.09, 10);
+    return g;
+  }, []);
+  useEffect(() => () => hatGeo.dispose(), [hatGeo]);
   const CAPS = 160;
   const BOXES = 24;
   /* per-industry actor plans: position fn(local t, index) in plinth space */
@@ -281,15 +290,17 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
         i < 6
           ? [-6 + ((i * 2.3 + t * 0.6) % 12), 0.28, 3.4 + Math.sin(i * 7) * 0.3]
           : null,
-      // R: 24 shoppers drifting aisles
-      (t, i) =>
-        i < 24
-          ? [
-              -5.5 + ((i % 4) * 3 + Math.sin(t * 0.25 + i) * 1.1),
-              0.24,
-              -3.6 + ((i * 1.7 + t * 0.5) % 7.4),
-            ]
-          : null,
+      // R: 5 queue at the first till + 19 drifting the aisles
+      (t, i) => {
+        if (i < 5) return [-2.2 - i * 0.12, 0.24, 2.5 - i * 0.62];
+        if (i < 24)
+          return [
+            -5.5 + ((i % 4) * 3 + Math.sin(t * 0.25 + i) * 1.1),
+            0.24,
+            -3.6 + ((i * 1.7 + t * 0.5) % 7.4),
+          ];
+        return null;
+      },
       // SC: 8 pedestrians on crosswalks
       (t, i) =>
         i < 8
@@ -314,11 +325,11 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
       new THREE.CatmullRomCurve3(
         [
           new THREE.Vector3(-30, 9, 34),
-          new THREE.Vector3(-19.5, 6, 22.5),
+          new THREE.Vector3(-15, 4.8, 14),
           new THREE.Vector3(-21, 15, 27),
           new THREE.Vector3(-19, 16, 24),
-          new THREE.Vector3(-15, 28, 32),
-          new THREE.Vector3(-20, 7, 21),
+          new THREE.Vector3(-12, 26, 25),
+          new THREE.Vector3(-17, 5.5, 16),
           new THREE.Vector3(0, 42, 48),
         ],
         false,
@@ -329,24 +340,60 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
   );
   const LOOKS = useMemo(
     () => [
-      new THREE.Vector3(3, 3, 0),
-      new THREE.Vector3(3.5, 2.8, -1),
-      new THREE.Vector3(3, 2.5, -2),
-      new THREE.Vector3(3.5, 2.2, -1),
-      new THREE.Vector3(4, 0.5, 0),
-      new THREE.Vector3(5, 3.5, -5),
-      new THREE.Vector3(0, 2.3, 0),
+      // NEGATIVE x: lookAt() CENTERS its target — to compose the maquette in
+      // the right two-thirds (copy owns the left), aim left of the subject
+      new THREE.Vector3(-4, 2.6, 1),
+      new THREE.Vector3(-4, 2.4, 1),
+      new THREE.Vector3(-3.5, 3, 0),
+      new THREE.Vector3(-4, 2.0, 0),
+      new THREE.Vector3(-4, 0.5, 2),
+      new THREE.Vector3(-1.5, 2.4, -2),
+      new THREE.Vector3(-2, 3, 0),
     ],
     [],
   );
-  // parks hold near-still; turns carry the drift
+  // parks hold near-still; turns carry the drift. U is derived from the
+  // anchors' TRUE arc-length parameters (CatmullRom anchors are NOT at i/N).
+  const anchorU = useMemo(() => {
+    const pts = camPath.points as THREE.Vector3[];
+    const SAMPLES = 400;
+    const us = pts.map(() => 0);
+    const best = pts.map(() => Infinity);
+    const probe = new THREE.Vector3();
+    for (let s = 0; s <= SAMPLES; s++) {
+      const u = s / SAMPLES;
+      camPath.getPointAt(u, probe);
+      pts.forEach((a, i) => {
+        const d = probe.distanceToSquared(a);
+        if (d < best[i]) {
+          best[i] = d;
+          us[i] = u;
+        }
+      });
+    }
+    return us; // 7 entries
+  }, [camPath]);
   const P = useMemo(() => [0, 0.15, 0.27, 0.42, 0.54, 0.69, 0.81, 0.93, 1], []);
-  const U = useMemo(() => [0.0, 0.06, 0.28, 0.34, 0.55, 0.6, 0.78, 0.83, 1.0], []);
+  const U = useMemo(() => {
+    const a = anchorU;
+    return [
+      a[0],
+      a[1], // P1 hold
+      (a[2] + a[3]) / 2,
+      a[3], // P2 hold
+      a[4] - 0.015, // P3 hold window
+      a[4] + 0.015,
+      a[5] - 0.015, // P4 hold window
+      a[5] + 0.015,
+      1.0,
+    ];
+  }, [anchorU]);
   const remapU = (p: number) => {
     let i = 0;
     while (i < P.length - 2 && p > P[i + 1]) i++;
     return U[i] + ((U[i + 1] - U[i]) * (p - P[i])) / (P[i + 1] - P[i]);
   };
+  const AXIS_Y = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const posCur = useMemo(() => new THREE.Vector3(-30, 9, 34), []);
   const lookCur = useMemo(() => new THREE.Vector3(3, 3, 0), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
@@ -358,6 +405,22 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     scene.fog = new THREE.Fog(PAPER, baseFog.near, baseFog.far);
     scene.background = new THREE.Color(PAPER);
   }, [scene, baseFog]);
+
+  /* exit murmuration — Events set thins into the living-fabric points */
+  const murm = useMemo(
+    () =>
+      buildMurmuration(
+        new THREE.Box3(new THREE.Vector3(-9, 0, -5.5), new THREE.Vector3(8.5, 5, 6)),
+      ),
+    [],
+  );
+  useEffect(
+    () => () => {
+      murm.geo.dispose();
+      murm.mat.dispose();
+    },
+    [murm],
+  );
 
   /* dev draw-call budget assertion */
   const budgetWarned = useRef(false);
@@ -412,6 +475,13 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     const exitW = window01(p, FRACTIONS.exit[0], 1);
     if (exitW > 0) setPop[3] = Math.min(setPop[3], 1 - exitW * 0.7);
 
+    /* murmuration: continuity before the set fade passes 50% */
+    murm.points.visible = exitW > 0.01;
+    if (murm.points.visible) {
+      murm.mat.uniforms.uProgress.value = exitW;
+      murm.mat.uniforms.uTime.value = t;
+    }
+
     popStores.forEach((st, i) => {
       st.current.forEach((sh) => (sh.uniforms.uPop.value = setPop[i]));
       const g = setGroupRefs.current[i];
@@ -445,8 +515,14 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     posCur.lerp(tmp, 0.08);
     camera.position.copy(posCur);
     // piecewise look targets across the 7 spline anchors
-    const seg = Math.min(5, Math.floor(remapU(p) * 6));
-    const segT = remapU(p) * 6 - seg;
+    const uNow = remapU(p);
+    let seg = 0;
+    while (seg < anchorU.length - 2 && uNow > anchorU[seg + 1]) seg++;
+    const segT = THREE.MathUtils.clamp(
+      (uNow - anchorU[seg]) / Math.max(1e-5, anchorU[seg + 1] - anchorU[seg]),
+      0,
+      1,
+    );
     tmp2.copy(LOOKS[seg]).lerp(LOOKS[Math.min(6, seg + 1)], segT);
     tmp2.x *= dir;
     lookCur.lerp(tmp2, 0.08);
@@ -465,7 +541,7 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     if (dotRef.current && plinthGroup.current) {
       const v = VIGNETTES[parkIdx];
       // dot position in WORLD (vignette anchors rotate with the plinth)
-      tmp.copy(v.dot).applyAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
+      tmp.copy(v.dot).applyAxisAngle(AXIS_Y, -angle);
       dotRef.current.position.copy(tmp);
       const ignite = window01(parkLocal, 0.35, 0.42);
       const fade = 1 - window01(parkLocal, 0.9, 1);
@@ -484,11 +560,21 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
             nearest = u.pos;
           }
         });
-        const mid = tmp.clone().lerp(nearest, 0.5);
-        mid.y += 2.2;
-        const pts = new THREE.QuadraticBezierCurve3(tmp.clone(), mid, nearest).getPoints(48);
+        // quadratic bezier evaluated inline — zero allocation
         const attr = detArcGeo.attributes.position as THREE.BufferAttribute;
-        pts.forEach((pt, i) => attr.setXYZ(i, pt.x, pt.y, pt.z));
+        const mx = (tmp.x + nearest.x) / 2;
+        const my = (tmp.y + nearest.y) / 2 + 2.2;
+        const mz = (tmp.z + nearest.z) / 2;
+        for (let k = 0; k <= 48; k++) {
+          const tt = k / 48;
+          const it = 1 - tt;
+          attr.setXYZ(
+            k,
+            it * it * tmp.x + 2 * it * tt * mx + tt * tt * nearest.x,
+            it * it * tmp.y + 2 * it * tt * my + tt * tt * nearest.y,
+            it * it * tmp.z + 2 * it * tt * mz + tt * tt * nearest.z,
+          );
+        }
         attr.needsUpdate = true;
         const drawW = window01(parkLocal, 0.42, 0.55);
         detArcGeo.setDrawRange(0, Math.floor(drawW * 49));
@@ -503,16 +589,16 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
     if (payoffTill.current) {
       (payoffTill.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
         parkIdx === 1 ? pay * 1.6 : 0;
-      payoffTill.current.visible = parkIdx === 1;
+      payoffTill.current.visible = parkIdx === 1 && turnIdx < 0;
     }
     if (payoffSignal.current) {
       const m = payoffSignal.current.material as THREE.MeshStandardMaterial;
       m.emissiveIntensity = parkIdx === 2 ? 0.4 + pay * 1.2 : 0;
       m.emissive.set(parkIdx === 2 && pay > 0.6 ? "#A8C09A" : CLAY);
-      payoffSignal.current.visible = parkIdx === 2;
+      payoffSignal.current.visible = parkIdx === 2 && turnIdx < 0;
     }
     if (payoffGate.current) {
-      payoffGate.current.visible = parkIdx === 3;
+      payoffGate.current.visible = parkIdx === 3 && turnIdx < 0;
       payoffGate.current.rotation.z = -pay * 1.2; // barrier swings open
       (payoffGate.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
         parkIdx === 3 ? 0.3 + pay : 0;
@@ -540,7 +626,7 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
           dummy.scale.setScalar(0.001);
           dummy.position.set(0, -5, 0);
         } else {
-          tmp.set(lp[0], lp[1], lp[2]).applyAxisAngle(tmp2.set(0, 1, 0), -angle);
+          tmp.set(lp[0] + 3, lp[1] + 0.28, lp[2]).applyAxisAngle(AXIS_Y, -angle);
           dummy.position.copy(tmp);
           dummy.scale.setScalar(Math.max(0.001, scl * Math.min(1, eE * 2)));
         }
@@ -549,12 +635,41 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
         caps.setMatrixAt(i, dummy.matrix);
       }
       caps.instanceMatrix.needsUpdate = true;
+      // hard hats ride the first six workers — index 2 is the BARE HEAD
+      const hats = hatsRef.current;
+      if (hats) {
+        for (let i = 0; i < 6; i++) {
+          const lp = parkIdx === 0 && turnIdx < 0 && i !== 2 ? actorPlan[0](t, i) : null;
+          if (!lp) {
+            dummy.position.set(0, -5, 0);
+            dummy.scale.setScalar(0.001);
+          } else {
+            tmp.set(lp[0] + 3, lp[1] + 0.28 + 1.12, lp[2]).applyAxisAngle(AXIS_Y, -angle);
+            dummy.position.copy(tmp);
+            dummy.scale.setScalar(1);
+          }
+          dummy.rotation.set(0, 0, 0);
+          dummy.updateMatrix();
+          hats.setMatrixAt(i, dummy.matrix);
+        }
+        hats.instanceMatrix.needsUpdate = true;
+      }
+      // robot arm pick loop (Manufacturing only, clock time)
+      if (armUpperRef.current && armForeRef.current) {
+        const sw = Math.sin(t * 0.9);
+        armUpperRef.current.rotation.y = -angle + sw * 0.7;
+        armUpperRef.current.rotation.z = 0.5 + Math.sin(t * 1.3) * 0.25;
+        armForeRef.current.rotation.z = -0.9 + Math.cos(t * 1.1) * 0.3;
+        const armVis = setPop[0] > 0.6;
+        armUpperRef.current.visible = armVis;
+        armForeRef.current.visible = armVis;
+      }
     }
     const boxes = boxesRef.current;
     if (boxes) {
       for (let i = 0; i < BOXES; i++) {
         let lp: [number, number, number] | null = null;
-        if (parkIdx === 0) lp = [-6 + ((i * 1.9 + t * 1.6) % 11.5), 1.35, 1.6]; // conveyor
+        if (parkIdx === 0) lp = [-6 + ((i * 1.9 + t * 1.6) % 11.5), 1.43, 1.6]; // conveyor
         else if (parkIdx === 2 && i < 8)
           lp = i % 2 ? [-9 + ((t * 2.2 + i * 2.7) % 18), 0.35, 1.1] : [1.1, 0.35, -9 + ((t * 2 + i * 3.1) % 18)];
         else if (parkIdx === 3 && i < 6) lp = [3 + (i % 3) * 1.2, 1.35, -1.5 + Math.floor(i / 3) * 1.2];
@@ -562,11 +677,15 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
           dummy.scale.setScalar(0.001);
           dummy.position.set(0, -5, 0);
         } else {
-          tmp.set(lp[0], lp[1], lp[2]).applyAxisAngle(tmp2.set(0, 1, 0), -angle);
+          tmp.set(lp[0] + 3, lp[1] + 0.28, lp[2]).applyAxisAngle(AXIS_Y, -angle);
           dummy.position.copy(tmp);
-          dummy.scale.setScalar(1);
+          // cars read as cars, not cubes (D9e)
+          if (parkIdx === 2) dummy.scale.set(1.7, 0.8, 1);
+          else dummy.scale.setScalar(1);
+          // boxes hand off with the actor swap (D9c)
+          if (turnIdx >= 0) dummy.scale.multiplyScalar(Math.max(0.001, Math.abs(window01((p - FRACTIONS.turns[turnIdx][0]) / (FRACTIONS.turns[turnIdx][1] - FRACTIONS.turns[turnIdx][0]), 0.45, 0.55) - 0.5) * 2));
         }
-        dummy.rotation.set(0, turnIdx >= 0 ? 0 : 0, 0);
+        dummy.rotation.set(0, 0, 0);
         dummy.updateMatrix();
         boxes.setMatrixAt(i, dummy.matrix);
       }
@@ -593,7 +712,7 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
   return (
     <group>
       {/* lighting: static ortho shadow box sized to the plinth (never moves) */}
-      <hemisphereLight args={["#FFF4E4", "#E2C4B4", 0.55]} />
+      <hemisphereLight args={["#FFF8EC", "#E8D2C2", 0.8]} />
       <directionalLight
         ref={keyLightRef}
         position={[26, 22, 14]}
@@ -616,7 +735,12 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
       </mesh>
       <mesh position={[0, -0.05, 0]} receiveShadow>
         <cylinderGeometry args={[14.5, 14.9, 0.6, 64]} />
-        <meshStandardMaterial color="#EFEADF" roughness={1} />
+        <meshStandardMaterial color="#F3EFE4" roughness={1} />
+      </mesh>
+      {/* crisp cream rim — the maquette reads as a museum object */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.262, 0]}>
+        <ringGeometry args={[13.9, 14.5, 64]} />
+        <meshStandardMaterial color="#E8E4D8" roughness={1} />
       </mesh>
 
       {/* THE TURNTABLE — everything industry-specific lives in here */}
@@ -626,6 +750,8 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
           return (
             <group
               key={key}
+              position={[3, 0.28, 0]} /* +y: floors above the plinth top;
+                +x: the hub gets a forecourt instead of sitting inside sets */
               ref={(g) => {
                 setGroupRefs.current[i] = g;
               }}
@@ -660,18 +786,39 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
           );
         })}
 
+        {/* exit murmuration (12k points, 140 clay motes → the hub) */}
+        <primitive object={murm.points} />
+
         {/* payoff elements (clay budget: ONE per park) */}
-        <mesh ref={payoffTill} position={[2.2, 1.35, 3.6]} visible={false}>
+        <mesh ref={payoffTill} position={[5.2, 1.57, 3.6]} visible={false}>
           <boxGeometry args={[0.22, 0.34, 0.22]} />
           <meshStandardMaterial color={CLAY} emissive={CLAY} emissiveIntensity={0} fog={false} />
         </mesh>
-        <mesh ref={payoffSignal} position={[2.6, 3.1, 2.6]} visible={false}>
+        <mesh ref={payoffSignal} position={[5.6, 3.33, 2.8]} visible={false}>
           <boxGeometry args={[0.3, 0.26, 0.14]} />
           <meshStandardMaterial color={INK_SAFE} emissive={CLAY} emissiveIntensity={0} fog={false} />
         </mesh>
-        <mesh ref={payoffGate} position={[-8.5, 1.1, 3.4]} visible={false}>
+        <mesh ref={payoffGate} position={[-5.5, 1.38, 3.4]} visible={false}>
           <boxGeometry args={[0.12, 1.6, 0.12]} />
           <meshStandardMaterial color={CLAY} emissive={CLAY} emissiveIntensity={0} fog={false} />
+        </mesh>
+
+        {/* hard hats (clay-free sand discs; worker #2 is conspicuously bare) */}
+        <instancedMesh ref={hatsRef} args={[hatGeo, undefined, 6]} frustumCulled={false}>
+          <meshStandardMaterial color="#E5C97B" roughness={0.7} />
+        </instancedMesh>
+        {/* robot arm: base + upper + forearm, hinged on clock time */}
+        <mesh position={[4.6, 0.78, -0.9]} castShadow>
+          <cylinderGeometry args={[0.45, 0.55, 1.0, 12]} />
+          <meshStandardMaterial color="#C3CCC9" roughness={0.7} />
+        </mesh>
+        <mesh ref={armUpperRef} position={[4.6, 1.35, -0.9]} castShadow>
+          <boxGeometry args={[0.32, 2.0, 0.32]} />
+          <meshStandardMaterial color="#CFD3BC" roughness={0.7} />
+        </mesh>
+        <mesh ref={armForeRef} position={[4.6, 2.6, -0.9]} castShadow>
+          <boxGeometry args={[0.24, 1.5, 0.24]} />
+          <meshStandardMaterial color="#C3CCC9" roughness={0.7} />
         </mesh>
 
         {/* actor pools */}
@@ -684,7 +831,7 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
       </group>
 
       {/* CCTV ring — FIXED in world (awareness is the constant) */}
-      <instancedMesh ref={(m) => placeRing(m, 0.27)} args={[bulletGeo, undefined, 12]} frustumCulled={false} castShadow>
+      <instancedMesh ref={(m) => placeRing(m, 0.16)} args={[bulletGeo, undefined, 12]} frustumCulled={false} castShadow>
         <meshStandardMaterial color="#F6F2E8" roughness={0.45} fog={false} />
       </instancedMesh>
       <instancedMesh ref={(m) => placeRing(m, 0.02)} args={[faceGeo, undefined, 12]} frustumCulled={false}>
@@ -733,8 +880,8 @@ export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneyScenePro
 
       {/* detection rig */}
       <mesh ref={dotRef} visible={false}>
-        <sphereGeometry args={[0.16, 12, 12]} />
-        <meshStandardMaterial color="#FFFFFF" emissive={CLAY} emissiveIntensity={1.2} fog={false} />
+        <sphereGeometry args={[0.3, 12, 12]} />
+        <meshStandardMaterial color="#FFFFFF" emissive={CLAY} emissiveIntensity={2.0} fog={false} />
       </mesh>
       <primitive object={detLine} />
     </group>

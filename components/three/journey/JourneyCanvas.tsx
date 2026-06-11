@@ -50,10 +50,10 @@ export function JourneyCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: Jo
       <JourneyScene progressRef={progressRef} entryRef={entryRef} dir={dir} />
       <EffectComposer multisampling={4}>
         <Bloom mipmapBlur intensity={0.75} luminanceThreshold={1} luminanceSmoothing={0.15} />
-        <BrightnessContrast brightness={0} contrast={0.06} />
-        <HueSaturation saturation={0.14} />
-        <Vignette eskil={false} offset={0.28} darkness={0.32} />
-        <Noise premultiply opacity={0.5} />
+        <BrightnessContrast brightness={0.04} contrast={0.05} />
+        <HueSaturation saturation={0.12} />
+        <Vignette eskil={false} offset={0.3} darkness={0.2} />
+        <Noise premultiply opacity={0.25} />
       </EffectComposer>
     </Canvas>
   );

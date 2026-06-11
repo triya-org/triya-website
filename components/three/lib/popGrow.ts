@@ -102,7 +102,7 @@ export function bakeAngularPop(geos: THREE.BufferGeometry[], seamAngle: number) 
     g.computeBoundingBox();
     g.boundingBox!.getCenter(c);
     const a = Math.atan2(c.z, c.x);
-    const key = ((((a - seamAngle) % TAU) + TAU) % TAU) / (Math.PI / 2);
+    const key = ((((a - seamAngle) % TAU) + TAU) % TAU) / TAU;
     setPopKey(g, THREE.MathUtils.clamp(key, 0, 1));
   });
 }
@@ -144,5 +144,57 @@ export function makePopDepthMaterial(store: PopShaderStore) {
     depthPacking: THREE.RGBADepthPacking,
   });
   depth.onBeforeCompile = (shader) => injectPop(shader, store);
+  return depth;
+}
+
+
+/* ================= rigid slide pop (Journey turntable) =================
+   The city's y-SQUASH pop reads as growth for ground-anchored boxes, but
+   elevated/slanted props (sawtooth roofs, trusses) "melt" under it. The
+   Journey uses RIGID SLIDE instead: each prop translates down through the
+   plinth as a unit (aDrop = its own top height), staying undeformed —
+   literally telescoping into the paper. */
+
+/** bake per-geo drop heights (rigid slide distance) */
+export function bakeDropHeights(geos: THREE.BufferGeometry[]) {
+  geos.forEach((g) => {
+    g.computeBoundingBox();
+    const drop = Math.max(0.6, g.boundingBox!.max.y + 0.4);
+    const n = g.attributes.position.count;
+    g.setAttribute(
+      "aDrop",
+      new THREE.BufferAttribute(new Float32Array(n).fill(drop), 1),
+    );
+  });
+}
+
+const SLIDE_VERTEX_DECL =
+  "#include <common>\nattribute float aPop;\nattribute float aDrop;\nuniform float uPop;";
+const SLIDE_VERTEX_CHUNK = `#include <begin_vertex>
+        {
+          float pgap = 0.85;
+          float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
+          float pe = 1.0 - pow(1.0 - pk, 3.0);
+          transformed.y -= (1.0 - pe) * aDrop;
+        }`;
+
+function injectSlide(
+  shader: { uniforms: Record<string, unknown>; vertexShader: string },
+  store: PopShaderStore,
+) {
+  shader.uniforms.uPop = { value: 1 };
+  shader.vertexShader = shader.vertexShader
+    .replace("#include <common>", SLIDE_VERTEX_DECL)
+    .replace("#include <begin_vertex>", SLIDE_VERTEX_CHUNK);
+  store.current.push(shader as never);
+}
+
+export function addPopSlide(mat: THREE.Material, store: PopShaderStore) {
+  mat.onBeforeCompile = (shader) => injectSlide(shader, store);
+}
+
+export function makeSlideDepthMaterial(store: PopShaderStore) {
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  depth.onBeforeCompile = (shader) => injectSlide(shader, store);
   return depth;
 }

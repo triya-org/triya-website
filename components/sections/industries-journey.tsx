@@ -154,7 +154,7 @@ export function IndustriesJourney({ language }: IndustriesJourneyProps) {
         if (!el) return;
         tl.to(el, { opacity: 1, y: 0, duration: 0.012 }, a + 0.009);
         if (i < 3) tl.to(el, { opacity: 0, y: -26, duration: 0.012 }, b - 0.027);
-        // scrim 4 holds through exit
+        else tl.to(el, { opacity: 0, y: -26, duration: 0.014 }, 0.945); // bow out before the cover
       });
       // turn breadcrumbs
       FRACTIONS.turns.forEach(([a, b], i) => {
@@ -179,7 +179,7 @@ export function IndustriesJourney({ language }: IndustriesJourneyProps) {
   return (
     // -mb-[100vh]: the CTA section slides OVER the pinned stage at the end
     // (the house analog.io cover exit)
-    <div ref={rootRef} data-section="industries-journey" className="relative -mb-[100vh]">
+    <div ref={rootRef} data-section="industries-journey" className="relative -mb-[45vh]">
       <div ref={stageRef} className="relative h-screen w-full overflow-hidden bg-cream-50">
         <div className="absolute inset-0">
           <JourneyCanvas
