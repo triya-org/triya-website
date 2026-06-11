@@ -103,7 +103,7 @@ function addPopGrow(
         "#include <begin_vertex>",
         `#include <begin_vertex>
         {
-          float pgap = 0.55;
+          float pgap = 0.85;
           float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
           float pe = 1.0 - pow(1.0 - pk, 3.0);
           transformed.y *= pe;
@@ -1066,18 +1066,21 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const e = 1 - Math.pow(1 - THREE.MathUtils.clamp(eRaw, 0, 1), 3); // easeOutCubic
     const exit = window01(p, 0.9, 1.0);
     // No exit mist — the next section physically slides OVER the city
-    // (analog.io cover pattern); fog only serves the entry develop.
-    const veil = e;
+    // (analog.io cover pattern); fog only serves the entry develop, and it
+    // clears EARLY so the pop-up growth happens in clear air, on screen.
+    const veil = Math.min(1, e * 1.8);
     const fog = scene.fog as THREE.Fog;
     fog.near = 4 + veil * 71; // 4 → 75
     fog.far = 24 + veil * 176; // 24 → 200
 
-    /* pop-up-book entry: buildings grow out of the ground with the scroll */
-    const popE = 1 - Math.pow(1 - e, 3);
+    /* pop-up-book entry: half the growth during the slide-in, the rest
+       through beat 1 — so the waves play while the city is ON SCREEN */
+    const pop = Math.min(1, e * 0.45 + window01(p, 0, 0.2) * 0.55);
+    const popE = 1 - Math.pow(1 - pop, 3);
     popShaders.current.forEach((sh) => {
-      sh.uniforms.uPop.value = e;
+      sh.uniforms.uPop.value = pop;
     });
-    if (e < 0.999) {
+    if (pop < 0.999) {
       // instanced street/roof hardware swells in as its block finishes
       placeCamParts(camBodyMeshRef.current, 0.27, popE);
       placeCamParts(camFaceMeshRef.current, 0.02, popE);
