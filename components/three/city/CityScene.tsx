@@ -962,14 +962,15 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const querySpot = window01(p, 0.52, 0.6) * (1 - window01(p, 0.74, 0.82));
     const finale = window01(p, 0.78, 0.92);
 
-    /* CCTV nodes (breathe larger through the exit — the constellation remains) */
+    /* CCTV lenses: the wake IGNITES them (emissive, via nodeMatRef) rather
+       than ballooning them — a lens bigger than its camera reads absurd */
     const nodes = nodeMeshRef.current;
     if (nodes) {
       for (let i = 0; i < city.nodes.length; i++) {
-        const pulse = 1 + (0.18 + 0.3 * finale) * wake * Math.sin(t * 2.2 + i * 1.7);
+        const pulse = 1 + 0.08 * wake * Math.sin(t * 2.2 + i * 1.7);
         dummy.position.copy(city.nodes[i]);
         dummy.rotation.set(0, 0, 0);
-        dummy.scale.setScalar(0.85 * pulse + 0.55 * wake + 0.25 * exit);
+        dummy.scale.setScalar((0.95 + 0.15 * wake + 0.2 * exit) * pulse);
         dummy.updateMatrix();
         nodes.setMatrixAt(i, dummy.matrix);
         colTmp.copy(DORMANT).lerp(CLAY, wake);
@@ -983,9 +984,10 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     /* lights of the city come alive (capped so bloom stays elegant) */
     if (lampMatRef.current) lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05;
     if (litWinMatRef.current) litWinMatRef.current.emissiveIntensity = 0.06 + wake * 1.3;
-    /* constellation glows brighter through the exit (bloom carries it) */
+    /* lenses ignite on wake; constellation glows brighter through the exit */
     if (nodeMatRef.current)
-      nodeMatRef.current.emissiveIntensity = 0.45 + finale * 0.25 + exit * 0.9;
+      nodeMatRef.current.emissiveIntensity =
+        0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9;
 
     /* arcs draw on (brighten through the exit whiteout) */
     city.arcs.forEach((arc) => {
@@ -1263,7 +1265,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         frustumCulled={false}
         castShadow={high}
       >
-        <boxGeometry args={[0.28, 0.24, 0.5]} />
+        <boxGeometry args={[0.34, 0.28, 0.55]} />
         <meshStandardMaterial color="#3D3A33" roughness={0.6} fog={false} />
       </instancedMesh>
 
@@ -1273,7 +1275,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         args={[undefined, undefined, city.nodes.length]}
         frustumCulled={false}
       >
-        <sphereGeometry args={[0.22, 12, 12]} />
+        <sphereGeometry args={[0.13, 12, 12]} />
         <meshStandardMaterial
           ref={nodeMatRef}
           color="#FFFFFF"
