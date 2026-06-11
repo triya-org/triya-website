@@ -353,20 +353,21 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       }
     }
 
-    /* plaza furniture: a tight, even garden crown on the central island —
-       reads as ONE intentional ring from any camera angle */
+    /* plaza furniture: four planters hugging the plinth — part of the
+       monument itself, so no camera angle can make them read as being on
+       the carriageway */
     if (high) {
-      for (let k = 0; k < 6; k++) {
-        const a = (k / 6) * Math.PI * 2 + Math.PI / 6;
-        const px = Math.cos(a) * 3.6;
-        const pz = Math.sin(a) * 3.6;
-        const tub = new RoundedBoxGeometry(0.7, 0.42, 0.7, 1, 0.07);
-        tub.translate(px, 0.21, pz);
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 4) * Math.PI * 2 + Math.PI / 4;
+        const px = Math.cos(a) * 2.5;
+        const pz = Math.sin(a) * 2.5;
+        const tub = new RoundedBoxGeometry(0.6, 0.4, 0.6, 1, 0.06);
+        tub.translate(px, 0.2, pz);
         paint(tub, new THREE.Color("#CFC8B6"));
         poleGeos.push(tub);
-        const bush = new THREE.IcosahedronGeometry(0.32, 1);
+        const bush = new THREE.IcosahedronGeometry(0.28, 1);
         bush.scale(1, 0.7, 1);
-        bush.translate(px, 0.52, pz);
+        bush.translate(px, 0.48, pz);
         col.copy(mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.05);
         paint(bush, col);
         treeGeos.push(bush);
