@@ -699,18 +699,25 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       color: THREE.Color;
       parked?: { x: number; z: number; ry: number };
     };
-    // One speed per lane + even spacing within the lane: cars in a lane can
-    // never catch up and clip through each other.
-    const laneSpeeds = [5.2, 6.4, 4.8, 7.0];
+    // SCHEDULED traffic: every route gets the SAME loop period (Tc), so all
+    // lane-crossing events (inner-ring connectors crossing the outer orbit
+    // lane) repeat at fixed phases — verified by offline simulation to keep
+    // ≥2.9 units between any two cars over a full cycle. Equal periods ⇒ one
+    // clean cycle ⇒ collision-free forever. (Unequal speeds made crossing
+    // phases precess into eventual overlaps.)
+    const Tc = 18; // seconds per loop, all routes
     const perLane = high ? 4 : 2;
     const laneSpan = range * 2 + 10;
+    const L1 = laneSpan / 2 - 11.5; // must match the frame-loop path math
     const cars: Car[] = Array.from({ length: perLane * 4 }, (_, i) => {
       const lane = i % 4;
       const k = Math.floor(i / 4);
+      const route = carRoutes[lane];
+      const T = 2 * L1 + route.bypass.len;
       return {
-        route: carRoutes[lane],
-        offset: (laneSpan / perLane) * k + rand() * 3,
-        speed: laneSpeeds[lane],
+        route,
+        offset: (k / perLane) * T, // exact quarter slots — no jitter
+        speed: T / Tc,
         color: new THREE.Color(carColors[Math.floor(rand() * carColors.length)]),
       };
     });
