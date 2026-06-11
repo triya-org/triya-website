@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
-import { UseCases } from "@/components/sections/use-cases";
+import { IndustriesJourney } from "@/components/sections/industries-journey";
 import { CTASection } from "@/components/sections/cta-section";
 import { ProductSchema } from "@/app/components/structured-data";
 import { HowItWorks } from "@/components/sections/how-it-works";
@@ -119,11 +119,14 @@ export default function Home() {
         {/* How It Works */}
         <HowItWorks language={language} />
 
-        {/* Use Cases */}
-        <UseCases language={language} />
+        {/* Industries Journey — "The Turntable" (falls back to the classic
+            cards on mobile / reduced motion / no WebGL) */}
+        <IndustriesJourney language={language} />
 
-        {/* CTA Section */}
-        <CTASection language={language} />
+        {/* CTA Section — rides its own cover layer over the journey's exit */}
+        <div className="relative z-30 bg-background">
+          <CTASection language={language} />
+        </div>
       </div>
 
       {/* Video Modal */}

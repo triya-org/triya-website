@@ -84,6 +84,7 @@ export function LivingCity({ language }: LivingCityProps) {
   const beatRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressRef = useRef(0);
   const entryRef = useRef(0);
+  const coveredRef = useRef(false);
   const canRender3D = useCanRender3D();
   const reduced = usePrefersReducedMotion();
   const beats = BEATS[language];
@@ -127,6 +128,9 @@ export function LivingCity({ language }: LivingCityProps) {
           scrub: true,
           onUpdate: (self) => {
             progressRef.current = self.progress;
+          },
+          onToggle: (self) => {
+            coveredRef.current = !self.isActive;
           },
         },
       });
@@ -212,7 +216,7 @@ export function LivingCity({ language }: LivingCityProps) {
       >
         {/* 3D city (wrapper carries the entry settle-scale) */}
         <div ref={canvasWrapRef} className="absolute inset-0">
-          <CityCanvas progressRef={progressRef} entryRef={entryRef} />
+          <CityCanvas progressRef={progressRef} entryRef={entryRef} coveredRef={coveredRef} />
         </div>
 
         {/* top feather only — the bottom edge is covered by the next section

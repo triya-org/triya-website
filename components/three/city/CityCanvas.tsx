@@ -16,6 +16,8 @@ import { CityScene } from "./CityScene";
 interface CityCanvasProps {
   progressRef: React.MutableRefObject<number>;
   entryRef?: React.MutableRefObject<number>;
+  /** true when the section is covered/off-screen → pause the render loop */
+  coveredRef?: React.MutableRefObject<boolean>;
 }
 
 /**
@@ -29,16 +31,20 @@ interface CityCanvasProps {
  *   · BrightnessContrast → a touch of clay-render contrast.
  * Mobile: lighter city, no shadows, no post (GPU budget).
  */
-export function CityCanvas({ progressRef, entryRef }: CityCanvasProps) {
+export function CityCanvas({ progressRef, entryRef, coveredRef }: CityCanvasProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [frameloop, setFrameloop] = useState<"always" | "never">("always");
 
   useEffect(() => {
     setIsMobile(window.matchMedia("(max-width: 767px)").matches);
-    const onVisibility = () =>
-      setFrameloop(document.hidden ? "never" : "always");
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+    const decide = () =>
+      setFrameloop(document.hidden || coveredRef?.current ? "never" : "always");
+    document.addEventListener("visibilitychange", decide);
+    const id = setInterval(decide, 300);
+    return () => {
+      document.removeEventListener("visibilitychange", decide);
+      clearInterval(id);
+    };
   }, []);
 
   return (

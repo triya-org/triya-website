@@ -1,0 +1,744 @@
+"use client";
+
+import { useEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import {
+  window01,
+  addPopGrow,
+  makePopDepthMaterial,
+  type PopShaderStore,
+} from "@/components/three/lib/popGrow";
+import { buildAllSets, type IndustrySet } from "./sets";
+
+/* ============================================================
+   "The Turntable" — one clay maquette on a paper plinth that
+   re-dresses itself four times. The CAMERA RING IS FIXED; the
+   plinth rotates a curator's quarter-turn between industries
+   while the outgoing set telescopes into the paper and the
+   incoming set pops up through it (angular-staggered uPop).
+   The world changes; Triya's awareness is the constant.
+
+   Storyboard fractions (master progress p ∈ 0..1 over a 600% pin):
+     PARK1 Manufacturing 0.00–0.15   TURN1 0.15–0.27
+     PARK2 Retail        0.27–0.42   TURN2 0.42–0.54
+     PARK3 Smart Cities  0.54–0.69   TURN3 0.69–0.81
+     PARK4 Events        0.81–0.93   EXIT  0.93–1.00
+   ============================================================ */
+
+export const FRACTIONS = {
+  parks: [
+    [0.0, 0.15],
+    [0.27, 0.42],
+    [0.54, 0.69],
+    [0.81, 0.93],
+  ] as const,
+  turns: [
+    [0.15, 0.27],
+    [0.42, 0.54],
+    [0.69, 0.81],
+  ] as const,
+  exit: [0.93, 1.0] as const,
+};
+
+const PAPER = "#FAF9F5";
+const CLAY = "#D97757";
+
+/* per-industry light script (key color/intensity lerped across turns) */
+const LIGHTS = [
+  { color: new THREE.Color("#FFF8EC"), intensity: 1.6 }, // Manufacturing noon
+  { color: new THREE.Color("#FFEFD8"), intensity: 1.65 }, // Retail warm
+  { color: new THREE.Color("#FFE9C9"), intensity: 1.6 }, // Smart Cities golden
+  { color: new THREE.Color("#FFE2C2"), intensity: 1.25 }, // Events dusk
+];
+
+/* eased quarter-turn: 15% anticipation / 60% action / 25% settle */
+function turnAngle(s: number) {
+  const D = Math.PI / 2;
+  if (s < 0.15) {
+    const t = s / 0.15;
+    return D * 0.055 * t * t; // power2.in creep → 5°
+  }
+  if (s < 0.75) {
+    const t = (s - 0.15) / 0.6;
+    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // inOut
+    return D * (0.055 + e * (0.955 - 0.055));
+  }
+  const t = (s - 0.75) / 0.25;
+  return D * (0.955 + (1 - Math.pow(1 - t, 3)) * 0.045); // power3.out settle
+}
+
+interface JourneySceneProps {
+  progressRef: React.MutableRefObject<number>;
+  entryRef?: React.MutableRefObject<number>;
+  /** mirror look composition for RTL */
+  dir?: 1 | -1;
+}
+
+export function JourneyScene({ progressRef, entryRef, dir = 1 }: JourneySceneProps) {
+  const { scene, gl } = useThree();
+
+  /* ---------- IBL for the hub clearcoat (local, no fetch) ---------- */
+  const envMap = useMemo(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+    return tex;
+  }, [gl]);
+  useEffect(() => () => envMap.dispose(), [envMap]);
+
+  /* ---------- industry sets (built once) ---------- */
+  const sets = useMemo(() => buildAllSets(), []);
+  useEffect(() => {
+    return () => {
+      Object.values(sets).forEach((s: IndustrySet) =>
+        Object.values(s).forEach((g) => g?.dispose()),
+      );
+    };
+  }, [sets]);
+
+  /* per-set pop stores + depth materials (one uPop write drives color+depth) */
+  const popStores = useMemo<PopShaderStore[]>(
+    () => [0, 1, 2, 3].map(() => ({ current: [] })),
+    [],
+  );
+  const depthMats = useMemo(
+    () => popStores.map((st) => makePopDepthMaterial(st)),
+    [popStores],
+  );
+  const setGroupRefs = useRef<(THREE.Group | null)[]>([]);
+  const popMat = (idx: number) => (m: THREE.MeshStandardMaterial | null) => {
+    if (m && !m.userData.popped) {
+      m.userData.popped = true;
+      addPopGrow(m, popStores[idx]);
+    }
+  };
+
+  /* ---------- persistent cast: plinth, CCTV ring, hub ---------- */
+  const plinthGroup = useRef<THREE.Group>(null);
+  const hubSeamRef = useRef<THREE.Mesh>(null);
+  const hubRingRef = useRef<THREE.Mesh>(null);
+
+  const RIM = 14;
+  const camRing = useMemo(() => {
+    const units: { pos: THREE.Vector3; yaw: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + Math.PI / 12;
+      const pos = new THREE.Vector3(Math.cos(a) * RIM, 1.9, Math.sin(a) * RIM);
+      units.push({ pos, yaw: Math.atan2(-pos.x, -pos.z) });
+    }
+    return units;
+  }, []);
+
+  const bulletGeo = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.15, 0.115, 0.52, 12);
+    g.rotateX(Math.PI / 2);
+    return g;
+  }, []);
+  const faceGeo = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.135, 0.135, 0.035, 12);
+    g.rotateX(Math.PI / 2);
+    return g;
+  }, []);
+  const mastGeo = useMemo(() => new THREE.CylinderGeometry(0.05, 0.07, 1.9, 6), []);
+  useEffect(
+    () => () => {
+      bulletGeo.dispose();
+      faceGeo.dispose();
+      mastGeo.dispose();
+    },
+    [bulletGeo, faceGeo, mastGeo],
+  );
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const PITCH = 0.42;
+  const placeRing = (mesh: THREE.InstancedMesh | null, offset: number, geoY = 0) => {
+    if (!mesh) return;
+    dummy.rotation.order = "YXZ";
+    camRing.forEach((u, i) => {
+      const cp = Math.cos(PITCH);
+      const fx = Math.sin(u.yaw) * cp;
+      const fy = -Math.sin(PITCH);
+      const fz = Math.cos(u.yaw) * cp;
+      dummy.position.set(
+        u.pos.x - fx * offset,
+        u.pos.y - fy * offset + geoY,
+        u.pos.z - fz * offset,
+      );
+      dummy.rotation.set(offset >= 0 ? PITCH : 0, u.yaw, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    dummy.rotation.order = "XYZ";
+  };
+  const placeMasts = (mesh: THREE.InstancedMesh | null) => {
+    if (!mesh) return;
+    camRing.forEach((u, i) => {
+      dummy.position.set(u.pos.x, u.pos.y - 0.95, u.pos.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  };
+
+  /* network arcs: every rim lens → hub, ONE merged LineSegments */
+  const arcs = useMemo(() => {
+    const hub = new THREE.Vector3(0, 2.3, 0);
+    const positions: number[] = [];
+    const ranges: { start: number; count: number }[] = [];
+    camRing.forEach((u) => {
+      const mid = u.pos.clone().lerp(hub, 0.5);
+      mid.y += u.pos.distanceTo(hub) * 0.14;
+      const pts = new THREE.QuadraticBezierCurve3(u.pos, mid, hub).getPoints(48);
+      const start = positions.length / 3;
+      for (let i = 0; i < pts.length - 1; i++) {
+        positions.push(pts[i].x, pts[i].y, pts[i].z, pts[i + 1].x, pts[i + 1].y, pts[i + 1].z);
+      }
+      ranges.push({ start, count: (pts.length - 1) * 2 });
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setDrawRange(0, 0);
+    const mat = new THREE.LineBasicMaterial({
+      color: "#C2613F",
+      transparent: true,
+      opacity: 0,
+      fog: false,
+    });
+    return { geo, mat, ranges, total: positions.length / 3 };
+  }, [camRing]);
+  useEffect(
+    () => () => {
+      arcs.geo.dispose();
+      arcs.mat.dispose();
+    },
+    [arcs],
+  );
+
+  /* ---------- detection rig (repositioned per park) ---------- */
+  const dotRef = useRef<THREE.Mesh>(null);
+  const detArcRef = useRef<THREE.Line | null>(null);
+  const payoffTill = useRef<THREE.Mesh>(null);
+  const payoffSignal = useRef<THREE.Mesh>(null);
+  const payoffGate = useRef<THREE.Mesh>(null);
+  /* per-park vignette anchors IN PLINTH-LOCAL space (rotate with the world);
+     dot floats over the subject, arc goes to the nearest rim lens (world). */
+  const VIGNETTES = useMemo(
+    () => [
+      { dot: new THREE.Vector3(-4.2, 2.6, -0.5) }, // M: bare-headed worker zone
+      { dot: new THREE.Vector3(-2.2, 2.4, 3.0) }, // R: queue at counter
+      { dot: new THREE.Vector3(0.8, 2.0, 0.8) }, // SC: stalled car
+      { dot: new THREE.Vector3(-8.0, 3.4, 0.0) }, // E: swelling gate
+    ],
+    [],
+  );
+  const detArcGeo = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(49 * 3), 3));
+    geo.setDrawRange(0, 0);
+    return geo;
+  }, []);
+  const detArcMat = useMemo(
+    () => new THREE.LineBasicMaterial({ color: CLAY, transparent: true, opacity: 0.9, fog: false }),
+    [],
+  );
+  const detLine = useMemo(() => new THREE.Line(detArcGeo, detArcMat), [detArcGeo, detArcMat]);
+  useEffect(
+    () => () => {
+      detArcGeo.dispose();
+      detArcMat.dispose();
+    },
+    [detArcGeo, detArcMat],
+  );
+
+  /* ---------- actor pools (time-driven ambience) ---------- */
+  const capsGeo = useMemo(() => {
+    const g = new THREE.CapsuleGeometry(0.16, 0.42, 3, 8);
+    g.translate(0, 0.45, 0);
+    return g;
+  }, []);
+  const boxGeo = useMemo(() => new THREE.BoxGeometry(0.5, 0.42, 0.5), []);
+  useEffect(
+    () => () => {
+      capsGeo.dispose();
+      boxGeo.dispose();
+    },
+    [capsGeo, boxGeo],
+  );
+  const capsRef = useRef<THREE.InstancedMesh>(null);
+  const boxesRef = useRef<THREE.InstancedMesh>(null);
+  const CAPS = 160;
+  const BOXES = 24;
+  /* per-industry actor plans: position fn(local t, index) in plinth space */
+  const actorPlan = useMemo(() => {
+    const plans: ((t: number, i: number) => [number, number, number] | null)[] = [
+      // M: 6 workers pacing the walkway + boxes on conveyor
+      (t, i) =>
+        i < 6
+          ? [-6 + ((i * 2.3 + t * 0.6) % 12), 0.28, 3.4 + Math.sin(i * 7) * 0.3]
+          : null,
+      // R: 24 shoppers drifting aisles
+      (t, i) =>
+        i < 24
+          ? [
+              -5.5 + ((i % 4) * 3 + Math.sin(t * 0.25 + i) * 1.1),
+              0.24,
+              -3.6 + ((i * 1.7 + t * 0.5) % 7.4),
+            ]
+          : null,
+      // SC: 8 pedestrians on crosswalks
+      (t, i) =>
+        i < 8
+          ? i % 2
+            ? [-3.6 + ((t * 0.8 + i) % 7.2), 0.18, 2.0 - (i % 4)]
+            : [2.0 - (i % 4), 0.18, -3.6 + ((t * 0.7 + i * 1.3) % 7.2)]
+          : null,
+      // E: 150 crowd streaming through gates toward the stage
+      (t, i) => {
+        if (i >= 150) return null;
+        const lane = i % 3;
+        const u = (i * 0.61 + t * 0.55) % 14;
+        return [-8.5 + u * 1.05, 0.18, -3.4 + lane * 3.4 + Math.sin(i * 3.3) * 0.6];
+      },
+    ];
+    return plans;
+  }, []);
+
+  /* ---------- camera rig (FIXED ring; world rotates) ---------- */
+  const camPath = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3(
+        [
+          new THREE.Vector3(-30, 9, 34),
+          new THREE.Vector3(-19.5, 6, 22.5),
+          new THREE.Vector3(-21, 15, 27),
+          new THREE.Vector3(-19, 16, 24),
+          new THREE.Vector3(-15, 28, 32),
+          new THREE.Vector3(-20, 7, 21),
+          new THREE.Vector3(0, 42, 48),
+        ],
+        false,
+        "catmullrom",
+        0.5,
+      ),
+    [],
+  );
+  const LOOKS = useMemo(
+    () => [
+      new THREE.Vector3(3, 3, 0),
+      new THREE.Vector3(3.5, 2.8, -1),
+      new THREE.Vector3(3, 2.5, -2),
+      new THREE.Vector3(3.5, 2.2, -1),
+      new THREE.Vector3(4, 0.5, 0),
+      new THREE.Vector3(5, 3.5, -5),
+      new THREE.Vector3(0, 2.3, 0),
+    ],
+    [],
+  );
+  // parks hold near-still; turns carry the drift
+  const P = useMemo(() => [0, 0.15, 0.27, 0.42, 0.54, 0.69, 0.81, 0.93, 1], []);
+  const U = useMemo(() => [0.0, 0.06, 0.28, 0.34, 0.55, 0.6, 0.78, 0.83, 1.0], []);
+  const remapU = (p: number) => {
+    let i = 0;
+    while (i < P.length - 2 && p > P[i + 1]) i++;
+    return U[i] + ((U[i + 1] - U[i]) * (p - P[i])) / (P[i + 1] - P[i]);
+  };
+  const posCur = useMemo(() => new THREE.Vector3(-30, 9, 34), []);
+  const lookCur = useMemo(() => new THREE.Vector3(3, 3, 0), []);
+  const tmp = useMemo(() => new THREE.Vector3(), []);
+  const tmp2 = useMemo(() => new THREE.Vector3(), []);
+
+  const keyLightRef = useRef<THREE.DirectionalLight>(null);
+  const baseFog = useMemo(() => ({ near: 55, far: 150 }), []);
+  useMemo(() => {
+    scene.fog = new THREE.Fog(PAPER, baseFog.near, baseFog.far);
+    scene.background = new THREE.Color(PAPER);
+  }, [scene, baseFog]);
+
+  /* dev draw-call budget assertion */
+  const budgetWarned = useRef(false);
+
+  /* ================= frame loop ================= */
+  useFrame(({ camera, clock }) => {
+    const p = THREE.MathUtils.clamp(progressRef.current, 0, 1);
+    const t = clock.elapsedTime;
+    const e = entryRef ? THREE.MathUtils.clamp(entryRef.current, 0, 1) : 1;
+    const eE = 1 - Math.pow(1 - e, 3);
+
+    /* --- which beat are we in? --- */
+    let parkIdx = 0;
+    let turnIdx = -1;
+    let turnS = 0;
+    FRACTIONS.turns.forEach(([a, b], i) => {
+      if (p >= a && p < b) {
+        turnIdx = i;
+        turnS = (p - a) / (b - a);
+      }
+    });
+    for (let i = 0; i < 4; i++) {
+      const [a] = FRACTIONS.parks[i];
+      if (p >= a) parkIdx = i;
+    }
+
+    /* --- plinth rotation: settled quarter-turns + eased current turn --- */
+    let angle = 0;
+    for (let i = 0; i < 3; i++) {
+      const [a, b] = FRACTIONS.turns[i];
+      if (p >= b) angle += Math.PI / 2;
+      else if (p >= a) angle += turnAngle((p - a) / (b - a));
+    }
+    if (plinthGroup.current) plinthGroup.current.rotation.y = -angle;
+
+    /* --- set uPop windows (entry develop drives set 0 initially) --- */
+    const setPop = [0, 0, 0, 0];
+    setPop[0] = Math.min(eE, 1 - window01(turnIdx === 0 ? turnS : p >= FRACTIONS.turns[0][1] ? 1 : 0, 0.1, 0.72));
+    for (let i = 1; i < 4; i++) {
+      const [a, b] = FRACTIONS.turns[i - 1];
+      const sIn = p < a ? 0 : p >= b ? 1 : (p - a) / (b - a);
+      let v = window01(sIn, 0.06, 0.92);
+      if (i < 4 && i - 1 < 2) {
+        // it later leaves on the NEXT turn
+        const [na, nb] = FRACTIONS.turns[i] ?? [2, 3];
+        const sOut = p < na ? 0 : p >= nb ? 1 : (p - na) / (nb - na);
+        v = Math.min(v, 1 - window01(sOut, 0.1, 0.72));
+      }
+      setPop[i] = v;
+    }
+    // exit: events set sinks to 0.3
+    const exitW = window01(p, FRACTIONS.exit[0], 1);
+    if (exitW > 0) setPop[3] = Math.min(setPop[3], 1 - exitW * 0.7);
+
+    popStores.forEach((st, i) => {
+      st.current.forEach((sh) => (sh.uniforms.uPop.value = setPop[i]));
+      const g = setGroupRefs.current[i];
+      if (g) g.visible = setPop[i] > 0.001;
+    });
+
+    /* --- fog micro-veil during turns (the exhale) + entry develop --- */
+    let veil = 0;
+    if (turnIdx >= 0) veil = Math.sin(Math.PI * THREE.MathUtils.clamp((turnS - 0.2) / 0.6, 0, 1)) * 0.18;
+    const dev = eE; // entry: fog develops the maquette out of paper
+    const fog = scene.fog as THREE.Fog;
+    fog.near = (8 + dev * (baseFog.near - 8)) * (1 - veil);
+    fog.far = (26 + dev * (baseFog.far - 26)) * (1 - veil * 0.6);
+
+    /* --- light script --- */
+    const li = turnIdx >= 0 ? turnIdx : Math.max(0, parkIdx - (turnIdx >= 0 ? 0 : 0));
+    const from = LIGHTS[turnIdx >= 0 ? turnIdx : parkIdx];
+    const to = LIGHTS[turnIdx >= 0 ? turnIdx + 1 : parkIdx];
+    const lt = turnIdx >= 0 ? window01(turnS, 0.6, 1) : 0;
+    if (keyLightRef.current) {
+      keyLightRef.current.color.copy(from.color).lerp(to.color, lt);
+      keyLightRef.current.intensity = THREE.MathUtils.lerp(from.intensity, to.intensity, lt);
+    }
+    void li;
+
+    /* --- camera --- */
+    camPath.getPointAt(remapU(p), tmp);
+    // entry pre-roll
+    tmp.y += (1 - eE) * 10;
+    tmp.z += (1 - eE) * 9;
+    posCur.lerp(tmp, 0.08);
+    camera.position.copy(posCur);
+    // piecewise look targets across the 7 spline anchors
+    const seg = Math.min(5, Math.floor(remapU(p) * 6));
+    const segT = remapU(p) * 6 - seg;
+    tmp2.copy(LOOKS[seg]).lerp(LOOKS[Math.min(6, seg + 1)], segT);
+    tmp2.x *= dir;
+    lookCur.lerp(tmp2, 0.08);
+    camera.lookAt(lookCur);
+
+    /* --- rim arcs glow with each detection + exit --- */
+    const parkLocal = (() => {
+      const [a, b] = FRACTIONS.parks[parkIdx];
+      return window01(p, a, b);
+    })();
+    const det = window01(parkLocal, 0.35, 0.5) * (1 - window01(parkLocal, 0.85, 0.97));
+    arcs.mat.opacity = 0.25 * det + 0.55 * exitW;
+    arcs.geo.setDrawRange(0, Math.floor((det > 0 ? det : exitW) * arcs.total));
+
+    /* --- detection vignette: dot ignites → arc to nearest lens → payoff --- */
+    if (dotRef.current && plinthGroup.current) {
+      const v = VIGNETTES[parkIdx];
+      // dot position in WORLD (vignette anchors rotate with the plinth)
+      tmp.copy(v.dot).applyAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
+      dotRef.current.position.copy(tmp);
+      const ignite = window01(parkLocal, 0.35, 0.42);
+      const fade = 1 - window01(parkLocal, 0.9, 1);
+      const on = (turnIdx < 0 ? ignite * fade : 0) * (exitW > 0 ? 0 : 1);
+      dotRef.current.visible = on > 0.01;
+      dotRef.current.scale.setScalar(0.001 + on * (1 + 0.12 * Math.sin(t * 4)));
+      (dotRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.6 + on * 1.4;
+      // arc to nearest rim lens
+      if (on > 0.01) {
+        let nearest = camRing[0].pos;
+        let nd = Infinity;
+        camRing.forEach((u) => {
+          const d = u.pos.distanceToSquared(tmp);
+          if (d < nd) {
+            nd = d;
+            nearest = u.pos;
+          }
+        });
+        const mid = tmp.clone().lerp(nearest, 0.5);
+        mid.y += 2.2;
+        const pts = new THREE.QuadraticBezierCurve3(tmp.clone(), mid, nearest).getPoints(48);
+        const attr = detArcGeo.attributes.position as THREE.BufferAttribute;
+        pts.forEach((pt, i) => attr.setXYZ(i, pt.x, pt.y, pt.z));
+        attr.needsUpdate = true;
+        const drawW = window01(parkLocal, 0.42, 0.55);
+        detArcGeo.setDrawRange(0, Math.floor(drawW * 49));
+        detArcMat.opacity = 0.9 * fade;
+      } else {
+        detArcGeo.setDrawRange(0, 0);
+      }
+    }
+
+    /* --- payoffs (ONE clay element per park) --- */
+    const pay = window01(parkLocal, 0.55, 0.65) * (turnIdx < 0 ? 1 : 0);
+    if (payoffTill.current) {
+      (payoffTill.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        parkIdx === 1 ? pay * 1.6 : 0;
+      payoffTill.current.visible = parkIdx === 1;
+    }
+    if (payoffSignal.current) {
+      const m = payoffSignal.current.material as THREE.MeshStandardMaterial;
+      m.emissiveIntensity = parkIdx === 2 ? 0.4 + pay * 1.2 : 0;
+      m.emissive.set(parkIdx === 2 && pay > 0.6 ? "#A8C09A" : CLAY);
+      payoffSignal.current.visible = parkIdx === 2;
+    }
+    if (payoffGate.current) {
+      payoffGate.current.visible = parkIdx === 3;
+      payoffGate.current.rotation.z = -pay * 1.2; // barrier swings open
+      (payoffGate.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        parkIdx === 3 ? 0.3 + pay : 0;
+    }
+
+    /* --- hub acknowledges each detection --- */
+    if (hubSeamRef.current) {
+      const blink = window01(parkLocal, 0.55, 0.6) * (1 - window01(parkLocal, 0.7, 0.8));
+      (hubSeamRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        0.3 + blink * 1.3 + exitW * 0.8;
+    }
+    if (hubRingRef.current) hubRingRef.current.rotation.z = t * 0.4;
+
+    /* --- actors (time-driven; hand off at turn midpoints) --- */
+    const caps = capsRef.current;
+    if (caps) {
+      const plan = actorPlan[parkIdx];
+      const nextPlan = turnIdx >= 0 ? actorPlan[Math.min(3, turnIdx + 1)] : null;
+      const swap = turnIdx >= 0 ? window01(turnS, 0.45, 0.55) : 0;
+      const activePlan = swap > 0.5 && nextPlan ? nextPlan : plan;
+      const scl = turnIdx >= 0 ? Math.abs(swap - 0.5) * 2 : 1;
+      for (let i = 0; i < CAPS; i++) {
+        const lp = activePlan(t, i);
+        if (!lp) {
+          dummy.scale.setScalar(0.001);
+          dummy.position.set(0, -5, 0);
+        } else {
+          tmp.set(lp[0], lp[1], lp[2]).applyAxisAngle(tmp2.set(0, 1, 0), -angle);
+          dummy.position.copy(tmp);
+          dummy.scale.setScalar(Math.max(0.001, scl * Math.min(1, eE * 2)));
+        }
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        caps.setMatrixAt(i, dummy.matrix);
+      }
+      caps.instanceMatrix.needsUpdate = true;
+    }
+    const boxes = boxesRef.current;
+    if (boxes) {
+      for (let i = 0; i < BOXES; i++) {
+        let lp: [number, number, number] | null = null;
+        if (parkIdx === 0) lp = [-6 + ((i * 1.9 + t * 1.6) % 11.5), 1.35, 1.6]; // conveyor
+        else if (parkIdx === 2 && i < 8)
+          lp = i % 2 ? [-9 + ((t * 2.2 + i * 2.7) % 18), 0.35, 1.1] : [1.1, 0.35, -9 + ((t * 2 + i * 3.1) % 18)];
+        else if (parkIdx === 3 && i < 6) lp = [3 + (i % 3) * 1.2, 1.35, -1.5 + Math.floor(i / 3) * 1.2];
+        if (!lp) {
+          dummy.scale.setScalar(0.001);
+          dummy.position.set(0, -5, 0);
+        } else {
+          tmp.set(lp[0], lp[1], lp[2]).applyAxisAngle(tmp2.set(0, 1, 0), -angle);
+          dummy.position.copy(tmp);
+          dummy.scale.setScalar(1);
+        }
+        dummy.rotation.set(0, turnIdx >= 0 ? 0 : 0, 0);
+        dummy.updateMatrix();
+        boxes.setMatrixAt(i, dummy.matrix);
+      }
+      boxes.instanceMatrix.needsUpdate = true;
+    }
+
+    /* --- dev budget assertion --- */
+    if (process.env.NODE_ENV !== "production" && !budgetWarned.current) {
+      const calls = gl.info.render.calls;
+      if (calls > 60) {
+        budgetWarned.current = true;
+        console.error(`[journey] draw-call budget exceeded: ${calls} > 60`);
+      }
+    }
+  });
+
+  const setOrder: (keyof ReturnType<typeof buildAllSets>)[] = [
+    "manufacturing",
+    "retail",
+    "smartCities",
+    "events",
+  ];
+
+  return (
+    <group>
+      {/* lighting: static ortho shadow box sized to the plinth (never moves) */}
+      <hemisphereLight args={["#FFF4E4", "#E2C4B4", 0.55]} />
+      <directionalLight
+        ref={keyLightRef}
+        position={[26, 22, 14]}
+        intensity={1.6}
+        color="#FFF8EC"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-20}
+        shadow-camera-right={20}
+        shadow-camera-top={20}
+        shadow-camera-bottom={-20}
+        shadow-camera-far={90}
+        shadow-bias={-0.0004}
+      />
+
+      {/* paper ground + plinth (persistent) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.31, 0]} receiveShadow>
+        <circleGeometry args={[60, 48]} />
+        <meshStandardMaterial color={PAPER} roughness={1} />
+      </mesh>
+      <mesh position={[0, -0.05, 0]} receiveShadow>
+        <cylinderGeometry args={[14.5, 14.9, 0.6, 64]} />
+        <meshStandardMaterial color="#EFEADF" roughness={1} />
+      </mesh>
+
+      {/* THE TURNTABLE — everything industry-specific lives in here */}
+      <group ref={plinthGroup}>
+        {setOrder.map((key, i) => {
+          const set = sets[key];
+          return (
+            <group
+              key={key}
+              ref={(g) => {
+                setGroupRefs.current[i] = g;
+              }}
+            >
+              {set.structures && (
+                <mesh geometry={set.structures} castShadow receiveShadow customDepthMaterial={depthMats[i]}>
+                  <meshStandardMaterial ref={popMat(i)} vertexColors roughness={0.92} />
+                </mesh>
+              )}
+              {set.windowsDark && (
+                <mesh geometry={set.windowsDark}>
+                  <meshStandardMaterial ref={popMat(i)} vertexColors roughness={0.6} />
+                </mesh>
+              )}
+              {set.windowsLit && (
+                <mesh geometry={set.windowsLit}>
+                  <meshStandardMaterial
+                    ref={popMat(i)}
+                    vertexColors
+                    roughness={0.5}
+                    emissive="#FFC98A"
+                    emissiveIntensity={0.9}
+                  />
+                </mesh>
+              )}
+              {set.props && (
+                <mesh geometry={set.props} castShadow customDepthMaterial={depthMats[i]}>
+                  <meshStandardMaterial ref={popMat(i)} vertexColors roughness={0.85} />
+                </mesh>
+              )}
+            </group>
+          );
+        })}
+
+        {/* payoff elements (clay budget: ONE per park) */}
+        <mesh ref={payoffTill} position={[2.2, 1.35, 3.6]} visible={false}>
+          <boxGeometry args={[0.22, 0.34, 0.22]} />
+          <meshStandardMaterial color={CLAY} emissive={CLAY} emissiveIntensity={0} fog={false} />
+        </mesh>
+        <mesh ref={payoffSignal} position={[2.6, 3.1, 2.6]} visible={false}>
+          <boxGeometry args={[0.3, 0.26, 0.14]} />
+          <meshStandardMaterial color={INK_SAFE} emissive={CLAY} emissiveIntensity={0} fog={false} />
+        </mesh>
+        <mesh ref={payoffGate} position={[-8.5, 1.1, 3.4]} visible={false}>
+          <boxGeometry args={[0.12, 1.6, 0.12]} />
+          <meshStandardMaterial color={CLAY} emissive={CLAY} emissiveIntensity={0} fog={false} />
+        </mesh>
+
+        {/* actor pools */}
+        <instancedMesh ref={capsRef} args={[capsGeo, undefined, CAPS]} frustumCulled={false} castShadow>
+          <meshStandardMaterial color="#F0E9DC" roughness={0.8} />
+        </instancedMesh>
+        <instancedMesh ref={boxesRef} args={[boxGeo, undefined, BOXES]} frustumCulled={false} castShadow>
+          <meshStandardMaterial color="#C9BFA8" roughness={0.8} />
+        </instancedMesh>
+      </group>
+
+      {/* CCTV ring — FIXED in world (awareness is the constant) */}
+      <instancedMesh ref={(m) => placeRing(m, 0.27)} args={[bulletGeo, undefined, 12]} frustumCulled={false} castShadow>
+        <meshStandardMaterial color="#F6F2E8" roughness={0.45} fog={false} />
+      </instancedMesh>
+      <instancedMesh ref={(m) => placeRing(m, 0.02)} args={[faceGeo, undefined, 12]} frustumCulled={false}>
+        <meshStandardMaterial color="#2C2B26" roughness={0.25} fog={false} />
+      </instancedMesh>
+      <instancedMesh ref={placeMasts} args={[mastGeo, undefined, 12]} frustumCulled={false}>
+        <meshStandardMaterial color="#A8A293" roughness={0.9} />
+      </instancedMesh>
+
+      {/* hub (clone of the city's device) */}
+      <group position={[0, 0.3, 0]}>
+        <mesh position={[0, 0.15, 0]} receiveShadow>
+          <cylinderGeometry args={[1.5, 1.7, 0.3, 24]} />
+          <meshStandardMaterial color="#E3DDCE" roughness={1} />
+        </mesh>
+        {[0.7, 1.8].map((y) => (
+          <mesh key={y} position={[0, y, 0]} castShadow>
+            <boxGeometry args={[1.5, 0.8, 1.5]} />
+            <meshPhysicalMaterial
+              color="#1A1715"
+              roughness={0.32}
+              clearcoat={0.45}
+              clearcoatRoughness={0.25}
+              envMap={envMap}
+              envMapIntensity={0.7}
+              fog={false}
+            />
+          </mesh>
+        ))}
+        <mesh ref={hubSeamRef} position={[0, 1.25, 0]}>
+          <boxGeometry args={[1.38, 0.3, 1.38]} />
+          <meshStandardMaterial color={CLAY} emissive={CLAY} emissiveIntensity={0.3} fog={false} />
+        </mesh>
+        <mesh ref={hubRingRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.27, 0]}>
+          <ringGeometry args={[2.2, 2.4, 48]} />
+          <meshBasicMaterial color={CLAY} transparent opacity={0.35} fog={false} />
+        </mesh>
+        <mesh position={[0, 2.32, 0]}>
+          <sphereGeometry args={[0.2, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#E8A381" emissive={CLAY} emissiveIntensity={1.25} roughness={0.3} fog={false} />
+        </mesh>
+      </group>
+
+      {/* merged rim arcs */}
+      <primitive object={useMemo(() => new THREE.LineSegments(arcs.geo, arcs.mat), [arcs])} />
+
+      {/* detection rig */}
+      <mesh ref={dotRef} visible={false}>
+        <sphereGeometry args={[0.16, 12, 12]} />
+        <meshStandardMaterial color="#FFFFFF" emissive={CLAY} emissiveIntensity={1.2} fog={false} />
+      </mesh>
+      <primitive object={detLine} />
+    </group>
+  );
+}
+
+const INK_SAFE = "#56524A";
