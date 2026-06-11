@@ -68,6 +68,52 @@ function paint(geo: THREE.BufferGeometry, color: THREE.Color) {
 }
 
 /**
+ * Bake a per-object "pop key" into every vertex (attribute aPop) so the
+ * entry can grow buildings out of the ground in a staggered pop-up-book
+ * wave. Keyed by quantized footprint anchor, so a building and everything
+ * standing on it (mast, AC, windows) rise together.
+ */
+function bakePopKeys(geos: THREE.BufferGeometry[]) {
+  const c = new THREE.Vector3();
+  geos.forEach((g) => {
+    g.computeBoundingBox();
+    g.boundingBox!.getCenter(c);
+    const qx = Math.round(c.x / 3);
+    const qz = Math.round(c.z / 3);
+    const key = (Math.abs(Math.sin(qx * 12.9898 + qz * 78.233)) * 43758.5453) % 1;
+    const n = g.attributes.position.count;
+    const arr = new Float32Array(n).fill(key);
+    g.setAttribute("aPop", new THREE.BufferAttribute(arr, 1));
+  });
+}
+
+/** patch a material so aPop/uPop scale vertices from the ground up */
+function addPopGrow(
+  mat: THREE.Material,
+  store: { current: { uniforms: { uPop: { value: number } } }[] },
+) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uPop = { value: 1 };
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        "#include <common>\nattribute float aPop;\nuniform float uPop;",
+      )
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        {
+          float pgap = 0.55;
+          float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
+          float pe = 1.0 - pow(1.0 - pk, 3.0);
+          transformed.y *= pe;
+        }`,
+      );
+    store.current.push(shader as never);
+  };
+}
+
+/**
  * Safe merge: mergeGeometries returns NULL if the inputs mix indexed and
  * non-indexed geometries (e.g. icosahedron canopies vs. box buildings).
  * Normalize everything to non-indexed first so the merge always succeeds.
@@ -491,6 +537,14 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       if (!cameraRoofs.has(i)) addRoof(r.x, r.z, r.w, r.topY, r.d);
     });
 
+    // pop-up-book entry: per-object grow keys (quantized anchor → a building
+    // and the things standing on it rise together)
+    bakePopKeys(buildingGeos);
+    bakePopKeys(windowDarkGeos);
+    bakePopKeys(windowLitGeos);
+    bakePopKeys(treeGeos);
+    bakePopKeys(poleGeos);
+
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
     const windowsLit = mergeSafe(windowLitGeos);
@@ -826,6 +880,15 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     };
   }, [city]);
 
+  /* pop-grow shader handles (uPop driven by entry progress each frame) */
+  const popShaders = useRef<{ uniforms: { uPop: { value: number } } }[]>([]);
+  const popMat = (m: THREE.MeshStandardMaterial | null) => {
+    if (m && !m.userData.popped) {
+      m.userData.popped = true;
+      addPopGrow(m, popShaders);
+    }
+  };
+
   /* ================= dynamic actor refs ================= */
   const nodeMeshRef = useRef<THREE.InstancedMesh>(null);
   const nodeMatRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -887,7 +950,11 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   /** static camera units: yaw toward the hub, pitched down at the street.
       offset = body-local +Z distance from the lens (node) position */
   const PITCH = 0.5;
-  const placeCamParts = (mesh: THREE.InstancedMesh | null, offset: number) => {
+  const placeCamParts = (
+    mesh: THREE.InstancedMesh | null,
+    offset: number,
+    s = 1,
+  ) => {
     if (!mesh) return;
     dummy.rotation.order = "YXZ";
     const cp = Math.cos(PITCH);
@@ -900,7 +967,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       const fz = Math.cos(yaw) * cp;
       dummy.position.set(n.x - fx * offset, n.y - fy * offset, n.z - fz * offset);
       dummy.rotation.set(PITCH, yaw, 0);
-      dummy.scale.setScalar(1);
+      dummy.scale.setScalar(s);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     });
@@ -908,8 +975,16 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     dummy.rotation.order = "XYZ";
     dummy.rotation.set(0, 0, 0);
   };
-  const setupCamBodies = (m: THREE.InstancedMesh | null) => placeCamParts(m, 0.27);
-  const setupCamFaces = (m: THREE.InstancedMesh | null) => placeCamParts(m, 0.02);
+  const camBodyMeshRef = useRef<THREE.InstancedMesh | null>(null);
+  const camFaceMeshRef = useRef<THREE.InstancedMesh | null>(null);
+  const setupCamBodies = (m: THREE.InstancedMesh | null) => {
+    camBodyMeshRef.current = m;
+    placeCamParts(m, 0.27);
+  };
+  const setupCamFaces = (m: THREE.InstancedMesh | null) => {
+    camFaceMeshRef.current = m;
+    placeCamParts(m, 0.02);
+  };
 
   const setupBodies = (mesh: THREE.InstancedMesh | null) => {
     if (!mesh) return;
@@ -997,6 +1072,28 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     fog.near = 4 + veil * 71; // 4 → 75
     fog.far = 24 + veil * 176; // 24 → 200
 
+    /* pop-up-book entry: buildings grow out of the ground with the scroll */
+    const popE = 1 - Math.pow(1 - e, 3);
+    popShaders.current.forEach((sh) => {
+      sh.uniforms.uPop.value = e;
+    });
+    if (e < 0.999) {
+      // instanced street/roof hardware swells in as its block finishes
+      placeCamParts(camBodyMeshRef.current, 0.27, popE);
+      placeCamParts(camFaceMeshRef.current, 0.02, popE);
+      const lampMesh = lampMeshRef.current;
+      if (lampMesh) {
+        city.lampPositions.forEach((pp, i) => {
+          dummy.position.copy(pp);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar(Math.max(0.001, popE));
+          dummy.updateMatrix();
+          lampMesh.setMatrixAt(i, dummy.matrix);
+        });
+        lampMesh.instanceMatrix.needsUpdate = true;
+      }
+    }
+
     camPath.getPointAt(remapU(p), tmp);
     // entry pre-roll: start higher/farther, settle onto the spline as the
     // world develops (the lerp below absorbs it smoothly)
@@ -1024,7 +1121,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         const pulse = 1 + 0.08 * wake * Math.sin(t * 2.2 + i * 1.7);
         dummy.position.copy(city.nodes[i]);
         dummy.rotation.set(0, 0, 0);
-        dummy.scale.setScalar((0.95 + 0.15 * wake + 0.2 * exit) * pulse);
+        dummy.scale.setScalar((0.95 + 0.15 * wake + 0.2 * exit) * pulse * Math.max(0.001, popE));
         dummy.updateMatrix();
         nodes.setMatrixAt(i, dummy.matrix);
         colTmp.copy(DORMANT).lerp(CLAY, wake);
@@ -1229,20 +1326,23 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       {/* buildings + rooftop furniture */}
       {city.buildings && (
         <mesh geometry={city.buildings} castShadow={high} receiveShadow={high}>
-          <meshStandardMaterial vertexColors roughness={0.92} />
+          <meshStandardMaterial ref={popMat} vertexColors roughness={0.92} />
         </mesh>
       )}
 
       {/* window grids */}
       {city.windowsDark && (
         <mesh geometry={city.windowsDark}>
-          <meshStandardMaterial vertexColors roughness={0.6} metalness={0.05} />
+          <meshStandardMaterial ref={popMat} vertexColors roughness={0.6} metalness={0.05} />
         </mesh>
       )}
       {city.windowsLit && (
         <mesh geometry={city.windowsLit}>
           <meshStandardMaterial
-            ref={litWinMatRef}
+            ref={(m) => {
+              (litWinMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
             vertexColors
             roughness={0.5}
             emissive="#FFC98A"
@@ -1254,14 +1354,14 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       {/* trees */}
       {city.greens && (
         <mesh geometry={city.greens} castShadow={high}>
-          <meshStandardMaterial vertexColors roughness={1} />
+          <meshStandardMaterial ref={popMat} vertexColors roughness={1} />
         </mesh>
       )}
 
       {/* streetlight poles */}
       {city.poles && (
         <mesh geometry={city.poles} castShadow={high}>
-          <meshStandardMaterial vertexColors roughness={0.9} />
+          <meshStandardMaterial ref={popMat} vertexColors roughness={0.9} />
         </mesh>
       )}
 
