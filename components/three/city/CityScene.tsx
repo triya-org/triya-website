@@ -641,20 +641,25 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       road.translate(0, 0.012, 0);
       paint(road, roadCol);
       roadGeos.push(road);
-      // sidewalks flanking the avenue
+      // sidewalks flanking the avenue — split into two segments that STOP
+      // at the roundabout (they must never cross the circle)
+      const walkLen = range + 7 - 9.5;
+      const walkMid = 9.5 + walkLen / 2;
       for (const s of [1, -1]) {
-        const walk = new THREE.PlaneGeometry(
-          horizontal ? range * 2 + 14 : 1.1,
-          horizontal ? 1.1 : range * 2 + 14,
-        );
-        walk.rotateX(-Math.PI / 2);
-        walk.translate(
-          horizontal ? 0 : s * 3.2,
-          0.016,
-          horizontal ? s * 3.2 : 0,
-        );
-        paint(walk, sideCol);
-        roadGeos.push(walk);
+        for (const seg of [1, -1]) {
+          const walk = new THREE.PlaneGeometry(
+            horizontal ? walkLen : 1.1,
+            horizontal ? 1.1 : walkLen,
+          );
+          walk.rotateX(-Math.PI / 2);
+          walk.translate(
+            horizontal ? seg * walkMid : s * 3.2,
+            0.016,
+            horizontal ? s * 3.2 : seg * walkMid,
+          );
+          paint(walk, sideCol);
+          roadGeos.push(walk);
+        }
       }
     }
 
@@ -676,7 +681,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     // centre-line dashes on the avenues
     if (high) {
       for (let s = -range; s <= range; s += 3) {
-        if (Math.abs(s) < 7.5) continue;
+        if (Math.abs(s) < 10.5) continue; // clear of the carriageway ring
         for (const horizontal of [true, false]) {
           const dash = new THREE.PlaneGeometry(horizontal ? 1.3 : 0.16, horizontal ? 0.16 : 1.3);
           dash.rotateX(-Math.PI / 2);
