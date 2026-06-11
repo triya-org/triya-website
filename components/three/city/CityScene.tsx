@@ -612,17 +612,21 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         dir: -1,
         bypass: buildOrbit([J, 1.45], [-1, 0], 6.7, 27, 153, [-J, 1.45]),
       },
-      {
-        axis: "z" as const,
-        lane: 1.45,
-        dir: -1,
-        bypass: buildOrbit([1.45, J], [0, -1], 7.9, 117, 243, [1.45, -J]),
-      },
+      // z-avenue on RIGHT-hand lanes (they were flipped, forcing exit
+      // connectors to cut across the mouth through oncoming merges):
+      // southbound keeps west (x −1.45), northbound keeps east (x +1.45) —
+      // every merge now stays on its own side of its mouth, no crossings
       {
         axis: "z" as const,
         lane: -1.45,
+        dir: -1,
+        bypass: buildOrbit([-1.45, J], [0, -1], 7.9, 117, 243, [-1.45, -J]),
+      },
+      {
+        axis: "z" as const,
+        lane: 1.45,
         dir: 1,
-        bypass: buildOrbit([-1.45, -J], [0, 1], 7.9, 297, 63, [-1.45, J]),
+        bypass: buildOrbit([1.45, -J], [0, 1], 7.9, 297, 63, [1.45, J]),
       },
     ];
     // no pure-black cars — dark warm grey so they catch the key light
