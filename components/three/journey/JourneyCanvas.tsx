@@ -53,7 +53,7 @@ export function JourneyCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: Jo
         <BrightnessContrast brightness={0.04} contrast={0.05} />
         <HueSaturation saturation={0.12} />
         <Vignette eskil={false} offset={0.3} darkness={0.2} />
-        <Noise premultiply opacity={0.25} />
+        <Noise premultiply opacity={0.13} />
       </EffectComposer>
     </Canvas>
   );

@@ -22,6 +22,7 @@ export function buildMurmuration(eventsBounds: THREE.Box3) {
   const to = new Float32Array(COUNT * 3);
   const colors = new Float32Array(COUNT * 3);
   const seeds = new Float32Array(COUNT);
+  const isClayArr = new Float32Array(COUNT);
 
   const cream = new THREE.Color("#BDB6A2");
   const clay = new THREE.Color("#D97757");
@@ -40,14 +41,16 @@ export function buildMurmuration(eventsBounds: THREE.Box3) {
     from[i * 3 + 2] = fz;
 
     const isClay = i < CLAY_COUNT;
+    isClayArr[i] = isClay ? 1 : 0;
     if (isClay) {
       // clay motes converge on the hub (slight scatter at arrival)
       to[i * 3] = hub.x + (rand() - 0.5) * 1.2;
       to[i * 3 + 1] = hub.y + rand() * 1.5;
       to[i * 3 + 2] = hub.z + (rand() - 0.5) * 1.2;
-      colors[i * 3] = clay.r;
-      colors[i * 3 + 1] = clay.g;
-      colors[i * 3 + 2] = clay.b;
+      // HDR boost — bloom selects exactly these 140 motes
+      colors[i * 3] = clay.r * 2.3;
+      colors[i * 3 + 1] = clay.g * 2.3;
+      colors[i * 3 + 2] = clay.b * 2.3;
     } else {
       // cream points disperse upward into a wide shell and thin out
       const a = rand() * Math.PI * 2;
@@ -68,12 +71,13 @@ export function buildMurmuration(eventsBounds: THREE.Box3) {
   geo.setAttribute("aTo", new THREE.BufferAttribute(to, 3));
   geo.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
   geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+  geo.setAttribute("aIsClay", new THREE.BufferAttribute(isClayArr, 1));
 
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uProgress: { value: 0 },
       uTime: { value: 0 },
-      uSize: { value: 5.5 },
+      uSize: { value: 9.5 },
     },
     vertexShader: /* glsl */ `
       uniform float uProgress;
@@ -83,6 +87,7 @@ export function buildMurmuration(eventsBounds: THREE.Box3) {
       attribute vec3 aTo;
       attribute vec3 aColor;
       attribute float aSeed;
+      attribute float aIsClay;
       varying vec3 vColor;
       varying float vFade;
       void main() {
@@ -97,12 +102,12 @@ export function buildMurmuration(eventsBounds: THREE.Box3) {
         pos.z += cos(uTime * 0.8 + aSeed * 6.2831 + pos.x * 0.3) * 1.6 * sw;
         pos.y += sin(uTime * 0.7 + aSeed * 12.566) * 0.8 * sw;
         vColor = aColor;
-        // clay motes persist; cream thins out as it disperses
-        float isClay = step(0.9882, 1.0 - (aSeed * 0.0)) * 0.0; // (color carries it)
-        vFade = 1.0 - ease * (aColor.r > 0.75 && aColor.g < 0.55 ? 0.15 : 0.85);
+        // clay motes persist (and grow); cream thins as it disperses
+        vFade = 1.0 - ease * mix(0.85, 0.1, aIsClay);
         vec4 mv = modelViewMatrix * vec4(pos, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = uSize * (1.0 + sw * 0.4) * (140.0 / max(-mv.z, 0.001)) * 0.18;
+        gl_PointSize = uSize * (1.0 + sw * 0.4) * (1.0 + aIsClay * 0.9)
+          * (140.0 / max(-mv.z, 0.001)) * 0.18;
       }
     `,
     fragmentShader: /* glsl */ `

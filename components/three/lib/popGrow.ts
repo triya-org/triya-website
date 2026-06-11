@@ -95,10 +95,36 @@ export function bakePopKeys(geos: THREE.BufferGeometry[]) {
  * pgap stagger turns a crossfade into one clean seam sweeping the rim —
  * leading wedge fully grown, trailing wedge fully sunk, never 50%-everything.
  */
+/**
+ * Key a group of geometries as ONE slide island (a sawtooth bay = wall +
+ * roof + glazing; a truss = legs + beams + string lights): shared aPop from
+ * the island's combined centroid rim angle, shared aDrop from its combined
+ * top — so no prop can ever orphan from its structure mid-turn.
+ */
+export function keyIsland(geos: THREE.BufferGeometry[], seamAngle: number) {
+  const TAU = Math.PI * 2;
+  const box = new THREE.Box3();
+  geos.forEach((g) => {
+    g.computeBoundingBox();
+    box.union(g.boundingBox!);
+  });
+  const c = new THREE.Vector3();
+  box.getCenter(c);
+  const a = Math.atan2(c.z, c.x);
+  const key = ((((a - seamAngle) % TAU) + TAU) % TAU) / TAU;
+  const drop = Math.max(0.6, box.max.y + 0.4);
+  geos.forEach((g) => {
+    setPopKey(g, key);
+    const n = g.attributes.position.count;
+    g.setAttribute("aDrop", new THREE.BufferAttribute(new Float32Array(n).fill(drop), 1));
+  });
+}
+
 export function bakeAngularPop(geos: THREE.BufferGeometry[], seamAngle: number) {
   const c = new THREE.Vector3();
   const TAU = Math.PI * 2;
   geos.forEach((g) => {
+    if (g.attributes.aPop) return; // island-keyed at creation
     g.computeBoundingBox();
     g.boundingBox!.getCenter(c);
     const a = Math.atan2(c.z, c.x);
@@ -108,7 +134,7 @@ export function bakeAngularPop(geos: THREE.BufferGeometry[], seamAngle: number) 
 }
 
 export type PopShaderStore = {
-  current: { uniforms: { uPop: { value: number } } }[];
+  current: { uniforms: { uPop: { value: number }; uInv?: { value: number } } }[];
 };
 
 const POP_VERTEX_DECL = "#include <common>\nattribute float aPop;\nuniform float uPop;";
@@ -158,6 +184,7 @@ export function makePopDepthMaterial(store: PopShaderStore) {
 /** bake per-geo drop heights (rigid slide distance) */
 export function bakeDropHeights(geos: THREE.BufferGeometry[]) {
   geos.forEach((g) => {
+    if (g.attributes.aDrop) return; // island-keyed at creation
     g.computeBoundingBox();
     const drop = Math.max(0.6, g.boundingBox!.max.y + 0.4);
     const n = g.attributes.position.count;
@@ -169,11 +196,12 @@ export function bakeDropHeights(geos: THREE.BufferGeometry[]) {
 }
 
 const SLIDE_VERTEX_DECL =
-  "#include <common>\nattribute float aPop;\nattribute float aDrop;\nuniform float uPop;";
+  "#include <common>\nattribute float aPop;\nattribute float aDrop;\nuniform float uPop;\nuniform float uInv;";
 const SLIDE_VERTEX_CHUNK = `#include <begin_vertex>
         {
           float pgap = 0.85;
-          float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
+          float kk = mix(aPop, 1.0 - aPop, uInv);
+          float pk = clamp((uPop * (1.0 + pgap) - kk * pgap), 0.0, 1.0);
           float pe = 1.0 - pow(1.0 - pk, 3.0);
           transformed.y -= (1.0 - pe) * aDrop;
         }`;
@@ -183,6 +211,7 @@ function injectSlide(
   store: PopShaderStore,
 ) {
   shader.uniforms.uPop = { value: 1 };
+  shader.uniforms.uInv = { value: 0 };
   shader.vertexShader = shader.vertexShader
     .replace("#include <common>", SLIDE_VERTEX_DECL)
     .replace("#include <begin_vertex>", SLIDE_VERTEX_CHUNK);
