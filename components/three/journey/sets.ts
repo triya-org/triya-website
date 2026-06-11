@@ -106,7 +106,7 @@ export function buildManufacturing(): IndustrySet {
     const x0 = -6.375 + i * 4.25;
     const bay: THREE.BufferGeometry[] = [];
     bay.push(box(G.structures, 4.25, 5.2, 0.4, x0, 2.6, -5.4, SAGE));
-    bay.push(box(G.structures, 4.25, 2.2, 0.4, x0, 1.1, 5.4, SAND));
+    bay.push(box(G.structures, 4.25, 1.0, 0.4, x0, 0.5, 5.4, SAND)); // low parapet: sightline to the workers
     const slope = new THREE.BoxGeometry(4.4, 0.22, 11);
     slope.rotateZ(0.42);
     slope.translate(x0 + 0.4, 6.1, 0);
