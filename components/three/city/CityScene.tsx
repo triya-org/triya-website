@@ -73,17 +73,29 @@ function paint(geo: THREE.BufferGeometry, color: THREE.Color) {
  * wave. Keyed by quantized footprint anchor, so a building and everything
  * standing on it (mast, AC, windows) rise together.
  */
+const POP_GAP = 0.85; // must match pgap in the grow shader
+function popCellKey(x: number, z: number) {
+  const qx = Math.round(x / 3);
+  const qz = Math.round(z / 3);
+  return (Math.abs(Math.sin(qx * 12.9898 + qz * 78.233)) * 43758.5453) % 1;
+}
+/** JS mirror of the shader grow ease — instanced hardware must ride the
+    exact curve of the building/pole it stands on */
+function popEase(pop: number, key: number) {
+  const pk = THREE.MathUtils.clamp(pop * (1 + POP_GAP) - key * POP_GAP, 0, 1);
+  return 1 - Math.pow(1 - pk, 3);
+}
+function setPopKey(g: THREE.BufferGeometry, key: number) {
+  const n = g.attributes.position.count;
+  g.setAttribute("aPop", new THREE.BufferAttribute(new Float32Array(n).fill(key), 1));
+}
 function bakePopKeys(geos: THREE.BufferGeometry[]) {
   const c = new THREE.Vector3();
   geos.forEach((g) => {
+    if (g.attributes.aPop) return; // explicitly keyed at creation
     g.computeBoundingBox();
     g.boundingBox!.getCenter(c);
-    const qx = Math.round(c.x / 3);
-    const qz = Math.round(c.z / 3);
-    const key = (Math.abs(Math.sin(qx * 12.9898 + qz * 78.233)) * 43758.5453) % 1;
-    const n = g.attributes.position.count;
-    const arr = new Float32Array(n).fill(key);
-    g.setAttribute("aPop", new THREE.BufferAttribute(arr, 1));
+    setPopKey(g, popCellKey(c.x, c.z));
   });
 }
 
@@ -186,6 +198,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const treeGeos: THREE.BufferGeometry[] = [];
     const poleGeos: THREE.BufferGeometry[] = [];
     const lampPositions: THREE.Vector3[] = [];
+    const lampKeys: number[] = [];
     const nodeCandidates: { pos: THREE.Vector3; h: number; roofIdx: number }[] = [];
     // rooftop furniture (AC/antennas) is deferred until cameras are placed —
     // a camera and an AC unit must never share a roof (they interpenetrate)
@@ -451,9 +464,12 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         [2.9, s, 1],
         [-2.9, s, -1],
       ] as const) {
+        const lampKey = popCellKey(lx, lz);
+        lampKeys.push(lampKey);
         const pole = new THREE.CylinderGeometry(0.06, 0.08, 2.8, 6);
         pole.translate(lx, 1.4, lz);
         paint(pole, trunkCol);
+        setPopKey(pole, lampKey);
         poleGeos.push(pole);
         // arm axis must POINT toward the road (along the offset direction),
         // spanning from the pole to the luminaire
@@ -464,11 +480,13 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         else arm.rotateZ(Math.PI / 2); // axis along X
         arm.translate(lx + towardRoad[0] * 0.9, 2.78, lz + towardRoad[1] * 0.9);
         paint(arm, trunkCol);
+        setPopKey(arm, lampKey);
         poleGeos.push(arm);
         // luminaire housing at the arm's end, head right beneath it
         const housing = new THREE.CylinderGeometry(0.16, 0.13, 0.14, 8);
         housing.translate(lx + towardRoad[0] * 1.8, 2.74, lz + towardRoad[1] * 1.8);
         paint(housing, new THREE.Color("#8C867A"));
+        setPopKey(housing, lampKey);
         poleGeos.push(housing);
         lampPositions.push(
           new THREE.Vector3(lx + towardRoad[0] * 1.8, 2.64, lz + towardRoad[1] * 1.8),
@@ -503,9 +521,13 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     nodeCandidates.sort((a, b) => b.h - a.h);
     const nodes: THREE.Vector3[] = [];
     const nodeYaws: number[] = [];
+    const nodeKeys: number[] = [];
     const cameraRoofs = new Set<number>();
     nodeCandidates.slice(0, high ? 30 : 16).forEach((c) => {
       cameraRoofs.add(c.roofIdx);
+      const roof = roofs[c.roofIdx];
+      const popKey = popCellKey(roof.x, roof.z); // EXACT building key
+      nodeKeys.push(popKey);
       const pos = c.pos
         .clone()
         .add(new THREE.Vector3((rand() - 0.5) * 1.2, 0.46, (rand() - 0.5) * 1.2));
@@ -520,6 +542,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       const mast = new THREE.CylinderGeometry(0.04, 0.055, 0.68, 6);
       mast.translate(mx, roofY + 0.34, mz);
       paint(mast, trunkCol);
+      setPopKey(mast, popKey);
       poleGeos.push(mast);
       const arm = new THREE.BoxGeometry(0.06, 0.06, 0.42);
       arm.rotateY(yaw);
@@ -529,6 +552,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
         pos.z - Math.cos(yaw) * 0.32,
       );
       paint(arm, trunkCol);
+      setPopKey(arm, popKey);
       poleGeos.push(arm);
     });
 
@@ -853,8 +877,10 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       greens,
       poles,
       lampPositions,
+      lampKeys,
       nodes,
       nodeYaws,
+      nodeKeys,
       arcs,
       hub,
       roads,
@@ -953,7 +979,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   const placeCamParts = (
     mesh: THREE.InstancedMesh | null,
     offset: number,
-    s = 1,
+    pop = 1,
   ) => {
     if (!mesh) return;
     dummy.rotation.order = "YXZ";
@@ -961,13 +987,20 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const sp = Math.sin(PITCH);
     city.nodes.forEach((n, i) => {
       const yaw = city.nodeYaws[i];
+      // ride the SAME grow curve as the building underneath (y compresses
+      // toward the ground exactly like the vertex shader)
+      const pe = pop >= 1 ? 1 : popEase(pop, city.nodeKeys[i]);
       // local +Z (front) in world, after yaw then downward pitch
       const fx = Math.sin(yaw) * cp;
       const fy = -sp;
       const fz = Math.cos(yaw) * cp;
-      dummy.position.set(n.x - fx * offset, n.y - fy * offset, n.z - fz * offset);
+      dummy.position.set(
+        n.x - fx * offset,
+        (n.y - fy * offset) * pe,
+        n.z - fz * offset,
+      );
       dummy.rotation.set(PITCH, yaw, 0);
-      dummy.scale.setScalar(s);
+      dummy.scale.setScalar(Math.max(0.001, pe));
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     });
@@ -1081,15 +1114,16 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       sh.uniforms.uPop.value = pop;
     });
     if (pop < 0.999) {
-      // instanced street/roof hardware swells in as its block finishes
-      placeCamParts(camBodyMeshRef.current, 0.27, popE);
-      placeCamParts(camFaceMeshRef.current, 0.02, popE);
+      // instanced hardware rides its own building/pole grow curve
+      placeCamParts(camBodyMeshRef.current, 0.27, pop);
+      placeCamParts(camFaceMeshRef.current, 0.02, pop);
       const lampMesh = lampMeshRef.current;
       if (lampMesh) {
         city.lampPositions.forEach((pp, i) => {
-          dummy.position.copy(pp);
+          const pe = popEase(pop, city.lampKeys[i]);
+          dummy.position.set(pp.x, pp.y * pe, pp.z);
           dummy.rotation.set(0, 0, 0);
-          dummy.scale.setScalar(Math.max(0.001, popE));
+          dummy.scale.setScalar(Math.max(0.001, pe));
           dummy.updateMatrix();
           lampMesh.setMatrixAt(i, dummy.matrix);
         });
@@ -1122,9 +1156,11 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     if (nodes) {
       for (let i = 0; i < city.nodes.length; i++) {
         const pulse = 1 + 0.08 * wake * Math.sin(t * 2.2 + i * 1.7);
+        const pe = pop >= 1 ? 1 : popEase(pop, city.nodeKeys[i]);
         dummy.position.copy(city.nodes[i]);
+        dummy.position.y *= pe;
         dummy.rotation.set(0, 0, 0);
-        dummy.scale.setScalar((0.95 + 0.15 * wake + 0.2 * exit) * pulse * Math.max(0.001, popE));
+        dummy.scale.setScalar((0.95 + 0.15 * wake + 0.2 * exit) * pulse * Math.max(0.001, pe));
         dummy.updateMatrix();
         nodes.setMatrixAt(i, dummy.matrix);
         colTmp.copy(DORMANT).lerp(CLAY, wake);
