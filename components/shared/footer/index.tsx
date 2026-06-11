@@ -69,7 +69,9 @@ export function Footer() {
   const t = getContent(language);
   
   return (
-    <footer className="border-t bg-muted/50">
+    /* Ink footer — the dark warm-charcoal closer (design-system dark surface).
+       The `dark` class flips the semantic tokens to the charcoal theme. */
+    <footer className="dark bg-background text-foreground">
       <div className="container py-16">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Company Info */}
@@ -96,7 +98,7 @@ export function Footer() {
           
           {/* Industries */}
           <div className="space-y-4">
-            <h4 className="font-semibold">{t.industries}</h4>
+            <h4 className="t-caption">{t.industries}</h4>
             <nav className="flex flex-col space-y-2">
               {t.industryItems.map((industry) => (
                 <Link 
@@ -112,7 +114,7 @@ export function Footer() {
           
           {/* Resources */}
           <div className="space-y-4">
-            <h4 className="font-semibold">{t.resources}</h4>
+            <h4 className="t-caption">{t.resources}</h4>
             <nav className="flex flex-col space-y-2">
               {t.resourceItems.map((resource) => (
                 <Link 
@@ -128,7 +130,7 @@ export function Footer() {
           
           {/* Contact */}
           <div className="space-y-4">
-            <h4 className="font-semibold">{t.contactUs}</h4>
+            <h4 className="t-caption">{t.contactUs}</h4>
             <div className="space-y-2">
               <div className="flex items-start space-x-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />

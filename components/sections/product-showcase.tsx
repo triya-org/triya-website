@@ -7,7 +7,8 @@ import {
   DollarSign,
   Search,
   Unlock,
-  LineChart
+  LineChart,
+  Building2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
@@ -53,7 +54,7 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           badge: "Data-Driven"
         },
         {
-          icon: Shield,
+          icon: Building2,
           title: "Multi-Industry Support",
           description: "Tailored solutions for manufacturing, retail, healthcare, and smart cities",
           badge: "Versatile"
@@ -95,7 +96,7 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           badge: "قائم على البيانات"
         },
         {
-          icon: Shield,
+          icon: Building2,
           title: "دعم متعدد الصناعات",
           description: "حلول مخصصة للتصنيع والتجزئة والرعاية الصحية والمدن الذكية",
           badge: "متعدد الاستخدامات"
@@ -116,6 +117,9 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeInUp}
         >
+          <p className="t-eyebrow mb-3">
+            {language === "ar" ? "لماذا تريا" : "Why Triya"}
+          </p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
             {t.title}
           </h2>
@@ -135,24 +139,16 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
             const Icon = feature.icon;
             return (
               <motion.div key={index} variants={fadeInUp}>
-                <Card className="group hover:shadow-lg transition-shadow duration-300 h-full">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {feature.badge}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                {/* editorial panel: 1px border on paper, no shadow, bare clay
+                    stroke icon, no redundant badge (design-system: borders
+                    over elevation, clay used sparingly) */}
+                <div className="group h-full rounded-lg border border-ink-900/10 bg-cream-100/60 p-6 transition-colors hover:border-clay-400/60">
+                  <Icon className="mb-5 h-5 w-5 text-clay-500" strokeWidth={1.75} />
+                  <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
+                  <p className="text-base leading-relaxed text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </div>
               </motion.div>
             );
           })}

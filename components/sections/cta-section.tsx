@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
+import { Reveal } from "@/components/scroll/Reveal";
 
 interface CTASectionProps {
   language: "en" | "ar";
@@ -49,7 +50,7 @@ export function CTASection({ language }: CTASectionProps) {
       <div className="absolute inset-0 bg-grid-slate-200/[0.03] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
       
       <div className="container relative z-10">
-        <div className="mx-auto max-w-4xl text-center">
+        <Reveal className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             {t.title}
           </h2>
@@ -92,7 +93,7 @@ export function CTASection({ language }: CTASectionProps) {
               </Link>
             </Button>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

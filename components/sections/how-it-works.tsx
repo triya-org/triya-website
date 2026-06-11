@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Camera, Cpu, Brain, Monitor } from "lucide-react";
+import { Reveal } from "@/components/scroll/Reveal";
 
 interface HowItWorksProps {
   language: "en" | "ar";
@@ -77,15 +78,18 @@ export function HowItWorks({ language }: HowItWorksProps) {
   return (
     <section className="py-24 bg-muted/30">
       <div className="container">
-        <div className="text-center mb-16">
+        <Reveal className="text-center mb-16">
+          <p className="t-eyebrow mb-3">
+            {language === "ar" ? "البنية" : "The System"}
+          </p>
           <h2 className="text-4xl font-bold mb-4">{t.title}</h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t.subtitle}
           </p>
-        </div>
+        </Reveal>
 
         {/* Diagram */}
-        <div className="mb-16 flex justify-center">
+        <Reveal className="mb-16 flex justify-center">
           <Image
             src="/how_it_works.png"
             alt="How Triya AI Works"
@@ -93,9 +97,9 @@ export function HowItWorks({ language }: HowItWorksProps) {
             height={400}
             className="w-full max-w-5xl h-auto"
           />
-        </div>
+        </Reveal>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <Reveal stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {t.steps.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -118,7 +122,7 @@ export function HowItWorks({ language }: HowItWorksProps) {
               </div>
             );
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

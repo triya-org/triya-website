@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Globe, X } from "lucide-react";
-import Link from "next/link";
+import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
@@ -17,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { motion } from "framer-motion";
-import { fadeInUp, fadeIn, staggerChildren } from "@/lib/motion-variants";
+import { SmoothScroll } from "@/components/scroll/SmoothScroll";
+import { CinematicHero } from "@/components/sections/cinematic-hero";
+import { LivingCity } from "@/components/sections/living-city";
 
 export default function Home() {
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -46,19 +45,17 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "ar" : "en";
-    setLanguage(newLang);
-    localStorage.setItem("language", newLang);
-    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
-  };
-
   const content = {
+    /* Hero copy: global-first headline (design direction: positioning is
+       worldwide, NOT GCC-only) with UAE/GCC proof carried in the subline.
+       The SEO <title> keeps "UAE's Leading Edge AI Surveillance Platform"
+       via seo-config — search is unaffected. */
     en: {
       hero: {
-        title: "UAE's Leading",
-        titleHighlight: "Edge AI Surveillance Platform",
-        subtitle: "Transform any camera into an intelligent security system. 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
+        eyebrow: "Triya.AI — Edge AI Surveillance",
+        title: "Talk to",
+        titleHighlight: "your cameras.",
+        subtitle: "Triya turns the CCTV you already own into sovereign, on-prem AI — ask anything, in 30+ languages. Built in the UAE, deployed across the GCC.",
         cta1: "Request Demo",
         cta2: "Watch Video"
       },
@@ -66,9 +63,10 @@ export default function Home() {
     },
     ar: {
       hero: {
-        title: "منصة الإمارات الرائدة",
-        titleHighlight: "للمراقبة بالذكاء الاصطناعي",
-        subtitle: "حوّل أي كاميرا إلى نظام أمني ذكي. توفير 85% من التكاليف. نخدم دبي وأبوظبي ومنطقة الخليج.",
+        eyebrow: "تريا — المراقبة بالذكاء الاصطناعي",
+        title: "تحدّث إلى",
+        titleHighlight: "كاميراتك.",
+        subtitle: "تريا تحوّل كاميرات المراقبة التي تملكها إلى ذكاء اصطناعي سيادي يعمل محليًا — اسأل بلغتك، بأكثر من ٣٠ لغة. صُنعت في الإمارات وتعمل في دول الخليج.",
         cta1: "طلب عرض توضيحي",
         cta2: "شاهد الفيديو"
       },
@@ -83,98 +81,25 @@ export default function Home() {
   }
 
   return (
+    <SmoothScroll>
     <div className="flex flex-col">
       <ProductSchema />
-      {/* Language Toggle */}
-      <div className="fixed top-20 right-4 z-50">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLanguage}
-          className="gap-2"
-        >
-          <Globe className="h-4 w-4" />
-          {language === "en" ? "العربية" : "English"}
-        </Button>
-      </div>
+      {/* (language toggle lives in the navbar — the old floating pill was a duplicate) */}
 
       {/* Hero Section */}
-      <section className="relative min-h-[100dvh] md:h-[75vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
-        {/* Video Background Container */}
-        <div className="absolute inset-0 z-0">
-          {videoLoaded && (
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="h-full w-full object-cover"
-              poster="/video-poster.jpg"
-              aria-label="Triya AI surveillance platform in action - showcasing real-time video analytics and edge AI security monitoring"
-            >
-              <source src="/videos/hero_1.mp4" type="video/mp4" />
-            </video>
-          )}
-          {/* Dark overlay for better text visibility */}
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
-        
-        {/* Content */}
-        <div className="container relative z-10 mx-auto px-4 sm:px-6 text-center">
-          <motion.div 
-            className="mx-auto max-w-4xl"
-            initial="hidden"
-            animate="visible"
-            variants={staggerChildren}
-          >
-            <motion.h1 
-              className="mb-4 sm:mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white"
-              variants={fadeInUp}
-            >
-              {t.hero.title}{" "}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                {t.hero.titleHighlight}
-              </span>
-            </motion.h1>
-            
-            {t.hero.subtitle && (
-              <motion.p 
-                className="mx-auto mb-6 sm:mb-8 max-w-2xl text-lg sm:text-xl text-gray-200"
-                variants={fadeInUp}
-              >
-                {t.hero.subtitle}
-              </motion.p>
-            )}
-            
-            <motion.div 
-              className="flex items-center justify-center"
-              variants={fadeInUp}
-            >
-              <Button 
-                size="lg" 
-                className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90" 
-                asChild
-                onClick={() => trackRequestDemo('Hero Section')}
-              >
-                <Link href="/contact/">
-                  {t.hero.cta1} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              {/* <Button 
-                size="lg" 
-                variant="outline" 
-                className="w-full sm:w-auto gap-2 bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"
-                onClick={() => {
-                  trackWatchVideo('Hero Section');
-                  setShowVideoModal(true);
-                }}
-              >
-                <Play className="h-4 w-4" /> {t.hero.cta2}
-              </Button> */}
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      <CinematicHero
+        language={language}
+        content={t.hero}
+        videoLoaded={videoLoaded}
+        onCta={() => trackRequestDemo("Hero Section")}
+        onWatchVideo={() => {
+          trackWatchVideo("Hero Section");
+          setShowVideoModal(true);
+        }}
+      />
+
+      {/* The Living City — scroll-scrubbed clay-world journey */}
+      <LivingCity language={language} />
       
       {/* Trust Section - Hidden for now */}
       {/* <section className="bg-background py-12 sm:py-16">
@@ -219,5 +144,6 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </div>
+    </SmoothScroll>
   );
 }

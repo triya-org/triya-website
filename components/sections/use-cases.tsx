@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Factory, ShoppingCart, Building2, Calendar } from "lucide-react";
+import { Reveal } from "@/components/scroll/Reveal";
 
 interface UseCasesProps {
   language: "en" | "ar";
@@ -97,16 +98,19 @@ export function UseCases({ language }: UseCasesProps) {
   return (
     <section className="py-24 bg-muted/50">
       <div className="container">
-        <div className="text-center mb-16">
+        <Reveal className="text-center mb-16">
+          <p className="t-eyebrow mb-3">
+            {language === "ar" ? "القطاعات" : "Industries"}
+          </p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
             {t.title}
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t.subtitle}
           </p>
-        </div>
+        </Reveal>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <Reveal stagger className="grid gap-8 md:grid-cols-2">
           {t.industries.map((industry, index) => {
             const Icon = industry.icon;
             return (
@@ -154,7 +158,7 @@ export function UseCases({ language }: UseCasesProps) {
               </Card>
             );
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
