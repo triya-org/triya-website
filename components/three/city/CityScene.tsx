@@ -929,9 +929,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const eRaw = entryRef ? entryRef.current : 1;
     const e = 1 - Math.pow(1 - THREE.MathUtils.clamp(eRaw, 0, 1), 3); // easeOutCubic
     const exit = window01(p, 0.9, 1.0);
-    // Exit only MISTS the city (cap 0.5) — it must stay legible under the
-    // constellation; a full whiteout reads as a rendering bug, not a moment.
-    const veil = Math.min(e, 1 - exit * 0.5);
+    // No exit mist — the next section physically slides OVER the city
+    // (analog.io cover pattern); fog only serves the entry develop.
+    const veil = e;
     const fog = scene.fog as THREE.Fog;
     fog.near = 4 + veil * 71; // 4 → 75
     fog.far = 24 + veil * 176; // 24 → 200

@@ -110,17 +110,21 @@ export default function Home() {
         </div>
       </section> */}
 
-      {/* Product Showcase */}
-      <ProductShowcase language={language} />
+      {/* The "sheet": slides up OVER the pinned city (z + opaque bg) and
+          carries the rest of the page — analog.io cover pattern */}
+      <div className="relative z-20 bg-background">
+        {/* Product Showcase */}
+        <ProductShowcase language={language} />
 
-      {/* How It Works */}
-      <HowItWorks language={language} />
+        {/* How It Works */}
+        <HowItWorks language={language} />
 
-      {/* Use Cases */}
-      <UseCases language={language} />
+        {/* Use Cases */}
+        <UseCases language={language} />
 
-      {/* CTA Section */}
-      <CTASection language={language} />
+        {/* CTA Section */}
+        <CTASection language={language} />
+      </div>
 
       {/* Video Modal */}
       <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>

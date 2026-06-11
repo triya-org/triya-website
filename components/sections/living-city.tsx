@@ -211,7 +211,10 @@ export function LivingCity({ language }: LivingCityProps) {
   }
 
   return (
-    <div ref={rootRef} data-section="living-city" className="relative">
+    // -mb-[100vh]: the content AFTER this section slides up OVER the pinned
+    // city during its final viewport of scroll (analog.io cover pattern) —
+    // the city is hidden behind the page, never faded out
+    <div ref={rootRef} data-section="living-city" className="relative -mb-[100vh]">
       {/* stage bg matches the scene's paper color so whiteout frames are
           seam-free against the page */}
       <div
@@ -223,11 +226,9 @@ export function LivingCity({ language }: LivingCityProps) {
           <CityCanvas progressRef={progressRef} entryRef={entryRef} />
         </div>
 
-        {/* edge feathering: the post stack (vignette + grain) tints the
-            canvas slightly vs the flat page cream, so its edges read as a
-            border — these veils dissolve the seam into the page */}
+        {/* top feather only — the bottom edge is covered by the next section
+            sliding over the city (no seam to hide) */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-24 bg-gradient-to-b from-cream-50 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-44 bg-gradient-to-t from-cream-50 to-transparent" />
 
         {/* beat-3 product proof: the real Triya assistant answering */}
         <div
