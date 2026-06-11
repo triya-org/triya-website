@@ -405,20 +405,6 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
               podium.translate(x, ph / 2, z);
               paint(podium, col.clone().lerp(baseCream, 0.3));
               buildingGeos.push(podium);
-              // street-level awning — a small canopy in an accent color
-              if (rand() < 0.65) {
-                const AWNINGS = ["#D97757", "#A8B89A", "#E5B864", "#C2613F", "#9FB4C7"];
-                const aw = new THREE.BoxGeometry(w * 0.85, 0.07, 0.55);
-                const side = rand() > 0.5 ? 1 : -1;
-                if (rand() > 0.5) {
-                  aw.translate(x, 1.65, z + side * (d * 1.25) * 0.5 + side * 0.2);
-                } else {
-                  aw.rotateY(Math.PI / 2);
-                  aw.translate(x + side * (w * 1.25) * 0.5 + side * 0.2, 1.65, z);
-                }
-                paint(aw, new THREE.Color(AWNINGS[Math.floor(rand() * AWNINGS.length)]));
-                buildingGeos.push(aw);
-              }
             }
 
             const body = new RoundedBoxGeometry(w, h, d, 2, 0.14);
@@ -608,6 +594,15 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       ringRoad.translate(0, 0.013, 0);
       paint(ringRoad, new THREE.Color("#D9D1BC")); // darker than any paving
       roadGeos.push(ringRoad);
+      // dashed centerline on the carriageway — reads as a real ring road
+      for (let k = 0; k < 22; k++) {
+        const a0 = (k / 22) * Math.PI * 2;
+        const dashArc = new THREE.RingGeometry(7.22, 7.4, 6, 1, a0, 0.14);
+        dashArc.rotateX(-Math.PI / 2);
+        dashArc.translate(0, 0.015, 0);
+        paint(dashArc, new THREE.Color("#FBF8F1"));
+        roadGeos.push(dashArc);
+      }
       // curbs ground the carriageway: inner ring is FULL (borders the island,
       // traffic never crosses it); outer ring is 4 arc segments with gaps at
       // the avenue mouths so entering/exiting cars never clip a curb
@@ -694,7 +689,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
 
     // crosswalks at the plaza ring and the first block ring
     const walkCol = new THREE.Color("#D97757").lerp(new THREE.Color("#FFFFFF"), 0.45);
-    for (const dist of [6.5, -6.5, 16.5, -16.5]) {
+    for (const dist of [16.5, -16.5]) {
       for (let k = -2; k <= 2; k++) {
         for (const horizontal of [true, false]) {
           const bar = new THREE.PlaneGeometry(horizontal ? 0.55 : 4.0, horizontal ? 4.0 : 0.55);
