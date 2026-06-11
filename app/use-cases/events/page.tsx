@@ -253,12 +253,9 @@ export default function EventsPage() {
             variants={staggerChildren}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.div variants={fadeInUp}>
-              <Badge variant="secondary" className="mb-4">
-                <Calendar className="h-3 w-3 mr-1" />
-                {t.hero.badge}
-              </Badge>
-            </motion.div>
+            <motion.p variants={fadeInUp} className="t-eyebrow mb-4 !text-clay-300">
+              {t.hero.badge}
+            </motion.p>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white"
               variants={fadeInUp}

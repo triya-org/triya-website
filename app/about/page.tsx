@@ -141,6 +141,9 @@ export default function AboutPage() {
             variants={staggerChildren}
             className="text-center max-w-4xl mx-auto"
           >
+            <motion.p variants={fadeInUp} className="t-eyebrow mb-4">
+              {language === "ar" ? "من نحن" : "About Triya"}
+            </motion.p>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
               variants={fadeInUp}

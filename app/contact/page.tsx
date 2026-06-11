@@ -200,6 +200,9 @@ export default function ContactPage() {
             variants={staggerChildren}
             className="text-center max-w-4xl mx-auto"
           >
+            <motion.p variants={fadeInUp} className="t-eyebrow mb-4">
+              {language === "ar" ? "تواصل معنا" : "Contact"}
+            </motion.p>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
               variants={fadeInUp}

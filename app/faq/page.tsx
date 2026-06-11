@@ -64,6 +64,9 @@ export default function FAQPage() {
         >
           {/* Header */}
           <motion.div variants={fadeInUp} className="text-center mb-12">
+            <p className="t-eyebrow mb-4">
+              {language === "ar" ? "الدعم" : "Support"}
+            </p>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               {t.title}
             </h1>
@@ -76,7 +79,7 @@ export default function FAQPage() {
           <motion.div variants={fadeInUp} className="space-y-8">
             {categories.map((category) => (
               <div key={category}>
-                <h2 className="text-2xl font-semibold mb-4 text-primary">
+                <h2 className="text-2xl font-semibold mb-4">
                   {category}
                 </h2>
                 <div className="space-y-4">

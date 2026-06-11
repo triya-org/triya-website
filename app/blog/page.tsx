@@ -122,7 +122,7 @@ export default function BlogPage() {
               <article className="group h-full">
                 <div className="h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="flex-1 p-6 flex flex-col">
-                    <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded mb-3 self-start">
+                    <span className="t-eyebrow mb-3 self-start">
                       {article.category[language]}
                     </span>
                     
@@ -153,7 +153,7 @@ export default function BlogPage() {
                         {article.tags[language].slice(0, 2).map((tag) => (
                           <span
                             key={tag}
-                            className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs"
+                            className="t-caption"
                           >
                             {tag}
                           </span>
