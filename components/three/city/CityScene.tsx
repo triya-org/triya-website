@@ -98,8 +98,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   }, [gl]);
   useEffect(() => () => envMap.dispose(), [envMap]);
 
-  /* chamfered chassis for the device (RoundedBox can't be a JSX primitive) */
-  const chassisGeo = useMemo(() => new RoundedBoxGeometry(1.7, 1.9, 1.7, 3, 0.07), []);
+  /* chamfered chassis half for the device — rendered twice (lower + upper)
+     with the glowing core seam visible in the gap between the halves */
+  const chassisGeo = useMemo(() => new RoundedBoxGeometry(1.7, 0.8, 1.7, 3, 0.07), []);
   useEffect(() => () => chassisGeo.dispose(), [chassisGeo]);
 
   /* wheel: cylinder axis rotated to lie along the car's lateral (Z) axis —
@@ -352,20 +353,20 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       }
     }
 
-    /* plaza furniture: planters decorate the CENTRAL ISLAND (radius 4.4),
-       never the orbit lane — the carriageway ring must stay clear */
+    /* plaza furniture: a tight, even garden crown on the central island —
+       reads as ONE intentional ring from any camera angle */
     if (high) {
-      for (let k = 0; k < 8; k++) {
-        const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
-        const px = Math.cos(a) * 4.4;
-        const pz = Math.sin(a) * 4.4;
-        const tub = new RoundedBoxGeometry(0.85, 0.5, 0.85, 1, 0.08);
-        tub.translate(px, 0.25, pz);
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + Math.PI / 6;
+        const px = Math.cos(a) * 3.6;
+        const pz = Math.sin(a) * 3.6;
+        const tub = new RoundedBoxGeometry(0.7, 0.42, 0.7, 1, 0.07);
+        tub.translate(px, 0.21, pz);
         paint(tub, new THREE.Color("#CFC8B6"));
         poleGeos.push(tub);
-        const bush = new THREE.IcosahedronGeometry(0.38, 1);
+        const bush = new THREE.IcosahedronGeometry(0.32, 1);
         bush.scale(1, 0.7, 1);
-        bush.translate(px, 0.62, pz);
+        bush.translate(px, 0.52, pz);
         col.copy(mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.05);
         paint(bush, col);
         treeGeos.push(bush);
@@ -422,14 +423,40 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const dashCol = new THREE.Color("#FBF8F1");
     const gridCol = new THREE.Color("#E8E2D2");
 
-    // roundabout carriageway: a road-toned annulus matching the orbit lane
-    // (bows ride radius ~6.8–7.7), so traffic visibly circles ON road
+    // roundabout carriageway: clearly road-toned annulus + raised curbs so
+    // the orbit lane (bows ride ~6.8–7.7) unmistakably reads as ROAD
     {
       const ringRoad = new THREE.RingGeometry(6.0, 8.6, 64);
       ringRoad.rotateX(-Math.PI / 2);
       ringRoad.translate(0, 0.013, 0);
-      paint(ringRoad, roadCol);
+      paint(ringRoad, new THREE.Color("#D9D1BC")); // darker than any paving
       roadGeos.push(ringRoad);
+      // curbs ground the carriageway: inner ring is FULL (borders the island,
+      // traffic never crosses it); outer ring is 4 arc segments with gaps at
+      // the avenue mouths so entering/exiting cars never clip a curb
+      const curbCol = new THREE.Color("#CFC8B6");
+      const innerCurb = new THREE.CylinderGeometry(5.95, 5.95, 0.14, 64, 1, true);
+      innerCurb.translate(0, 0.07, 0);
+      paint(innerCurb, curbCol);
+      roadGeos.push(innerCurb);
+      const innerTop = new THREE.RingGeometry(5.8, 6.07, 64);
+      innerTop.rotateX(-Math.PI / 2);
+      innerTop.translate(0, 0.14, 0);
+      paint(innerTop, curbCol);
+      roadGeos.push(innerTop);
+      for (let q = 0; q < 4; q++) {
+        const a0 = (q * Math.PI) / 2 + (30 * Math.PI) / 180;
+        const aLen = (30 * Math.PI) / 180;
+        const arc = new THREE.CylinderGeometry(8.7, 8.7, 0.1, 24, 1, true, a0, aLen);
+        arc.translate(0, 0.05, 0);
+        paint(arc, curbCol);
+        roadGeos.push(arc);
+        const arcTop = new THREE.RingGeometry(8.58, 8.82, 24, 1, a0, aLen);
+        arcTop.rotateX(-Math.PI / 2);
+        arcTop.translate(0, 0.1, 0);
+        paint(arcTop, curbCol);
+        roadGeos.push(arcTop);
+      }
     }
 
     // main avenues
@@ -1141,21 +1168,24 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
           <cylinderGeometry args={[1.7, 1.9, 0.3, 24]} />
           <meshStandardMaterial color="#E3DDCE" roughness={1} />
         </mesh>
-        {/* chassis — warm near-black, chamfered, clearcoat catches the env */}
-        <mesh position={[0, 1.25, 0]} castShadow={high} geometry={chassisGeo}>
-          <meshPhysicalMaterial
-            color="#1A1715"
-            roughness={0.32}
-            clearcoat={0.45}
-            clearcoatRoughness={0.25}
-            envMap={envMap}
-            envMapIntensity={0.7}
-            fog={false}
-          />
-        </mesh>
-        {/* glowing clay core seam (the animated heart — hubRef drives it) */}
+        {/* split chassis — warm near-black halves; the glowing core shows in
+            the gap between them (recessed, so it never reads as a stray car) */}
+        {[0.7, 1.8].map((y) => (
+          <mesh key={y} position={[0, y, 0]} castShadow={high} geometry={chassisGeo}>
+            <meshPhysicalMaterial
+              color="#1A1715"
+              roughness={0.32}
+              clearcoat={0.45}
+              clearcoatRoughness={0.25}
+              envMap={envMap}
+              envMapIntensity={0.7}
+              fog={false}
+            />
+          </mesh>
+        ))}
+        {/* glowing clay core in the seam gap, slightly recessed */}
         <mesh ref={hubRef} position={[0, 1.25, 0]}>
-          <boxGeometry args={[1.74, 0.38, 1.74]} />
+          <boxGeometry args={[1.56, 0.32, 1.56]} />
           <meshStandardMaterial
             color="#D97757"
             emissive="#D97757"
