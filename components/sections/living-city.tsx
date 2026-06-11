@@ -101,6 +101,9 @@ export function LivingCity({ language }: LivingCityProps) {
       // ENTRY (pre-pin): as the section slides in under the hero, the city
       // "develops out of paper" — entryRef drives the fog veil in CityScene,
       // and the canvas settles from a gentle over-scale.
+      // (no scale tween here: a scrubbed wrapper scale reads as the whole 3D
+      // section inflating/deflating on every scroll nudge near the boundary —
+      // the fog develop + camera pre-roll carry the entry on their own)
       ScrollTrigger.create({
         trigger: rootRef.current,
         start: "top bottom",
@@ -110,20 +113,6 @@ export function LivingCity({ language }: LivingCityProps) {
           entryRef.current = self.progress;
         },
       });
-      gsap.fromTo(
-        canvasWrapRef.current,
-        { scale: 1.05 },
-        {
-          scale: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: rootRef.current,
-            start: "top bottom",
-            end: "top top",
-            scrub: true,
-          },
-        },
-      );
 
       // ONE master timeline (duration normalized to 1) drives the pin, the
       // 3D camera (progressRef) and all four text beats — positions below are
