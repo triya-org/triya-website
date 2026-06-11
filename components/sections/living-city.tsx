@@ -223,6 +223,12 @@ export function LivingCity({ language }: LivingCityProps) {
           <CityCanvas progressRef={progressRef} entryRef={entryRef} />
         </div>
 
+        {/* edge feathering: the post stack (vignette + grain) tints the
+            canvas slightly vs the flat page cream, so its edges read as a
+            border — these veils dissolve the seam into the page */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-24 bg-gradient-to-b from-cream-50 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-44 bg-gradient-to-t from-cream-50 to-transparent" />
+
         {/* beat-3 product proof: the real Triya assistant answering */}
         <div
           ref={productCardRef}
