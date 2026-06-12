@@ -1377,6 +1377,94 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     [beatRigs],
   );
   const dotScratch = useMemo(() => new THREE.Vector3(), []);
+
+  /* FINALE MOTES (spec §8): 140 clay fireflies riding the EXISTING arc
+     bezier geometry home — tributaries converging on the hub; convergence,
+     never dispersal (the murmuration is retired). One Points, fog-exempt,
+     HDR color so ONLY they bloom. Pure f(uProgress): scrub-back reads as
+     the network exhaling its data home. */
+  const motes = useMemo(() => {
+    const N = 140;
+    const aP0 = new Float32Array(N * 3);
+    const aP1 = new Float32Array(N * 3);
+    const aP2 = new Float32Array(N * 3);
+    const aSeed = new Float32Array(N);
+    const hub = new THREE.Vector3(0, 2.32, 0);
+    const mrand = mulberry32(777);
+    for (let i = 0; i < N; i++) {
+      const n = city.nodes[i % city.nodes.length];
+      const fx = n.x + (mrand() - 0.5) * 0.9;
+      const fy = n.y + mrand() * 0.5;
+      const fz = n.z + (mrand() - 0.5) * 0.9;
+      const dist = Math.hypot(fx - hub.x, fy - hub.y, fz - hub.z);
+      const mx = (fx + hub.x) / 2;
+      const my = Math.max(fy, 6) + dist * 0.16; // the arcs' own mid formula
+      const mz = (fz + hub.z) / 2;
+      aP0.set([fx, fy, fz], i * 3);
+      aP1.set([mx, my, mz], i * 3);
+      aP2.set(
+        [hub.x + (mrand() - 0.5) * 0.7, hub.y + mrand() * 0.7, hub.z + (mrand() - 0.5) * 0.7],
+        i * 3,
+      );
+      aSeed[i] = mrand();
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(aP0.slice(), 3));
+    geo.setAttribute("aP0", new THREE.BufferAttribute(aP0, 3));
+    geo.setAttribute("aP1", new THREE.BufferAttribute(aP1, 3));
+    geo.setAttribute("aP2", new THREE.BufferAttribute(aP2, 3));
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uProgress: { value: 0 }, uTime: { value: 0 } },
+      vertexShader: /* glsl */ `
+        uniform float uProgress;
+        uniform float uTime;
+        attribute vec3 aP0;
+        attribute vec3 aP1;
+        attribute vec3 aP2;
+        attribute float aSeed;
+        varying float vA;
+        void main() {
+          float lp = clamp(uProgress * 1.35 - aSeed * 0.35, 0.0, 1.0);
+          float e = lp * lp * (3.0 - 2.0 * lp);
+          vec3 q0 = mix(aP0, aP1, e);
+          vec3 q1 = mix(aP1, aP2, e);
+          vec3 pos = mix(q0, q1, e); // quadratic bezier — the arc itself
+          pos.x += sin(uTime * 1.4 + aSeed * 40.0) * 0.12 * (1.0 - e);
+          pos.y += cos(uTime * 1.1 + aSeed * 30.0) * 0.10 * (1.0 - e);
+          vA = smoothstep(0.0, 0.08, lp) * (1.0 - 0.6 * smoothstep(0.93, 1.0, lp));
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = (5.0 + 3.0 * sin(3.14159 * e)) * (140.0 / max(-mv.z, 0.001)) * 0.35;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        precision highp float;
+        varying float vA;
+        void main() {
+          vec2 uv = gl_PointCoord - 0.5;
+          float d = length(uv);
+          if (d > 0.5) discard;
+          float alpha = smoothstep(0.5, 0.08, d) * vA;
+          gl_FragColor = vec4(vec3(0.851, 0.467, 0.341) * 2.2, alpha);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+    });
+    const pts = new THREE.Points(geo, mat);
+    pts.visible = false;
+    pts.frustumCulled = false;
+    return { pts, geo, mat };
+  }, [city]);
+  useEffect(
+    () => () => {
+      motes.geo.dispose();
+      motes.mat.dispose();
+    },
+    [motes],
+  );
   /* beat-3 "results found" pins — small glowing markers hovering over the
      matched buildings (precise like real detections; tiny so a near camera
      pass can never smear the frame) */
@@ -1687,8 +1775,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     // clears EARLY so the pop-up growth happens in clear air, on screen.
     const veil = Math.min(1, e * 1.8);
     const fog = scene.fog as THREE.Fog;
-    fog.near = 4 + veil * 71; // 4 → 75
-    fog.far = 24 + veil * 176; // 24 → 200
+    // SOFTENED exit veil (spec §5.3): a partial pinch (~60% of clear) so the
+    // lit city stays visible under the incoming cover — covered mid-breath,
+    // alive, never faded. Constellation/hub/motes are fog-exempt.
+    const exitVeil = window01(p, 0.93, 1.0);
+    fog.near = THREE.MathUtils.lerp(4 + veil * 71, 45, exitVeil); // 4 → 75 → 45
+    fog.far = THREE.MathUtils.lerp(24 + veil * 176, 120, exitVeil); // 24 → 200 → 120
 
     /* pop-up-book entry: half the growth during the slide-in, the rest
        through the GAZE beat — the wave completes as the prologue scrim
@@ -1955,6 +2047,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     if (nodeMatRef.current)
       nodeMatRef.current.emissiveIntensity =
         0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9 + heart * 1.7;
+
+    /* finale motes: the network exhales home (0.89–0.97) */
+    const moteW = window01(p, 0.89, 0.97);
+    motes.pts.visible = moteW > 0.001;
+    if (moteW > 0.001) {
+      (motes.mat.uniforms.uProgress as { value: number }).value = moteW;
+      (motes.mat.uniforms.uTime as { value: number }).value = t;
+    }
 
     /* arcs draw on across the whole journey — the network learns the city
        park by park (each settled park lifts the baseline), the detection
@@ -2331,6 +2431,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       {beatRigs.map((rig, i) => (
         <primitive key={`beat-${i}`} object={rig.line} />
       ))}
+      <primitive object={motes.pts} />
 
       {/* actor pools — ONE capsule mesh for all four districts + hat discs
           (five butter hats, one conspicuously bare head: the M beat) */}
