@@ -13,12 +13,12 @@ import {
   popCellKey,
   popEase,
   setPopKey,
-  bakePopKeys,
   addPopGrow,
   makePopDepthMaterial,
   type PopShaderStore,
 } from "@/components/three/lib/popGrow";
 import { assertClearance, type Collider } from "@/components/three/city/clearance";
+import { FRACTIONS } from "@/components/three/city/fractions";
 
 /* ============================================================
    The Living City v3 — Triya's clay-miniature world, detailed.
@@ -437,6 +437,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     }
 
+    /* THE BLOOM (spec §4.1): entry keys become a radial wave rolling out
+       from the hub through the district skylines — 70% radius, 30% the old
+       hash sparkle, quantized per 3-unit cell so a building and everything
+       standing on it (mast, lamp, CCTV) rise as one. */
+    const POP_RADIAL_BLEND = 0.7;
+    const radialCellKey = (x: number, z: number) => {
+      const qx = Math.round(x / 3) * 3;
+      const qz = Math.round(z / 3) * 3;
+      const radial = Math.min(1, Math.hypot(qx, qz) / 55);
+      return POP_RADIAL_BLEND * radial + (1 - POP_RADIAL_BLEND) * popCellKey(x, z);
+    };
+
     /* streetlights along both central avenues */
     const lampSpacing = 7;
     for (let s = -range; s <= range; s += lampSpacing) {
@@ -447,7 +459,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         [2.9, s, 1],
         [-2.9, s, -1],
       ] as const) {
-        const lampKey = popCellKey(lx, lz);
+        const lampKey = radialCellKey(lx, lz);
         lampKeys.push(lampKey);
         const pole = new THREE.CylinderGeometry(0.06, 0.08, 2.8, 6);
         pole.translate(lx, 1.4, lz);
@@ -762,8 +774,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // district re-seats (roofIdx −1) key by their own anchor cell
       const popKey =
         c.roofIdx >= 0
-          ? popCellKey(roofs[c.roofIdx].x, roofs[c.roofIdx].z) // EXACT building key
-          : popCellKey(c.pos.x, c.pos.z);
+          ? radialCellKey(roofs[c.roofIdx].x, roofs[c.roofIdx].z) // EXACT building key
+          : radialCellKey(c.pos.x, c.pos.z);
       nodeKeys.push(popKey);
       const pos = c.pos
         .clone()
@@ -798,16 +810,25 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       if (!cameraRoofs.has(i)) addRoof(r.x, r.z, r.w, r.topY, r.d);
     });
 
-    // pop-up-book entry: per-object grow keys (quantized anchor → a building
-    // and the things standing on it rise together)
-    bakePopKeys(buildingGeos);
-    bakePopKeys(windowDarkGeos);
-    bakePopKeys(windowLitGeos);
-    bakePopKeys(treeGeos);
-    bakePopKeys(poleGeos);
-    bakePopKeys(retailLitGeos);
-    bakePopKeys(eventsLitGeos);
-    bakePopKeys(mfgGlowGeos);
+    // pop-up-book entry: per-object grow keys on the RADIAL wave (quantized
+    // anchor → a building and the things standing on it rise together)
+    const bakeRadial = (geos: THREE.BufferGeometry[]) => {
+      const cc = new THREE.Vector3();
+      geos.forEach((g) => {
+        if (g.attributes.aPop) return; // explicitly keyed at creation
+        g.computeBoundingBox();
+        g.boundingBox!.getCenter(cc);
+        setPopKey(g, radialCellKey(cc.x, cc.z));
+      });
+    };
+    bakeRadial(buildingGeos);
+    bakeRadial(windowDarkGeos);
+    bakeRadial(windowLitGeos);
+    bakeRadial(treeGeos);
+    bakeRadial(poleGeos);
+    bakeRadial(retailLitGeos);
+    bakeRadial(eventsLitGeos);
+    bakeRadial(mfgGlowGeos);
 
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
@@ -1242,6 +1263,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     mesh.instanceMatrix.needsUpdate = true;
   };
 
+  /** GAZE state (spec §4.2): while active, the nearest 6 lenses yaw a few
+      degrees toward the camera — the city notices you. Progress-windowed. */
+  const gazeRef = useRef<{ amt: number; x: number; z: number; set: Set<number> }>({
+    amt: 0,
+    x: 0,
+    z: 0,
+    set: new Set(),
+  });
+
   /** static camera units: yaw toward the hub, pitched down at the street.
       offset = body-local +Z distance from the lens (node) position */
   const PITCH = 0.5;
@@ -1254,8 +1284,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     dummy.rotation.order = "YXZ";
     const cp = Math.cos(PITCH);
     const sp = Math.sin(PITCH);
+    const gz = gazeRef.current;
     city.nodes.forEach((n, i) => {
-      const yaw = city.nodeYaws[i];
+      let yaw = city.nodeYaws[i];
+      if (gz.amt > 0 && gz.set.has(i)) {
+        let dy = Math.atan2(gz.x - n.x, gz.z - n.z) - yaw;
+        dy = THREE.MathUtils.euclideanModulo(dy + Math.PI, Math.PI * 2) - Math.PI;
+        yaw += THREE.MathUtils.clamp(dy, -0.45, 0.45) * gz.amt;
+      }
       // ride the SAME grow curve as the building underneath (y compresses
       // toward the ground exactly like the vertex shader)
       const pe = pop >= 1 ? 1 : popEase(pop, city.nodeKeys[i]);
@@ -1502,7 +1538,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     popShaders.current.forEach((sh) => {
       sh.uniforms.uPop.value = pop;
     });
-    if (pop < 0.999) {
+
+    /* GAZE (spec §4.2): as the bloom completes, the nearest 6 lenses turn
+       toward the camera — pure progress window, no clock relax */
+    const gazeAmt = window01(p, 0.005, 0.03) * (1 - window01(p, 0.055, 0.08));
+    const gz = gazeRef.current;
+    gz.amt = gazeAmt;
+    gz.x = posCur.x;
+    gz.z = posCur.z;
+    if (gazeAmt > 0 && gz.set.size === 0) {
+      const order = city.nodes
+        .map((n, i) => ({ i, d: n.distanceToSquared(posCur) }))
+        .sort((a, b) => a.d - b.d);
+      gz.set = new Set(order.slice(0, 6).map((o) => o.i));
+    } else if (gazeAmt === 0 && gz.set.size) {
+      gz.set.clear();
+    }
+
+    if (pop < 0.999 || gazeAmt > 0) {
       // instanced hardware rides its own building/pole grow curve
       placeCamParts(camBodyMeshRef.current, 0.27, pop);
       placeCamParts(camFaceMeshRef.current, 0.02, pop);
@@ -1550,6 +1603,19 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     lookCur.lerp(tmp, 0.08);
     camera.lookAt(lookCur);
 
+    /* FOV script (spec §0.19): ~27 through the dive, 32 cruising, ease
+       toward 34.5 in each hold's push-in — the film gets lenses */
+    const diveW = window01(p, 0.05, 0.08) * (1 - window01(p, 0.125, 0.155));
+    let fovT = 32 - 5 * diveW;
+    for (const [a, b] of FRACTIONS.parks)
+      fovT += 2.5 * window01(p, (a + b) / 2, b) * (1 - window01(p, b, b + 0.035));
+    const pcam = camera as THREE.PerspectiveCamera;
+    const nf = pcam.fov + (fovT - pcam.fov) * (1 - Math.exp(-4 * delta));
+    if (Math.abs(nf - pcam.fov) > 0.002) {
+      pcam.fov = nf;
+      pcam.updateProjectionMatrix();
+    }
+
     /* narrative windows — keyed to the unified FRACTIONS (spec §5.1):
        wake = the silhouette overture (lenses/lamps/skyline rows ramp as the
        bloom completes and the dive flies); querySpot rides the SC park;
@@ -1590,10 +1656,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       eventsLitMatRef.current.emissiveIntensity = 0.1 + window01(p, 0.7, 0.76) * 1.5;
     if (mfgGlowMatRef.current)
       mfgGlowMatRef.current.emissiveIntensity = 0.2 + window01(p, 0.1, 0.15) * 1.2;
-    /* lenses ignite on wake; constellation glows brighter through the exit */
+    /* lenses ignite on wake; constellation glows brighter through the exit.
+       HEARTBEAT (spec §4.2): one synchronized pulse as the bloom completes —
+       every lens fires through the bloom threshold at once. */
+    const heart = Math.sin(Math.PI * window01(p, 0.028, 0.062));
     if (nodeMatRef.current)
       nodeMatRef.current.emissiveIntensity =
-        0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9;
+        0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9 + heart * 1.7;
 
     /* arcs draw on across the whole journey (the network learns the city
        park by park), all at full draw through the finale crane */
