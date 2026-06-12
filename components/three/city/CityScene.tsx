@@ -152,20 +152,21 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* curated warm-pastel facade palette (weighted — sand/cream dominate,
        color punctuates; clay stays the SIGNAL, these are the chorus) */
-    /* founder note: the old 22/16 sand+ochre weighting read as "brown
-       theme" from the god view — cool/blush chorus now carries half the
-       city, with a soft mint admitted for relief */
+    /* founder mandate: VIBRANT. Burano-painted-houses energy — saturated,
+       joyful, harmonized. Cream breathers keep it sophisticated; clay stays
+       the only MOVING light so the signal survives the chroma. */
     const FACADES: [string, number][] = [
-      ["#EDE4D3", 12], // warm sand
-      ["#E9D8C0", 9], // pale ochre
+      ["#F2E3C8", 13], // warm cream (breather)
+      ["#7FA8C9", 12], // sky blue
+      ["#93B17C", 11], // leaf green
+      ["#5FA8A0", 10], // venetian teal
+      ["#D98C9C", 10], // rose pink
+      ["#E3B23C", 9], // mustard
       ["#E5C1A5", 11], // apricot
-      ["#DFAE92", 9], // terracotta blush
-      ["#D9BCAD", 10], // rose taupe
-      ["#CFD3BC", 14], // dusty sage
-      ["#E8CFC8", 13], // shell pink
-      ["#C3CCC9", 11], // dusty blue-grey
-      ["#E2D6E0", 8], // faded lilac
-      ["#CFE0D4", 7], // soft mint (new relief note)
+      ["#E8826B", 7], // coral (kept rarer than clay's airtime)
+      ["#B89CC8", 8], // wisteria
+      ["#C96F4A", 5], // terracotta
+      ["#E8CFC8", 9], // shell pink
     ];
     const FACADE_TOTAL = FACADES.reduce((a, [, w]) => a + w, 0);
     const pickFacade = () => {
@@ -335,7 +336,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             // a clear annulus — no buildings hugging the plaza corners
             if (Math.hypot(x, z) < 11.5) continue;
 
-            if (rand() < 0.22) {
+            // the HIGH STREET never skips a lot — a street wall with a
+            // missing tooth was the founder's "did you remove a building?"
+            const retailFront = high && Math.abs(x) < 10 && z >= 14 && z <= 44;
+            if (rand() < 0.22 && !retailFront) {
               if (rand() < 0.8) {
                 const th = 0.8 + rand() * 0.5;
                 const trunk = new THREE.CylinderGeometry(0.1, 0.14, th, 6);
@@ -394,7 +398,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               col.set(
                 flagship
                   ? "#E8CFC8"
-                  : ["#E8CFC8", "#E5C1A5", "#E2D6E0"][(((i + j + bx + bz) % 3) + 3) % 3],
+                  : ["#7FA8C9", "#E3B23C", "#D98C9C", "#5FA8A0", "#E8CFC8"][
+                      (((i + j * 2 + bx + bz) % 5) + 5) % 5
+                    ],
               );
 
             // ~12% of the low-rises are cylindrical (silhouette variety)
@@ -1067,6 +1073,90 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           dbox(buildingGeos, 0.22, 5.2, 0.22, 45.8 + ls, 2.5, -7.8 + ls * 0.35, "#A8A293", 0.18 * ls);
         }
         colliders.push({ x: 45.8, z: -7.8, hw: 4.5, hd: 1.0, h: 9.5, label: "ferris" });
+        // the gate camera's GROUND POLE (founder: "still slightly levitating")
+        dbox(buildingGeos, 0.18, 4.1, 0.18, 41.8, 2.05, -8.4, CREAM300);
+        dbox(buildingGeos, 0.5, 0.12, 0.5, 41.8, 0.06, -8.4, "#CBC2AE"); // base
+        colliders.push({ x: 41.8, z: -8.4, hw: 0.3, hd: 0.3, h: 4.6, label: "campole" });
+
+        /* ---- FESTIVAL KIT (founder: "make it look like a proper event") ---- */
+        // striped pavilion tents, flanking the gate run
+        for (const [tx2, tz2, tr] of [
+          [29.8, -8.8, 1.7],
+          [43.0, -9.7, 1.5],
+        ] as const) {
+          const wall = new THREE.CylinderGeometry(tr * 0.92, tr, 1.5, 12);
+          wall.translate(tx2, 0.75, tz2);
+          // vertical stripes via per-vertex angle
+          {
+            const wpos = wall.attributes.position;
+            const wcol = new Float32Array(wpos.count * 3);
+            const c1 = new THREE.Color("#E8826B");
+            const c2 = new THREE.Color("#F5EFE2");
+            const wc = new THREE.Color();
+            for (let vi = 0; vi < wpos.count; vi++) {
+              const ang = Math.atan2(wpos.getZ(vi) - 0, wpos.getX(vi) - 0);
+              wc.copy(Math.floor(((ang + Math.PI) / (Math.PI * 2)) * 12) % 2 ? c1 : c2);
+              wcol[vi * 3] = wc.r;
+              wcol[vi * 3 + 1] = wc.g;
+              wcol[vi * 3 + 2] = wc.b;
+            }
+            wall.setAttribute("color", new THREE.BufferAttribute(wcol, 3));
+          }
+          buildingGeos.push(wall);
+          const roof = new THREE.ConeGeometry(tr * 1.18, 1.3, 12);
+          roof.translate(tx2, 2.15, tz2);
+          paint(roof, dcol.set("#D98C9C"));
+          buildingGeos.push(roof);
+          const fin = new THREE.SphereGeometry(0.09, 8, 6);
+          fin.translate(tx2, 2.86, tz2);
+          paint(fin, dcol.set("#E5B864"));
+          buildingGeos.push(fin);
+          colliders.push({ x: tx2, z: tz2, hw: tr + 0.2, hd: tr + 0.2, h: 3.0, label: "tent" });
+        }
+        // balloon clusters on the gate posts + stalls (festival color!)
+        const BALLOONS = ["#E8826B", "#7FA8C9", "#E3B23C", "#93B17C", "#D98C9C"];
+        for (const [bx3, bz3] of [
+          [31.4, -8.2],
+          [41.0, -8.2],
+          [29.4, -10.5],
+          [29.4, -15.6],
+          [43.0, -9.7],
+        ] as const)
+          for (let bb = 0; bb < 4; bb++) {
+            const bl = new THREE.SphereGeometry(0.16 + drand() * 0.07, 8, 6);
+            bl.scale(1, 1.18, 1);
+            bl.translate(
+              bx3 + (drand() - 0.5) * 0.5,
+              3.6 + drand() * 0.7,
+              bz3 + (drand() - 0.5) * 0.5,
+            );
+            paint(bl, dcol.set(BALLOONS[Math.floor(drand() * 5)]));
+            buildingGeos.push(bl);
+          }
+        // bunting between the gate lintels — triangle flags
+        for (let bf = 0; bf < 16; bf++) {
+          const bt = bf / 15;
+          const bxp = 31.4 + bt * 9.6;
+          const byp = 3.7 - Math.sin(Math.PI * bt) * 0.45;
+          const flag2 = new THREE.BufferGeometry();
+          flag2.setFromPoints([
+            new THREE.Vector3(bxp - 0.12, byp, -8.05),
+            new THREE.Vector3(bxp + 0.12, byp, -8.05),
+            new THREE.Vector3(bxp, byp - 0.3, -8.05),
+          ]);
+          flag2.computeVertexNormals();
+          flag2.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(6), 2)); // merge parity
+          paint(flag2, dcol.set(BALLOONS[bf % 5]));
+          buildingGeos.push(flag2);
+        }
+        // the lit ENTRY sign over the centre gate (bulb-bordered)
+        dbox(buildingGeos, 3.4, 0.55, 0.16, 36.2, 4.1, -8.2, "#D97757");
+        for (let sb = 0; sb < 9; sb++) {
+          const bulb = new THREE.BoxGeometry(0.09, 0.09, 0.09);
+          bulb.translate(34.9 + sb * 0.33, 4.46, -8.2);
+          paint(bulb, dcol.set("#FFE2B8"));
+          eventsLitGeos.push(bulb);
+        }
         // three gate arches fronting the avenue (the crowd streams out of
         // downtown INTO the ground); the clay payoff hinge is wired in P4
         for (let g = 0; g < 3; g++) {
@@ -1074,6 +1164,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           for (const s of [-1.35, 1.35])
             dbox(buildingGeos, 0.36, 3.1, 0.36, gx + s, 1.55, -8.2, [ROSE, LILAC][g % 2]);
           dbox(buildingGeos, 3.1, 0.4, 0.42, gx, 3.3, -8.2, SAND);
+          {
+            const cap2 = new THREE.BoxGeometry(2.9, 0.07, 0.1);
+            cap2.translate(gx, 3.54, -8.0);
+            paint(cap2, dcol.set("#FFE2B8"));
+            eventsLitGeos.push(cap2); // lit lintel caps — festive, not funereal
+          }
           colliders.push({ x: gx, z: -8.2, hw: 1.7, hd: 0.3, h: 3.7, label: "gate" });
         }
         // tiered stand facing the stage
@@ -1140,6 +1236,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [stallTops[1], stallTops[0]],
           [stallTops[2], stallTops[1]],
           [stallTops[3], stallTops[2]],
+          // the festival CANOPY: crisscross spans over the whole ground
+          [lp3(31.4, 3.6, -8.3), lp3(36.5, 3.4, -16.5)],
+          [lp3(41.0, 3.6, -8.3), lp3(33.5, 3.4, -12.5)],
+          [lp3(36.2, 3.9, -8.3), lp3(44, 3.4, -13.5)],
+          [lp3(29.8, 2.9, -8.8), lp3(33.5, 3.4, -12.5)],
+          [lp3(43.0, 2.9, -9.7), lp3(44, 3.4, -13.5)],
         ];
         const quartet = ["#FFE2B8", "#FFB5A0", "#BFEAD8", "#D8C8FF"]; // lantern tints
         const zAxis = new THREE.Vector3(0, 0, 1);
@@ -1179,10 +1281,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [-46, 5.98, -10.5],
           [-28, 5.98, -10.5],
           [-37, 7.18, -15.8],
-          // WP8 seat law: lens y = support top + 0.38 (mast base flush).
-          // Gate cam on GATE-3's post (clear of the copy card); truss cam
-          // on the truss beam; hall cams on the flat side-wall tops 5.6
-          [40.95, 3.88, -8.2],
+          // WP8 seat law + founder fix: the gate cam rides its OWN
+          // ground-anchored pole beside gate-3 (a real event camera tower —
+          // physically cannot levitate); truss cam on the beam; hall cams
+          // on the flat side-wall tops 5.6
+          [41.8, 4.45, -8.4],
           [43, 5.08, -18.55],
         ] as const
       ).forEach(([nx, ny, nz], k) => {
@@ -1812,8 +1915,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         speed: 0.5 + arand() * 0.3,
         kind: 5,
       });
-    // WP9.5: the audience crescent — a real crowd faces the stage
-    for (let k = 0; k < 38; k++) {
+    // WP9.5 + founder round: a real festival crowd
+    for (let k = 0; k < 58; k++) {
       const a = Math.PI * (0.7 + arand() * 0.7);
       const rr2 = 2.5 + arand() * 4;
       list.push({
@@ -2209,10 +2312,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [35, 3, -7], xOff: -2 }, // T3 toward gates
         // corridor pin: the T3 descent bowed +x/+z into a facade at 2.1u (CI)
         { p: 0.735, pos: new THREE.Vector3(30, 8.5, 2.2), look: [40, 3, -10], xOff: -2 },
-        // E-HOLD: low at the avenue mouth so the gate arches read as
-        // foreground occlusion, stage + string lights stacked behind
-        { p: 0.75, pos: new THREE.Vector3(34, 4.6, 0.5), look: [43, 2.2, -16], xOff: -3 }, // A9 E-HOLD
-        { p: 0.88, pos: new THREE.Vector3(35.5, 4.8, -0.5), look: [43, 2.2, -16], xOff: -3 }, //    (push-in)
+        // E-HOLD reframed (founder): high enough to read the whole
+        // festival BOWL — gates + bunting foreground, tents/stalls left,
+        // stage + light canopy centre, ferris wheel back-right
+        { p: 0.75, pos: new THREE.Vector3(32.5, 8.4, 3), look: [41.5, 1.4, -14.5], xOff: -3 }, // A9 E-HOLD
+        { p: 0.88, pos: new THREE.Vector3(34, 8.7, 2), look: [41.5, 1.4, -14.5], xOff: -3 }, //    (push-in)
         // crane departure: climb IN the corridor first, then arc out high —
         // the direct diagonal skimmed the SE tower field at 2.1u (CI)
         { p: 0.9, pos: new THREE.Vector3(33.5, 12, 1.2), look: [30, 2, -6], xOff: -3 },
