@@ -152,16 +152,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* curated warm-pastel facade palette (weighted — sand/cream dominate,
        color punctuates; clay stays the SIGNAL, these are the chorus) */
+    /* founder note: the old 22/16 sand+ochre weighting read as "brown
+       theme" from the god view — cool/blush chorus now carries half the
+       city, with a soft mint admitted for relief */
     const FACADES: [string, number][] = [
-      ["#EDE4D3", 22], // warm sand (workhorse)
-      ["#E9D8C0", 16], // pale ochre
-      ["#E5C1A5", 13], // apricot
-      ["#DFAE92", 11], // terracotta blush
+      ["#EDE4D3", 12], // warm sand
+      ["#E9D8C0", 9], // pale ochre
+      ["#E5C1A5", 11], // apricot
+      ["#DFAE92", 9], // terracotta blush
       ["#D9BCAD", 10], // rose taupe
-      ["#CFD3BC", 10], // dusty sage
-      ["#E8CFC8", 8], // shell pink
-      ["#C3CCC9", 6], // dusty blue-grey (rare, cool relief)
-      ["#E2D6E0", 4], // faded lilac (rarest)
+      ["#CFD3BC", 14], // dusty sage
+      ["#E8CFC8", 13], // shell pink
+      ["#C3CCC9", 11], // dusty blue-grey
+      ["#E2D6E0", 8], // faded lilac
+      ["#CFE0D4", 7], // soft mint (new relief note)
     ];
     const FACADE_TOTAL = FACADES.reduce((a, [, w]) => a + w, 0);
     const pickFacade = () => {
@@ -263,7 +267,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           pad.rotateX(-Math.PI / 2);
           pad.translate(bx * BLOCK, 0.006, bz * BLOCK);
           const hb = Math.abs(Math.sin(bx * 37.7 + bz * 91.3) * 43758.5453) % 1;
-          colCap.set("#EDE8DA").offsetHSL((hb - 0.5) * 0.016, 0, (hb - 0.5) * 0.05);
+          colCap.set("#EDEAE0").offsetHSL((hb - 0.5) * 0.012, 0, (hb - 0.5) * 0.05);
           paint(pad, colCap);
           padGeos.push(pad);
         }
@@ -313,7 +317,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const canopy = new THREE.IcosahedronGeometry(cr, 1);
             canopy.scale(1, 0.85, 1);
             canopy.translate(tx, th + cr * 0.52, tz); // seats INTO the trunk (WP7)
-            col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
+            col.copy(rand() < 0.42 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
             paint(canopy, col);
             treeGeos.push(canopy);
           }
@@ -332,7 +336,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             if (Math.hypot(x, z) < 11.5) continue;
 
             if (rand() < 0.22) {
-              if (rand() < 0.6) {
+              if (rand() < 0.8) {
                 const th = 0.8 + rand() * 0.5;
                 const trunk = new THREE.CylinderGeometry(0.1, 0.14, th, 6);
                 trunk.translate(x, th / 2, z);
@@ -342,7 +346,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
                 const canopy = new THREE.IcosahedronGeometry(cr2, 1);
                 canopy.scale(1, 0.85, 1);
                 canopy.translate(x, th + cr2 * 0.52, z);
-                col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
+                col.copy(rand() < 0.42 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
                 paint(canopy, col);
                 treeGeos.push(canopy);
               }
@@ -1218,12 +1222,25 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const yaw = Math.atan2(-pos.x, -pos.z) + (rand() - 0.5) * 0.5;
       nodeYaws.push(yaw);
       // mast set BEHIND the body + L-bracket arm reaching forward to it
-      const mx = pos.x - Math.sin(yaw) * 0.5;
-      const mz = pos.z - Math.cos(yaw) * 0.5;
+      const isSeat = c.roofIdx < 0; // district re-seats get HEAVY mounts
+      const mx = pos.x - Math.sin(yaw) * (isSeat ? 0.3 : 0.5);
+      const mz = pos.z - Math.cos(yaw) * (isSeat ? 0.3 : 0.5);
       const roofY = pos.y - 0.46;
-      const mast = new THREE.CylinderGeometry(0.04, 0.055, 0.68, 6);
-      mast.translate(mx, roofY + 0.34, mz);
-      paint(mast, trunkCol);
+      const mast = new THREE.CylinderGeometry(
+        isSeat ? 0.09 : 0.04,
+        isSeat ? 0.13 : 0.055,
+        isSeat ? 1.0 : 0.68,
+        6,
+      );
+      mast.translate(mx, roofY + (isSeat ? 0.18 : 0.34), mz);
+      paint(mast, isSeat ? colCap.set("#D9D4C4") : trunkCol);
+      if (isSeat) {
+        const plate = new THREE.CylinderGeometry(0.24, 0.24, 0.07, 8);
+        plate.translate(mx, roofY - 0.3, mz);
+        paint(plate, colCap.set("#CBC2AE"));
+        setPopKey(plate, popKey);
+        poleGeos.push(plate);
+      }
       setPopKey(mast, popKey);
       poleGeos.push(mast);
       const arm = new THREE.BoxGeometry(0.06, 0.06, 0.42);
@@ -1426,7 +1443,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       for (let i = 0; i < npos.count; i++) {
         const hx2 = npos.getX(i) * 12.9898 + npos.getZ(i) * 78.233;
         const jit = ((Math.abs(Math.sin(hx2) * 43758.5453) % 1) - 0.5) * 0.04;
-        nc.set("#F0EBDE").offsetHSL(0, 0, jit);
+        nc.set("#F0EDE5").offsetHSL(0, 0, jit);
         ncol[i * 3] = nc.r;
         ncol[i * 3 + 1] = nc.g;
         ncol[i * 3 + 2] = nc.b;
@@ -1693,16 +1710,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     () =>
       (
         [
-          [0.0, "#FFF6E8", 1.6, "#FFF4E4", "#E2C4B4", 0.6, "#FAF9F5", 95, 200],
-          [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#E2C4B4", 0.58, "#FAF9F5", 75, 200],
-          [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#CBBFA8", 0.55, "#F7F3E9", 70, 190],
-          [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#CBBFA8", 0.58, "#FAF9F5", 75, 200],
-          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#D8B9A4", 0.52, "#F8F0E2", 70, 180],
+          // hemi GROUND is cool stone, never brown — shadows stop filling
+          // with khaki; god-view fog pulled back so distant color survives
+          [0.0, "#FFF6E8", 1.6, "#FFF4E4", "#CDC9C2", 0.6, "#FAF9F5", 125, 260],
+          [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#CDC9C2", 0.58, "#FAF9F5", 90, 230],
+          [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#C5C1B6", 0.55, "#F7F3E9", 85, 220],
+          [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#C5C1B6", 0.58, "#FAF9F5", 90, 230],
+          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F8F0E2", 80, 200],
           [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#DCD2DA", 60, 160], // THE FLIP
           [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#CFC6D6", 55, 150],
           [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#C4B8CC", 50, 140],
-          [0.8, "#9FA8D4", 0.38, "#565E8C", "#34323F", 0.24, "#BCAFC4", 48, 135],
-          [0.93, "#A8B0DA", 0.35, "#565E8C", "#34323F", 0.22, "#C9BECE", 45, 120],
+          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#BCAFC4", 48, 135],
+          [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#C9BECE", 45, 120],
         ] as [number, string, number, string, string, number, string, number, number][]
       ).map(([pp, k, ki, hs, hg, hi, f, fn, ff]) => ({
         p: pp,
@@ -1859,6 +1878,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const skyMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const scWindowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const wetMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const camBodyMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const ferrisRef = useRef<THREE.Group>(null);
   const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -1906,7 +1926,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
      top rows are CREAM so it melts into the page; the horizon band carries
      blush→indigo night. Fog-exempt; opacity rides the flip. */
   const skyGeo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(360, 140, 8, 24);
+    // a DOME (open cylinder, inside faces): the night wraps every camera
+    // yaw — a flat card left a raw-paper void looking east (founder catch)
+    const g = new THREE.CylinderGeometry(200, 200, 150, 48, 24, true);
     const pos = g.attributes.position;
     const colArr = new Float32Array(pos.count * 3);
     const cream = new THREE.Color("#FAF9F5");
@@ -1915,13 +1937,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const indigo = new THREE.Color("#383454");
     const vc = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
-      const ty = (pos.getY(i) + 70) / 140; // 0 bottom → 1 top
-      const tx = Math.abs(pos.getX(i)) / 180;
-      if (ty < 0.16) vc.copy(blush).lerp(dusk, ty / 0.16);
-      else if (ty < 0.55) vc.copy(dusk).lerp(indigo, (ty - 0.16) / 0.39);
-      else vc.copy(indigo).lerp(cream, (ty - 0.55) / 0.45);
-      // edge melt into the cream page
-      vc.lerp(cream, THREE.MathUtils.clamp((tx - 0.72) / 0.28, 0, 1));
+      const ty = (pos.getY(i) + 75) / 150; // 0 bottom → 1 top
+      if (ty < 0.2) vc.copy(blush).lerp(dusk, ty / 0.2);
+      else if (ty < 0.58) vc.copy(dusk).lerp(indigo, (ty - 0.2) / 0.38);
+      else vc.copy(indigo).lerp(cream, (ty - 0.58) / 0.42); // melts into page
       colArr[i * 3] = vc.r;
       colArr[i * 3 + 1] = vc.g;
       colArr[i * 3 + 2] = vc.b;
@@ -2154,7 +2173,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         // A2 look down-street with less left bias — at xOff -5 a corridor-
         // edge facade stacked dead-center over a passing car (panel finding)
         { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 2.6, 6], xOff: -2 }, // A2 canyon floor
-        { p: 0.11, pos: new THREE.Vector3(-7.5, 5.5, 6), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing
+        // corridor pin: hold the avenue until the annulus — the A2→A3
+        // diagonal cut the west blocks at y≈5 (CI catch after the palette
+        // re-roll moved a tower into the old gap)
+        { p: 0.1, pos: new THREE.Vector3(0.5, 5.2, 12), look: [-1, 2, 0], xOff: -2 },
+        { p: 0.11, pos: new THREE.Vector3(-7, 5.5, 4.4), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing (hugs the corridor line)
         // corridor pin: the annulus→sprint corner cut a facade at 0.79u (CI)
         { p: 0.118, pos: new THREE.Vector3(-13, 5.4, 2.2), look: [-22, 3, -2], xOff: -5 },
         { p: 0.125, pos: new THREE.Vector3(-20, 5.0, 1.6), look: [-28, 3, -3], xOff: -6 }, // A4 west sprint
@@ -2618,6 +2641,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // mid-flip (p=.50) never parks dark
       scWindowMatRef.current.emissiveIntensity = 1.7 * window01(p, 0.475, 0.545);
     if (wetMatRef.current) wetMatRef.current.opacity = night01;
+    // the hero prop must READ at night, not silhouette
+    if (camBodyMatRef.current) camBodyMatRef.current.emissiveIntensity = 0.18 * night01;
     /* ferris: rotation pure f(p); gondolas ignite through T3 with the
        string lights */
     if (ferrisRef.current) ferrisRef.current.rotation.z = p * Math.PI * 1.4;
@@ -2819,7 +2844,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       {/* ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow={high}>
         <planeGeometry args={[420, 420]} />
-        <meshStandardMaterial color="#F2EEE3" roughness={1} />
+        <meshStandardMaterial color="#F1EFE8" roughness={1} />
       </mesh>
 
       {/* street network (avenues, grid, sidewalks, dashes, crosswalks) */}
@@ -2982,7 +3007,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         castShadow={high}
         geometry={bulletGeo}
       >
-        <meshStandardMaterial color="#F6F2E8" roughness={0.45} fog={false} />
+        <meshStandardMaterial
+          ref={camBodyMatRef}
+          color="#F6F2E8"
+          roughness={0.45}
+          fog={false}
+          emissive="#FFF4E0"
+          emissiveIntensity={0}
+        />
       </instancedMesh>
       {/* dark glass faces */}
       <instancedMesh
@@ -3038,8 +3070,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         </group>
       </group>
 
-      {/* WP1: the night sky card — far behind the city, cream-edged */}
-      <mesh geometry={skyGeo} position={[0, 55, -150]} renderOrder={-2}>
+      {/* WP1: the night sky DOME — wraps the city, cream-topped */}
+      <mesh geometry={skyGeo} position={[0, 58, 0]} renderOrder={-2}>
         <meshBasicMaterial
           ref={skyMatRef}
           vertexColors
@@ -3048,6 +3080,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           fog={false}
           depthWrite={false}
           toneMapped={false}
+          side={THREE.BackSide}
         />
       </mesh>
 
