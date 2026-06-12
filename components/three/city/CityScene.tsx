@@ -1162,6 +1162,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       cars,
       range,
       colliders,
+      radialKey: radialCellKey, // actors ride the same bloom wave
       retailLit: mergeSafe(retailLitGeos),
       eventsLit: mergeSafe(eventsLitGeos),
       mfgGlow: mergeSafe(mfgGlowGeos),
@@ -1217,6 +1218,165 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const hubRef = useRef<THREE.Mesh>(null);
   const hubRingRef = useRef<THREE.Mesh>(null);
   const highlightRef = useRef<THREE.Mesh>(null);
+  const cityHemiRef = useRef<THREE.HemisphereLight>(null);
+  const cityKeyRef = useRef<THREE.DirectionalLight>(null);
+  const actorMeshRef = useRef<THREE.InstancedMesh>(null);
+  const hatMeshRef = useRef<THREE.InstancedMesh>(null);
+  const beatDotRef = useRef<THREE.Mesh>(null);
+  const tillRef = useRef<THREE.Mesh>(null);
+  const gateBarRef = useRef<THREE.Group>(null);
+  const lastBeatRef = useRef(-1);
+  const gzWasRef = useRef(false);
+
+  /* day-aging light stops: p → key color / key intensity / hemi intensity */
+  const LIGHT_STOPS = useMemo(
+    () =>
+      (
+        [
+          [0.0, "#FFF6E8", 1.6, 0.6],
+          [0.34, "#FFF0DC", 1.65, 0.56],
+          [0.55, "#FFE7CC", 1.7, 0.5],
+          [0.8, "#FFDEBC", 1.3, 0.42],
+          [1.0, "#FFDEBC", 1.25, 0.4],
+        ] as [number, string, number, number][]
+      ).map(([pp, hex, ki, hi]) => ({ p: pp, col: new THREE.Color(hex), ki, hi })),
+    [],
+  );
+
+  /* ---------- actor pools (spec §7): ONE capsule mesh, four districts ----------
+     kinds: 0 walker · 1 hatted M worker · 2 the BARE-HEADED worker (the
+     detection subject) · 3 queue · 4 queue-that-splits · 5 events crowd */
+  const ACTORS = useMemo(() => {
+    const arand = mulberry32(4242);
+    type Actor = {
+      bx: number;
+      bz: number;
+      amp: number;
+      axis: 0 | 1;
+      phase: number;
+      speed: number;
+      kind: number;
+    };
+    const list: Actor[] = [];
+    // M: six workers pacing the hall mouth (visible over the LOW parapet)
+    for (let k = 0; k < 6; k++)
+      list.push({
+        bx: -43 + k * 2.5,
+        bz: -7.3,
+        amp: 1.6,
+        axis: 0,
+        phase: arand() * 10,
+        speed: 0.45 + arand() * 0.25,
+        kind: k === 2 ? 2 : 1,
+      });
+    // R: high-street shoppers on both sidewalks
+    for (let k = 0; k < 12; k++)
+      list.push({
+        bx: (k % 2 ? 3.7 : -3.7) + (arand() - 0.5) * 0.7,
+        bz: 18 + arand() * 22,
+        amp: 3.5 + arand() * 3,
+        axis: 1,
+        phase: arand() * 20,
+        speed: 0.5 + arand() * 0.35,
+        kind: 0,
+      });
+    // R: the flagship queue (last two split at the payoff)
+    for (let q = 0; q < 5; q++)
+      list.push({
+        bx: -6.1,
+        bz: 26.2 + q * 0.62,
+        amp: 0,
+        axis: 1,
+        phase: q * 1.7,
+        speed: 0,
+        kind: q >= 3 ? 4 : 3,
+      });
+    // SC: plaza-quarter pedestrians
+    for (let k = 0; k < 12; k++) {
+      const onX = k % 2 === 0;
+      const side = k % 4 < 2 ? 3.9 : -3.9;
+      list.push({
+        bx: onX ? -16 + arand() * 32 : side,
+        bz: onX ? side : -16 + arand() * 32,
+        amp: 2.5 + arand() * 3,
+        axis: onX ? 0 : 1,
+        phase: arand() * 20,
+        speed: 0.45 + arand() * 0.3,
+        kind: 0,
+      });
+    }
+    // E: three gate lanes streaming + a loose stage crowd
+    for (let k = 0; k < 14; k++)
+      list.push({
+        bx: 32.8 + (k % 3) * 3.4 + (arand() - 0.5) * 0.8,
+        bz: -11.5,
+        amp: 2.8,
+        axis: 1,
+        phase: arand() * 20,
+        speed: 0.5 + arand() * 0.3,
+        kind: 5,
+      });
+    for (let k = 0; k < 10; k++) {
+      const a = Math.PI * (0.9 + arand() * 1.2);
+      list.push({
+        bx: 43 + Math.cos(a) * (3 + arand() * 2.2),
+        bz: -18 + Math.sin(a) * (2.5 + arand() * 2),
+        amp: 0.25,
+        axis: 0,
+        phase: arand() * 6,
+        speed: 0.25,
+        kind: 5,
+      });
+    }
+    return list;
+  }, []);
+  const actorKeys = useMemo(
+    () => ACTORS.map((a) => city.radialKey(a.bx, a.bz)),
+    [ACTORS, city],
+  );
+
+  /* beat arc rigs: dot anchor → district lens (drawRange bezier, the house
+     arc grammar); node indices: 1 = hall parapet cam, 3 = gate cam */
+  const beatRigs = useMemo(() => {
+    const mk = (from: THREE.Vector3, lensIdx: number) => {
+      const to = city.nodes[Math.min(lensIdx, city.nodes.length - 1)];
+      const mid = from.clone().lerp(to, 0.5);
+      mid.y = Math.max(from.y, to.y) + from.distanceTo(to) * 0.25;
+      const pts = new THREE.QuadraticBezierCurve3(from, mid, to).getPoints(36);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      geo.setDrawRange(0, 0);
+      const mat = new THREE.LineBasicMaterial({
+        color: "#D97757",
+        transparent: true,
+        opacity: 0,
+        fog: false,
+      });
+      return { line: new THREE.Line(geo, mat), geo, mat, total: pts.length, lensIdx };
+    };
+    let rIdx = 0;
+    let best = Infinity;
+    city.nodes.forEach((n, i) => {
+      const d2 = (n.x + 6.5) ** 2 + (n.z - 28) ** 2;
+      if (d2 < best) {
+        best = d2;
+        rIdx = i;
+      }
+    });
+    return [
+      mk(new THREE.Vector3(-36, 2.9, -7.2), 1), // M: hall mouth → parapet cam
+      mk(new THREE.Vector3(-6.0, 2.4, 26.8), rIdx), // R: queue → street cam
+      mk(new THREE.Vector3(36.6, 4.2, -8.6), 3), // E: gate swell → gate cam
+    ];
+  }, [city]);
+  useEffect(
+    () => () =>
+      beatRigs.forEach((r) => {
+        r.geo.dispose();
+        r.mat.dispose();
+      }),
+    [beatRigs],
+  );
+  const dotScratch = useMemo(() => new THREE.Vector3(), []);
   /* beat-3 "results found" pins — small glowing markers hovering over the
      matched buildings (precise like real detections; tiny so a near camera
      pass can never smear the frame) */
@@ -1624,6 +1784,138 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const querySpot = window01(p, 0.555, 0.615) * (1 - window01(p, 0.67, 0.7));
     const finale = window01(p, 0.88, 0.97);
 
+    /* ---- day-aging light script (spec §6.5) ---- */
+    if (cityKeyRef.current && cityHemiRef.current) {
+      let si = 0;
+      while (si < LIGHT_STOPS.length - 2 && p > LIGHT_STOPS[si + 1].p) si++;
+      const A = LIGHT_STOPS[si];
+      const B = LIGHT_STOPS[si + 1];
+      const lt = THREE.MathUtils.clamp((p - A.p) / (B.p - A.p), 0, 1);
+      cityKeyRef.current.color.copy(A.col).lerp(B.col, lt);
+      cityKeyRef.current.intensity = THREE.MathUtils.lerp(A.ki, B.ki, lt);
+      cityHemiRef.current.intensity = THREE.MathUtils.lerp(A.hi, B.hi, lt);
+    }
+
+    /* ---- SURVEILLANCE BEATS (spec §7): dot → arc to district lens →
+       two-hop hub brighten → hub blink → exactly ONE clay payoff.
+       All windows on park-local progress: scrub-reversible. ---- */
+    const sR = window01(p, FRACTIONS.parks[1][0], FRACTIONS.parks[1][1]);
+    const sE = window01(p, FRACTIONS.parks[3][0], FRACTIONS.parks[3][1]);
+    const payR = window01(sR, 0.55, 0.65); // second till lamp + queue split
+    const payE = window01(sE, 0.55, 0.65); // third gate barrier swings open
+    const splitW = payR;
+    if (tillRef.current)
+      (tillRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        0.1 + payR * 2.4;
+    if (gateBarRef.current) gateBarRef.current.rotation.z = -1.15 * payE;
+
+    let dotW = 0;
+    let hopIdx = -1;
+    let hopW = 0;
+    let blinkW = 0;
+    let activeBeat = -1;
+    beatRigs.forEach((rig) => {
+      rig.mat.opacity = 0;
+      rig.geo.setDrawRange(0, 0);
+    });
+    const BEAT_MAP: [number, number][] = [
+      [0, 0],
+      [1, 1],
+      [3, 2],
+    ]; // park → rig (SC's beat is the existing query machinery)
+    for (const [bi, ri] of BEAT_MAP) {
+      const [a, b] = FRACTIONS.parks[bi];
+      if (p < a || p > b) continue;
+      const s = (p - a) / (b - a);
+      const rig = beatRigs[ri];
+      const fade = 1 - window01(s, 0.9, 1);
+      dotW = window01(s, 0.35, 0.42) * fade;
+      const arcW = window01(s, 0.42, 0.55) * fade;
+      hopW = window01(s, 0.55, 0.62) * fade;
+      blinkW = Math.sin(Math.PI * window01(s, 0.6, 0.7)) * fade;
+      activeBeat = bi;
+      hopIdx = rig.lensIdx;
+      rig.geo.setDrawRange(0, Math.floor(arcW * rig.total));
+      rig.mat.opacity = 0.85 * arcW;
+      if (bi === 1) dotScratch.set(-6.0, 2.3, 26.0);
+      if (bi === 3) dotScratch.set(36.6, 4.3, -8.6);
+    }
+
+    /* ---- actor pools: walkers/queue/crowd, riding the bloom wave ---- */
+    const actorsMesh = actorMeshRef.current;
+    let w2x = -38;
+    let w2z = -7.3;
+    if (actorsMesh) {
+      const hats = hatMeshRef.current;
+      let hatIdx = 0;
+      ACTORS.forEach((a, i) => {
+        const pe = pop >= 1 ? 1 : popEase(pop, actorKeys[i]);
+        let along = 0;
+        if (a.amp > 0) {
+          const L = a.amp * 2;
+          const tt2 = (a.phase + t * a.speed) % (L * 2);
+          along = (tt2 < L ? tt2 : L * 2 - tt2) - a.amp;
+        }
+        let px2 = a.bx + (a.axis === 0 ? along : 0);
+        const pz2 = a.bz + (a.axis === 1 ? along : 0);
+        if (a.kind === 4) px2 += 0.95 * splitW; // the queue visibly drains
+        let sc = pe;
+        // crowd density biased by the Events park window (the stream thickens)
+        if (a.kind === 5) sc *= 0.55 + 0.45 * window01(p, 0.69, 0.76);
+        const bob = a.speed > 0.3 ? Math.abs(Math.sin(t * 3.2 * a.speed + a.phase)) * 0.05 : 0;
+        dummy.position.set(px2, (0.31 + bob) * sc, pz2);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.setScalar(Math.max(0.001, sc));
+        dummy.updateMatrix();
+        actorsMesh.setMatrixAt(i, dummy.matrix);
+        if (a.kind === 2) {
+          w2x = px2;
+          w2z = pz2;
+        }
+        if (a.kind === 1 && hats) {
+          dummy.position.set(px2, (0.72 + bob) * sc, pz2);
+          dummy.updateMatrix();
+          hats.setMatrixAt(hatIdx++, dummy.matrix);
+        }
+      });
+      actorsMesh.instanceMatrix.needsUpdate = true;
+      if (hats) hats.instanceMatrix.needsUpdate = true;
+    }
+    // the M dot hovers over the BARE head — the missing hat IS the payoff
+    if (activeBeat === 0) dotScratch.set(w2x, 1.8, w2z);
+    if (beatDotRef.current) {
+      beatDotRef.current.visible = dotW > 0.01;
+      if (dotW > 0.01) {
+        beatDotRef.current.position.copy(dotScratch);
+        beatDotRef.current.scale.setScalar(dotW * (1 + 0.12 * Math.sin(t * 3)));
+      }
+    }
+    // nearest 3-4 lenses yaw-track the dot during the hold
+    if (dotW > 0.01) {
+      const gzb = gazeRef.current;
+      gzb.amt = Math.max(gzb.amt, dotW * 0.7);
+      gzb.x = dotScratch.x;
+      gzb.z = dotScratch.z;
+      if (lastBeatRef.current !== activeBeat) {
+        lastBeatRef.current = activeBeat;
+        const order = city.nodes
+          .map((n, i) => ({ i, d: (n.x - dotScratch.x) ** 2 + (n.z - dotScratch.z) ** 2 }))
+          .sort((q1, q2) => q1.d - q2.d);
+        gzb.set = new Set(order.slice(0, 4).map((o) => o.i));
+      }
+    } else if (activeBeat === -1 && p > 0.12 && gazeRef.current.set.size) {
+      gazeRef.current.set.clear();
+      gazeRef.current.amt = 0;
+      lastBeatRef.current = -1;
+    }
+    // re-place cam instances while tracking (the pop block stops at pop≥1)
+    const tracking = pop >= 0.999 && (gazeRef.current.amt > 0.01 || gzWasRef.current);
+    if (tracking) {
+      placeCamParts(camBodyMeshRef.current, 0.27, 1);
+      placeCamParts(camFaceMeshRef.current, 0.02, 1);
+    }
+    gzWasRef.current = gazeRef.current.amt > 0.01;
+
     /* CCTV lenses: the wake IGNITES them (emissive, via nodeMatRef) rather
        than ballooning them — a lens bigger than its camera reads absurd */
     const nodes = nodeMeshRef.current;
@@ -1664,19 +1956,28 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       nodeMatRef.current.emissiveIntensity =
         0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9 + heart * 1.7;
 
-    /* arcs draw on across the whole journey (the network learns the city
-       park by park), all at full draw through the finale crane */
-    city.arcs.forEach((arc) => {
+    /* arcs draw on across the whole journey — the network learns the city
+       park by park (each settled park lifts the baseline), the detection
+       beat's lens runs a brighter two-hop, full draw through the finale */
+    const parksLit =
+      0.1 * window01(p, 0.27, 0.29) +
+      0.1 * window01(p, 0.47, 0.49) +
+      0.1 * window01(p, 0.68, 0.7);
+    city.arcs.forEach((arc, i) => {
       const local = window01(p, 0.22 + arc.delay * 0.5, 0.55 + arc.delay * 0.5);
       arc.geo.setDrawRange(0, Math.floor(local * arc.total));
-      arc.mat.opacity = Math.min(0.9, 0.55 * local + 0.3 * finale + 0.25 * exit);
+      const hop = i === hopIdx ? hopW * 0.5 : 0;
+      arc.mat.opacity = Math.min(
+        0.95,
+        (0.45 + parksLit) * local + 0.3 * finale + 0.25 * exit + hop,
+      );
     });
 
     /* hub breathes; ring spins */
     if (hubRef.current) {
       hubRef.current.scale.setScalar(1 + wake * 0.12 * Math.sin(t * 3));
       (hubRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
-        0.25 + wake * 0.7 + finale * 0.4 + 0.5 * exit;
+        0.25 + wake * 0.7 + finale * 0.4 + 0.5 * exit + blinkW * 0.6;
     }
     if (hubRingRef.current) {
       hubRingRef.current.rotation.z = t * 0.4;
@@ -1809,9 +2110,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       {/* clay-miniature lighting: strong low warm key (~30° elevation) with
           soft shadows, quiet fill — key:fill ≈ 3:1 so faces read keyed/
           filled/shadowed instead of uniformly lit */}
-      {/* golden hour: warm low key, blush-tinted fill and shadow bounce */}
-      <hemisphereLight args={["#FFF4E4", "#E2C4B4", 0.55]} />
+      {/* the day ages noon→dusk across the journey (script in the frame
+          loop, khaki-mud law: mood = intensity + emissives, tint floor
+          #FFDEBC, hemisphere rides down with the key) */}
+      <hemisphereLight ref={cityHemiRef} args={["#FFF4E4", "#E2C4B4", 0.55]} />
       <directionalLight
+        ref={cityKeyRef}
         position={[48, 30, 22]}
         intensity={1.75}
         color="#FFE3BC"
@@ -2024,6 +2328,71 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       {city.arcs.map((arc, i) => (
         <primitive key={i} object={arc.line} />
       ))}
+      {beatRigs.map((rig, i) => (
+        <primitive key={`beat-${i}`} object={rig.line} />
+      ))}
+
+      {/* actor pools — ONE capsule mesh for all four districts + hat discs
+          (five butter hats, one conspicuously bare head: the M beat) */}
+      <instancedMesh
+        ref={(m) => {
+          (actorMeshRef as React.MutableRefObject<THREE.InstancedMesh | null>).current = m;
+          if (m && !m.userData.colored) {
+            m.userData.colored = true;
+            const pal = ["#8E8A7E", "#A8A293", "#B5A08E", "#9FB4C7", "#A8B89A", "#C9A6A0"];
+            const ac = new THREE.Color();
+            for (let i = 0; i < ACTORS.length; i++)
+              m.setColorAt(i, ac.set(pal[i % pal.length]));
+            if (m.instanceColor) m.instanceColor.needsUpdate = true;
+          }
+        }}
+        args={[undefined, undefined, ACTORS.length]}
+        frustumCulled={false}
+      >
+        <capsuleGeometry args={[0.14, 0.34, 4, 8]} />
+        <meshStandardMaterial roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh
+        ref={hatMeshRef}
+        args={[undefined, undefined, 5]}
+        frustumCulled={false}
+      >
+        <cylinderGeometry args={[0.17, 0.17, 0.07, 10]} />
+        <meshStandardMaterial color="#E5C97B" roughness={0.55} />
+      </instancedMesh>
+
+      {/* detection dot (HDR — blooms) + the two clay payoff rigs */}
+      <mesh ref={beatDotRef} visible={false}>
+        <sphereGeometry args={[0.24, 12, 12]} />
+        <meshStandardMaterial
+          color="#D97757"
+          emissive="#D97757"
+          emissiveIntensity={2.4}
+          fog={false}
+        />
+      </mesh>
+      {/* second till lamp at the flagship (ignites clay on the R payoff) */}
+      <mesh ref={tillRef} position={[-5.45, 2.3, 29.2]}>
+        <boxGeometry args={[0.3, 0.3, 0.3]} />
+        <meshStandardMaterial
+          color="#D97757"
+          emissive="#D97757"
+          emissiveIntensity={0.1}
+          fog={false}
+        />
+      </mesh>
+      {/* gate-3 barrier — swings open on the E payoff (hinged at the post) */}
+      <group ref={gateBarRef} position={[38.25, 0.95, -8.2]}>
+        <mesh position={[1.2, 0, 0]}>
+          <boxGeometry args={[2.4, 0.12, 0.14]} />
+          <meshStandardMaterial
+            color="#D97757"
+            emissive="#D97757"
+            emissiveIntensity={0.55}
+            fog={false}
+          />
+        </mesh>
+      </group>
 
       {/* the Triya edge hub — a real device, not a placeholder cube:
           ink chassis, glowing clay core seam, vent lines, beacon dome */}
