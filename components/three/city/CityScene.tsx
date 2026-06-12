@@ -120,6 +120,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     const buildingGeos: THREE.BufferGeometry[] = [];
     const colliders: Collider[] = []; // camera-clearance AABBs (spec §3.4)
+    /* per-district emissive buckets (own mesh+material = wake-on-approach
+       is a material write, never a vertex-color rewrite — spec §0.4) */
+    const retailLitGeos: THREE.BufferGeometry[] = [];
+    const eventsLitGeos: THREE.BufferGeometry[] = [];
+    const mfgGlowGeos: THREE.BufferGeometry[] = [];
     const windowDarkGeos: THREE.BufferGeometry[] = [];
     const windowLitGeos: THREE.BufferGeometry[] = [];
     const treeGeos: THREE.BufferGeometry[] = [];
@@ -230,6 +235,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     for (let bx = -SPAN; bx <= SPAN; bx++) {
       for (let bz = -SPAN; bz <= SPAN; bz++) {
         if (Math.abs(bx) < 1 && Math.abs(bz) < 1) continue; // plaza
+        // DISTRICT MASK (spec §1): these blocks are replaced by authored
+        // sets built after the loop — same skip pattern as the PARK block.
+        // The −z arm and the south-east quarter stay generic civilian tissue.
+        if (high && bx >= -5 && bx <= -3 && (bz === -2 || bz === -1)) continue; // MFG halls
+        if (high && bx >= -5 && bx <= -3 && (bz === 1 || bz === 2)) continue; // container yard
+        if (high && bx >= 3 && bx <= 5 && (bz === -2 || bz === -1)) continue; // Events ground
         if (high && bx === PARK.bx && bz === PARK.bz) {
           // park: lawn + crossing paths + a small grove
           const px = bx * BLOCK;
@@ -306,18 +317,40 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
             const centerBias =
               1 - Math.min(1, (Math.abs(bx) + Math.abs(bz)) / (SPAN * 2));
-            const h = 2 + rand() * 4.5 + centerBias * rand() * 9.5;
-            const w = 2.7 + rand() * 1.3;
-            const d = 2.7 + rand() * 1.3;
+            /* RETAIL HIGH STREET (spec §1.2): lots fronting the +z avenue
+               are re-dressed in place — heights clamped, storefront butter
+               glazing, awnings under generator law. hOrig keeps the shared
+               rand stream byte-identical for every branch roll. */
+            const retailZone = high && Math.abs(x) < 10 && z >= 14 && z <= 44;
+            const marketPocket = retailZone && x >= 6 && x <= 14 && z >= 24 && z <= 34;
+            const flagship = retailZone && bx === -1 && bz === 3 && i === 1 && j === 0;
+            const hOrig = 2 + rand() * 4.5 + centerBias * rand() * 9.5;
+            let h = hOrig;
+            if (retailZone) h = marketPocket ? 1.7 + (hOrig % 0.5) : 2.4 + (hOrig % 2.6);
+            let w = 2.7 + rand() * 1.3;
+            let d = 2.7 + rand() * 1.3;
+            if (flagship) {
+              h = 3.4;
+              w = 4.3;
+              d = 4.0;
+            }
 
             // pastel facade, blushing gently toward clay with height
             const t = THREE.MathUtils.clamp((h - 4) / 18, 0, 1);
             col.set(pickFacade()).lerp(CLAY_SOFT, t * 0.25);
             // per-building albedo jitter — never one flat value
             col.offsetHSL((rand() - 0.5) * 0.012, (rand() - 0.5) * 0.06, (rand() - 0.5) * 0.05);
+            if (retailZone)
+              // palette reweight: apricot / shell / blush (deterministic, no draw)
+              col.set(
+                flagship
+                  ? "#E8CFC8"
+                  : ["#E5C1A5", "#E8CFC8", "#DFAE92"][(((i + j + bx + bz) % 3) + 3) % 3],
+              );
 
             // ~12% of the low-rises are cylindrical (silhouette variety)
-            if (h < 9 && rand() < 0.12) {
+            // (branch rolls gate on hOrig so the stream never shifts)
+            if (hOrig < 9 && rand() < 0.12 && !retailZone) {
               const cyl = new THREE.CylinderGeometry(w * 0.55, w * 0.55, h, 14);
               cyl.translate(x, h / 2, z);
               paint(cyl, col);
@@ -327,7 +360,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             }
 
             // podium base on some towers (street presence)
-            if (h > 9 && rand() < 0.5) {
+            if (hOrig > 9 && rand() < 0.5 && !retailZone) {
               const ph = 1.4;
               const podium = new RoundedBoxGeometry(w * 1.25, ph, d * 1.25, 2, 0.1);
               podium.translate(x, ph / 2, z);
@@ -344,7 +377,40 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             buildingGeos.push(body);
             addWindows(x, z, w, h, d);
 
-            if (h > 9 && rand() < 0.6) {
+            if (retailZone) {
+              /* storefront butter glazing facing the street + awning.
+                 GENERATOR LAW (spec §0.20): awning top ≤3.2, front edge
+                 |x| ≥ 5.7 — the corridor and its lamp arms own that air;
+                 signboards over the corridor are BANNED outright. */
+              const sxd = x > 0 ? -1 : 1; // toward the street
+              const faceX = x + sxd * (w / 2 + 0.035);
+              const glaze = new THREE.PlaneGeometry(
+                w * (flagship ? 0.8 : 0.7),
+                flagship ? 1.5 : 1.15,
+              );
+              glaze.rotateY(sxd > 0 ? Math.PI / 2 : -Math.PI / 2);
+              glaze.translate(faceX, flagship ? 1.15 : 1.0, z);
+              retailLitGeos.push(glaze);
+              if (flagship)
+                // two till lamps flanking the door (the queue beat's payoff
+                // handles — clay ignition is wired in P4)
+                for (const tz of [z - 1.2, z + 1.2]) {
+                  const till = new THREE.BoxGeometry(0.26, 0.26, 0.26);
+                  till.translate(faceX + sxd * 0.12, 2.3, tz);
+                  retailLitGeos.push(till);
+                }
+              if (!marketPocket) {
+                const aw = new THREE.BoxGeometry(0.6, 0.1, w * 0.82);
+                aw.rotateZ(sxd * 0.24);
+                const axRaw = x + sxd * (w / 2 + 0.32);
+                const ax = Math.sign(x) * Math.max(5.7, Math.abs(axRaw));
+                aw.translate(ax, Math.min(2.45, h - 0.4), z);
+                paint(aw, col.set(["#E5C1A5", "#E8CFC8"][(i + bz) & 1]));
+                buildingGeos.push(aw);
+              }
+            }
+
+            if (hOrig > 9 && rand() < 0.6 && !retailZone) {
               const ch = 2 + rand() * 3;
               const crown = new RoundedBoxGeometry(w * 0.62, ch, d * 0.62, 2, 0.12);
               crown.translate(x, h + ch / 2 - 0.05, z);
@@ -432,6 +498,257 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     }
 
+    /* ================== DISTRICTS (spec §1) — authored sets ==================
+       Own PRNG: the shared city stream stays untouched downstream (traffic
+       offsets are slot-deterministic anyway, but layout draws stay isolated). */
+    if (high) {
+      const drand = mulberry32(20260612);
+      const dcol = new THREE.Color();
+      const dbox = (
+        arr: THREE.BufferGeometry[],
+        w: number,
+        hh: number,
+        dd: number,
+        x: number,
+        y: number,
+        z: number,
+        hex: string,
+        ry = 0,
+        round = 0,
+      ) => {
+        const g =
+          round > 0
+            ? new RoundedBoxGeometry(w, hh, dd, 2, round)
+            : new THREE.BoxGeometry(w, hh, dd);
+        if (ry) g.rotateY(ry);
+        g.translate(x, y, z);
+        paint(g, dcol.set(hex));
+        buildingGeos.push(g);
+        if (arr !== buildingGeos) {
+          buildingGeos.pop();
+          arr.push(g);
+        }
+        return g;
+      };
+      const SAND = "#EDE4D3";
+      const OCHRE = "#E9D8C0";
+      const SAGE = "#CFD3BC";
+      const ROOFTOOTH = "#E5D3AE";
+      const ROSE = "#D9BCAD";
+      const LILAC = "#E2D6E0";
+      const INKISH = "#56524A";
+      const TRUNK = "#A8A293";
+      const CREAM300 = "#D9D4C4";
+
+      /* ---- MANUFACTURING — west arm (§1.1) ---- */
+      {
+        const hx = -37;
+        const hz = -10.5; // near hall center
+        dbox(buildingGeos, 18, 0.3, 9.4, hx, 0.15, hz, SAGE); // floor slab
+        // LOW front parapet — the M-hold sightline lesson from the Turntable
+        dbox(buildingGeos, 18, 1.0, 0.45, hx, 0.5, -6.2, SAND);
+        for (let b = 0; b < 4; b++) {
+          const x0 = hx - 6.75 + b * 4.5;
+          dbox(buildingGeos, 4.5, 5.6, 0.45, x0, 2.8, -14.9, SAGE); // back wall
+          const slope = new THREE.BoxGeometry(4.7, 0.24, 9.4);
+          slope.rotateZ(0.42);
+          slope.translate(x0 + 0.4, 6.3, hz);
+          paint(slope, dcol.set(ROOFTOOTH));
+          buildingGeos.push(slope);
+          const glaze = new THREE.PlaneGeometry(3.4, 1.15);
+          glaze.rotateY(Math.PI / 2);
+          glaze.translate(x0 - 1.55, 6.2, hz);
+          paint(glaze, winLit);
+          windowLitGeos.push(glaze);
+        }
+        dbox(buildingGeos, 0.45, 5.6, 9.4, hx - 9, 2.8, hz, SAND); // side walls
+        dbox(buildingGeos, 0.45, 5.6, 9.4, hx + 9, 2.8, hz, SAND);
+        colliders.push({ x: hx, z: hz, hw: 9.2, hd: 4.9, h: 8.2, label: "mfg-hallA" });
+        // interior, visible over the parapet: conveyor + pallet boxes
+        dbox(buildingGeos, 13, 0.32, 1.25, hx - 0.5, 1.15, -8.4, INKISH);
+        for (let k = 0; k < 5; k++)
+          dbox(buildingGeos, 0.2, 1.0, 0.2, hx - 6 + k * 2.8, 0.5, -8.4, TRUNK);
+        for (let k = 0; k < 6; k++)
+          dbox(
+            buildingGeos,
+            0.9,
+            0.5 + drand() * 0.55,
+            0.9,
+            hx - 7 + drand() * 14,
+            0.55,
+            -12.6 + drand() * 1.6,
+            [SAND, OCHRE, ROSE][k % 3],
+            0,
+            0.05,
+          );
+        const strip = new THREE.PlaneGeometry(12.6, 0.18); // conveyor glow line
+        strip.rotateX(-Math.PI / 2);
+        strip.translate(hx - 0.5, 1.33, -8.4);
+        mfgGlowGeos.push(strip);
+        // far hall: closed block + roof monitor
+        dbox(buildingGeos, 17, 6.8, 7.5, hx, 3.4, -20.2, OCHRE, 0, 0.12);
+        dbox(buildingGeos, 12, 1.4, 3.2, hx, 7.4, -20.2, SAND, 0, 0.08);
+        colliders.push({ x: hx, z: -20.2, hw: 8.7, hd: 3.9, h: 9, label: "mfg-hallB" });
+        for (let k = 0; k < 7; k++) {
+          const g = new THREE.PlaneGeometry(1.2, 1.5);
+          g.translate(hx - 6 + k * 2, 3.4, -16.35);
+          paint(g, winDark);
+          windowDarkGeos.push(g);
+        }
+        // smokestack
+        const st = new THREE.CylinderGeometry(0.85, 1.05, 11.5, 12);
+        st.translate(-28.6, 5.75, -21);
+        paint(st, dcol.set(ROSE));
+        buildingGeos.push(st);
+        const cap = new THREE.CylinderGeometry(1.0, 1.0, 0.5, 12);
+        cap.translate(-28.6, 11.4, -21);
+        paint(cap, dcol.set(INKISH));
+        buildingGeos.push(cap);
+        colliders.push({ x: -28.6, z: -21, hw: 1.1, hd: 1.1, h: 12, label: "stack" });
+        // box trucks at the dock
+        for (const tx of [-31.5, -27.8]) {
+          dbox(buildingGeos, 1.1, 1.15, 2.9, tx, 0.85, -7.9, "#FFFFFF", 0.06, 0.06);
+          dbox(buildingGeos, 1.05, 0.8, 0.9, tx, 0.62, -9.6, INKISH, 0.06, 0.08);
+        }
+        // gantry sky-bridge across the x-avenue (deck underside y=7.2 —
+        // the dive's signature fly-under; deck is NOT a ground collider,
+        // its clearance has a dedicated assertion)
+        for (const gz of [-5.6, 5.6]) {
+          dbox(buildingGeos, 0.55, 7.2, 0.55, -30, 3.6, gz, "#C3CCC9");
+          colliders.push({ x: -30, z: gz, hw: 0.35, hd: 0.35, h: 7.8, label: "gantry-leg" });
+        }
+        dbox(buildingGeos, 2.6, 0.5, 12.4, -30, 7.45, 0, INKISH); // deck
+        for (let k = 0; k < 5; k++)
+          dbox(
+            buildingGeos,
+            0.8,
+            0.55,
+            0.8,
+            -30 + (drand() - 0.5) * 1.2,
+            7.98,
+            -4.5 + k * 2.2,
+            [OCHRE, SAGE, SAND][k % 3],
+            0,
+            0.05,
+          );
+      }
+
+      /* ---- CONTAINER YARD — west-south (§1.1), ≤3.2 authored camera pocket:
+         the M-hold flies INSIDE it; the height cap lives HERE, in the
+         generator, so reseeds can never break the camera ---- */
+      for (let cx = 0; cx < 5; cx++)
+        for (let cz = 0; cz < 4; cz++) {
+          if (drand() < 0.18) continue;
+          const sx2 = -44.5 + cx * 3.9;
+          const sz2 = 7.6 + cz * 4.1;
+          const levels = drand() < 0.5 ? 1 : 2;
+          for (let l = 0; l < levels; l++)
+            dbox(
+              buildingGeos,
+              3.1,
+              1.32,
+              1.5,
+              sx2 + (drand() - 0.5) * 0.3,
+              0.7 + l * 1.36,
+              sz2 + (drand() - 0.5) * 0.3,
+              [OCHRE, SAGE, SAND, ROSE][(cx + cz + l) % 4],
+              0,
+              0.07,
+            );
+          colliders.push({
+            x: sx2,
+            z: sz2,
+            hw: 1.75,
+            hd: 0.95,
+            h: 0.74 + levels * 1.36, // ≤ 3.2 by construction
+            label: "container",
+          });
+        }
+
+      /* ---- EVENTS — east arm festival ground (§1.4) ---- */
+      {
+        const pad = new RoundedBoxGeometry(17, 0.14, 16, 2, 0.05);
+        pad.translate(37, 0.07, -14.5);
+        paint(pad, dcol.set("#D8DCC4")); // festival green
+        buildingGeos.push(pad);
+        // stage at (43,−18) facing southwest
+        dbox(buildingGeos, 6.2, 1.1, 4.6, 43, 0.55, -18, INKISH, 0, 0.06);
+        dbox(buildingGeos, 6.2, 3.6, 0.5, 43, 2.9, -20, ROSE);
+        for (const px of [40.4, 45.6]) {
+          dbox(buildingGeos, 0.4, 4.6, 0.4, px, 2.3, -18.6, LILAC);
+          colliders.push({ x: px, z: -18.6, hw: 0.3, hd: 0.3, h: 5.2, label: "truss" });
+        }
+        dbox(buildingGeos, 5.6, 0.3, 0.35, 43, 4.55, -18.6, LILAC); // truss beam
+        colliders.push({ x: 43, z: -19, hw: 3.3, hd: 1.6, h: 6.6, label: "stage" });
+        // three gate arches fronting the avenue (the crowd streams out of
+        // downtown INTO the ground); the clay payoff hinge is wired in P4
+        for (let g = 0; g < 3; g++) {
+          const gx = 32.8 + g * 3.4;
+          for (const s of [-1.35, 1.35])
+            dbox(buildingGeos, 0.36, 3.1, 0.36, gx + s, 1.55, -8.2, [ROSE, LILAC][g % 2]);
+          dbox(buildingGeos, 3.1, 0.4, 0.42, gx, 3.3, -8.2, SAND);
+          colliders.push({ x: gx, z: -8.2, hw: 1.7, hd: 0.3, h: 3.7, label: "gate" });
+        }
+        // tiered stand facing the stage
+        for (let s2 = 0; s2 < 3; s2++)
+          dbox(
+            buildingGeos,
+            1.3,
+            0.5,
+            7.5,
+            30.2 + s2 * 1.05,
+            0.3 + s2 * 0.42,
+            -16.5,
+            [SAND, OCHRE, SAND][s2],
+          );
+        colliders.push({ x: 31.3, z: -16.5, hw: 1.9, hd: 3.9, h: 1.9, label: "stand" });
+        // barrier ribbons: three lanes, gates → stage
+        for (let lane2 = 0; lane2 < 4; lane2++)
+          dbox(buildingGeos, 0.16, 0.5, 6.5, 31.2 + lane2 * 3.4, 0.32, -12.2, CREAM300);
+        // string lights: posts + sagging butter dot chains (own emissive
+        // mesh — they ignite one-by-one through T3, independent of windows)
+        const posts: [number, number][] = [
+          [33.5, -12.5],
+          [39, -11.5],
+          [44, -13.5],
+          [36.5, -16.5],
+        ];
+        for (const [px, pz] of posts) dbox(buildingGeos, 0.14, 3.4, 0.14, px, 1.7, pz, TRUNK);
+        const spans: [[number, number], [number, number]][] = [
+          [posts[0], posts[1]],
+          [posts[1], posts[2]],
+          [posts[2], [43, -18]],
+          [posts[0], posts[3]],
+          [posts[3], [43, -18]],
+        ];
+        for (const [[ax2, az2], [bx2, bz2]] of spans)
+          for (let k = 1; k < 12; k++) {
+            const tt = k / 12;
+            const dot = new THREE.BoxGeometry(0.11, 0.11, 0.11);
+            dot.translate(
+              ax2 + (bx2 - ax2) * tt,
+              3.3 - Math.sin(Math.PI * tt) * 0.55,
+              az2 + (bz2 - az2) * tt,
+            );
+            eventsLitGeos.push(dot);
+          }
+      }
+
+      /* district CCTV re-seats (hall parapets + gate + stage truss) —
+         forced into the constellation via sort height; slice keeps 30 total */
+      (
+        [
+          [-44, 6.45, -6.4],
+          [-30, 6.45, -6.4],
+          [-37, 7.9, -15.2],
+          [36.2, 3.55, -8.2],
+          [43, 5.1, -18.4],
+        ] as const
+      ).forEach(([nx, ny, nz], k) => {
+        nodeCandidates.push({ pos: new THREE.Vector3(nx, ny, nz), h: 99 - k, roofIdx: -1 });
+      });
+    }
+
     /* CCTV camera units on the tallest rooftops — the ICONIC silhouette:
        white bullet body on an L-bracket mast, pitched down at the street.
        The "node" position is the LENS; arcs emanate from it. */
@@ -441,9 +758,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const nodeKeys: number[] = [];
     const cameraRoofs = new Set<number>();
     nodeCandidates.slice(0, high ? 30 : 16).forEach((c) => {
-      cameraRoofs.add(c.roofIdx);
-      const roof = roofs[c.roofIdx];
-      const popKey = popCellKey(roof.x, roof.z); // EXACT building key
+      if (c.roofIdx >= 0) cameraRoofs.add(c.roofIdx);
+      // district re-seats (roofIdx −1) key by their own anchor cell
+      const popKey =
+        c.roofIdx >= 0
+          ? popCellKey(roofs[c.roofIdx].x, roofs[c.roofIdx].z) // EXACT building key
+          : popCellKey(c.pos.x, c.pos.z);
       nodeKeys.push(popKey);
       const pos = c.pos
         .clone()
@@ -485,6 +805,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     bakePopKeys(windowLitGeos);
     bakePopKeys(treeGeos);
     bakePopKeys(poleGeos);
+    bakePopKeys(retailLitGeos);
+    bakePopKeys(eventsLitGeos);
+    bakePopKeys(mfgGlowGeos);
 
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
@@ -818,6 +1141,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       cars,
       range,
       colliders,
+      retailLit: mergeSafe(retailLitGeos),
+      eventsLit: mergeSafe(eventsLitGeos),
+      mfgGlow: mergeSafe(mfgGlowGeos),
     };
   }, [high]);
 
@@ -831,6 +1157,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       c.greens?.dispose();
       c.poles?.dispose();
       c.roads?.dispose();
+      c.retailLit?.dispose();
+      c.eventsLit?.dispose();
+      c.mfgGlow?.dispose();
       c.arcs.forEach((a) => {
         a.geo.dispose();
         a.mat.dispose();
@@ -858,6 +1187,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const lampMeshRef = useRef<THREE.InstancedMesh>(null);
   const lampMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const litWinMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const retailLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const eventsLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const mfgGlowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const bodyMeshRef = useRef<THREE.InstancedMesh>(null);
   const cabinMeshRef = useRef<THREE.InstancedMesh>(null);
   const wheelMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -984,10 +1316,23 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         { p: 0.06, pos: new THREE.Vector3(2.5, 16, 40), look: [0, 4, 10], xOff: -4 }, // A1 dive-in
         { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 3, 4], xOff: -5 }, // A2 canyon floor
         { p: 0.11, pos: new THREE.Vector3(-7.5, 5.5, 6), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing
-        { p: 0.125, pos: new THREE.Vector3(-20, 5.2, 1.6), look: [-28, 3, -3], xOff: -6 }, // A4 west sprint
-        { p: 0.135, pos: new THREE.Vector3(-30, 4.7, 1.2), look: [-34, 3, -4], xOff: -6 }, // A5 gantry line
-        { p: 0.14, pos: new THREE.Vector3(-34, 6.3, 1.8), look: [-36, 2.5, -6], xOff: -6 }, // A6 M-HOLD
-        { p: 0.27, pos: new THREE.Vector3(-37, 6.5, 1.8), look: [-36, 2.5, -6], xOff: -6 }, //    (push-in)
+        // corridor pin: the annulus→sprint corner cut a facade at 0.79u (CI)
+        { p: 0.118, pos: new THREE.Vector3(-13, 5.4, 2.2), look: [-22, 3, -2], xOff: -5 },
+        { p: 0.125, pos: new THREE.Vector3(-20, 5.0, 1.6), look: [-28, 3, -3], xOff: -6 }, // A4 west sprint
+        // A5 at 4.5: CatmullRom rides ~0.25 above the key near the deck
+        // edges — 4.5 keeps the whole ±1.3 window ≥2.45 under the 7.2 deck
+        { p: 0.135, pos: new THREE.Vector3(-30, 4.35, 1.2), look: [-34, 3, -4], xOff: -6 }, // A5 gantry fly-under
+        // stay LOW until clear of the deck's x-window, then climb to the hold
+        { p: 0.1375, pos: new THREE.Vector3(-33, 4.8, 4), look: [-36, 3, -8], xOff: -5 },
+        // M-HOLD above the container-yard pocket (≤3.2 by generator law):
+        // high enough that the sawtooth pair + yard read as a diorama, the
+        // gantry at frame edge — halls right two-thirds, copy owns the left
+        { p: 0.14, pos: new THREE.Vector3(-33, 8.6, 12.5), look: [-37, 3.5, -12], xOff: -5 }, // A6 M-HOLD
+        { p: 0.27, pos: new THREE.Vector3(-36, 8.9, 12), look: [-37, 3.5, -12], xOff: -5 }, //    (push-in)
+        // T1 exit overfly: climb begins INSIDE the yard so the gantry deck
+        // clears by 4u+ (the direct yard→hub diagonal skimmed it — CI)
+        { p: 0.278, pos: new THREE.Vector3(-34.5, 9.5, 8), look: [-24, 4, 0], xOff: -3 },
+        { p: 0.29, pos: new THREE.Vector3(-30, 14, 5), look: [-18, 4, 0], xOff: -3 },
         { p: 0.305, pos: new THREE.Vector3(-12, 16, 2), look: [0, 2, 0], xOff: -2 }, // T1 hub pass
         // T1→A7 routing: ride the TRANSIT band to the +z avenue mouth, then
         // descend INSIDE the corridor (a direct diagonal crosses tower blocks
@@ -1000,10 +1345,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         { p: 0.53, pos: new THREE.Vector3(16, 24, 18), look: [2, 2, -2], xOff: -6 }, // A8 SC-HOLD
         { p: 0.68, pos: new THREE.Vector3(20, 23, 8), look: [2, 2, -2], xOff: -6 }, //    (drift)
         { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [35, 3, -7], xOff: -2 }, // T3 toward gates
-        { p: 0.75, pos: new THREE.Vector3(33, 5.2, 2), look: [46, 3, -14], xOff: -2 }, // A9 E-HOLD
-        { p: 0.88, pos: new THREE.Vector3(34.5, 5.4, 1), look: [46, 3, -14], xOff: -2 }, //    (push-in)
-        // steep first climb so the crane clears the (27.9,7.7) tower block
-        { p: 0.91, pos: new THREE.Vector3(31, 20, 10), look: [10, 1, 5], xOff: -4 },
+        // corridor pin: the T3 descent bowed +x/+z into a facade at 2.1u (CI)
+        { p: 0.735, pos: new THREE.Vector3(30, 8.5, 2.2), look: [40, 3, -10], xOff: -2 },
+        // E-HOLD: low at the avenue mouth so the gate arches read as
+        // foreground occlusion, stage + string lights stacked behind
+        { p: 0.75, pos: new THREE.Vector3(34, 4.6, 0.5), look: [43, 2.2, -16], xOff: -3 }, // A9 E-HOLD
+        { p: 0.88, pos: new THREE.Vector3(35.5, 4.8, -0.5), look: [43, 2.2, -16], xOff: -3 }, //    (push-in)
+        // crane departure: climb IN the corridor first, then arc out high —
+        // the direct diagonal skimmed the SE tower field at 2.1u (CI)
+        { p: 0.9, pos: new THREE.Vector3(33.5, 12, 1.2), look: [30, 2, -6], xOff: -3 },
+        { p: 0.925, pos: new THREE.Vector3(27, 26, 14), look: [10, 1, 5], xOff: -4 },
         { p: 0.94, pos: new THREE.Vector3(20, 38, 40), look: [0, 1, 2], xOff: -4 }, // A10 crane out
         { p: 1.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // closed loop
       ] as { p: number; pos: THREE.Vector3; look: [number, number, number]; xOff: number }[],
@@ -1093,6 +1444,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       (u, out) => camPath.getPointAt(u, out),
       remapU,
     );
+    // dedicated assertion (spec §3.4): the gantry deck is an ELEVATED volume
+    // the ground-anchored AABB sweep can't model — check both regimes:
+    // UNDER (the A5 fly-under): underside 7.2 − y ≥ 2.5
+    // OVER (the T1 overfly): y − 8.3 (deck top + conveyor boxes) ≥ 2.5
+    const gp = new THREE.Vector3();
+    let worstGap = Infinity;
+    for (let s = 0; s <= 1000; s++) {
+      camPath.getPointAt(s / 1000, gp);
+      if (Math.abs(gp.x + 30) < 1.45 && Math.abs(gp.z) < 6.4) {
+        // conveyor boxes (top 8.25) only ride the deck's middle span
+        const top = Math.abs(gp.z) < 4.8 ? 8.25 : 7.7;
+        worstGap = Math.min(worstGap, gp.y < 7.2 ? 7.2 - gp.y : gp.y - top);
+      }
+    }
+    if (worstGap !== Infinity && worstGap < 2.45)
+      console.error(
+        `[city-clearance] gantry pass clearance ${worstGap.toFixed(2)} < 2.5`,
+      );
   }, [city, camPath, remapU]);
 
   /* perf budget (dev, spec §2): ≤55 draw calls / ≤450k triangles */
@@ -1213,6 +1582,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     /* lights of the city come alive (capped so bloom stays elegant) */
     if (lampMatRef.current) lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05;
     if (litWinMatRef.current) litWinMatRef.current.emissiveIntensity = 0.06 + wake * 1.3;
+    /* district interiors: approach-keyed ignition lands in P4; v2 rides the
+       park windows so each district is awake for its own hold */
+    if (retailLitMatRef.current)
+      retailLitMatRef.current.emissiveIntensity = 0.15 + window01(p, 0.3, 0.36) * 1.1;
+    if (eventsLitMatRef.current)
+      eventsLitMatRef.current.emissiveIntensity = 0.1 + window01(p, 0.7, 0.76) * 1.5;
+    if (mfgGlowMatRef.current)
+      mfgGlowMatRef.current.emissiveIntensity = 0.2 + window01(p, 0.1, 0.15) * 1.2;
     /* lenses ignite on wake; constellation glows brighter through the exit */
     if (nodeMatRef.current)
       nodeMatRef.current.emissiveIntensity =
@@ -1426,6 +1803,52 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             roughness={0.5}
             emissive="#FFC98A"
             emissiveIntensity={0.08}
+          />
+        </mesh>
+      )}
+
+      {/* per-district emissive layers (spec §0.4): own mesh+material each, so
+          wake-on-approach is ONE material write per district (P4 wires the
+          approach ramps; until then they ride the global wake) */}
+      {city.retailLit && (
+        <mesh geometry={city.retailLit}>
+          <meshStandardMaterial
+            ref={(m) => {
+              (retailLitMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
+            color="#FFEFD8"
+            roughness={0.45}
+            emissive="#FFB45C"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+      )}
+      {city.eventsLit && (
+        <mesh geometry={city.eventsLit}>
+          <meshStandardMaterial
+            ref={(m) => {
+              (eventsLitMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
+            color="#FFE9C8"
+            roughness={0.4}
+            emissive="#FFC98A"
+            emissiveIntensity={0.25}
+          />
+        </mesh>
+      )}
+      {city.mfgGlow && (
+        <mesh geometry={city.mfgGlow}>
+          <meshStandardMaterial
+            ref={(m) => {
+              (mfgGlowMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
+            color="#FFE2B8"
+            roughness={0.4}
+            emissive="#FFB45C"
+            emissiveIntensity={0.3}
           />
         </mesh>
       )}
