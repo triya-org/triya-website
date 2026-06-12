@@ -1410,10 +1410,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* ============== street network ============== */
     const roadGeos: THREE.BufferGeometry[] = [];
-    const roadCol = new THREE.Color("#E3DDCE");
+    const roadCol = new THREE.Color("#B9B2A4"); // warm asphalt — streets read as figure
     const sideCol = new THREE.Color("#F1ECDF");
     const dashCol = new THREE.Color("#FBF8F1");
-    const gridCol = new THREE.Color("#DCD4BF"); // darker: streets read as figure
+    const gridCol = new THREE.Color("#C9C2B2"); // side streets: one step lighter
 
     // roundabout carriageway: clearly road-toned annulus + raised curbs so
     // the orbit lane (bows ride ~6.8–7.7) unmistakably reads as ROAD
@@ -1421,7 +1421,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const ringRoad = new THREE.RingGeometry(6.0, 8.6, 64);
       ringRoad.rotateX(-Math.PI / 2);
       ringRoad.translate(0, 0.013, 0);
-      paint(ringRoad, new THREE.Color("#D9D1BC")); // darker than any paving
+      paint(ringRoad, new THREE.Color("#B4ADA0")); // carriageway asphalt
       roadGeos.push(ringRoad);
       // dashed centerline on the carriageway — reads as a real ring road
       for (let k = 0; k < 22; k++) {
@@ -1533,6 +1533,75 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           roadGeos.push(bar);
         }
       }
+    }
+
+    /* THE PAPER HORIZON (founder: "the missing piece"): pastel hill rings
+       layering into the haze + wind turbines on the near ridge + a meadow
+       apron bridging city edge to hills. ONE merged mesh. The +z sector
+       stays open — the camera lives there. */
+    const horizonGeos: THREE.BufferGeometry[] = [];
+    if (high) {
+      const hrand = mulberry32(515151);
+      const RINGS3: [number, number, string][] = [
+        [84, 1.0, "#BFD0B0"], // near: sage meadow hills
+        [114, 1.5, "#C2D5CC"], // mid: blue-green
+        [150, 2.2, "#D3DDDA"], // far: misty blue-cream
+      ];
+      RINGS3.forEach(([rr, hs, hex], ri) => {
+        const n = 16 + ri * 4;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 + hrand() * 0.25;
+          if (Math.cos(a) > 0.78) continue; // the camera's sector stays open
+          const w2 = (14 + hrand() * 16) * hs;
+          const hh2 = (5 + hrand() * 7) * hs;
+          const hill = new THREE.SphereGeometry(1, 10, 7);
+          hill.scale(w2, hh2, w2 * (0.7 + hrand() * 0.4));
+          hill.translate(Math.sin(a) * (rr + hrand() * 10), 0, Math.cos(a) * (rr + hrand() * 10));
+          paintGraded(hill, colCap.set(hex).offsetHSL(0, 0, (hrand() - 0.5) * 0.04), {
+            aoBand: hh2 * 0.4,
+            noise: 0.01,
+          });
+          horizonGeos.push(hill);
+        }
+      });
+      // wind turbines on the near ridge — the smart-city wink
+      for (const ta of [2.4, 2.9, 3.5, 5.6, 6.1]) {
+        if (Math.cos(ta) > 0.78) continue;
+        const tx2 = Math.sin(ta) * 88;
+        const tz2 = Math.cos(ta) * 88;
+        const pole = new THREE.CylinderGeometry(0.18, 0.32, 11, 6);
+        pole.translate(tx2, 8.5, tz2);
+        paint(pole, colCap.set("#F0EEE6"));
+        horizonGeos.push(pole);
+        for (let bl = 0; bl < 3; bl++) {
+          const blade = new THREE.BoxGeometry(0.35, 4.2, 0.12);
+          blade.translate(0, 2.1, 0);
+          blade.rotateZ((bl / 3) * Math.PI * 2 + ta * 1.7);
+          blade.translate(tx2, 14, tz2);
+          paint(blade, colCap.set("#F0EEE6"));
+          horizonGeos.push(blade);
+        }
+      }
+      // meadow apron: city edge → hills, cream fading to pale sage
+      const apron = new THREE.RingGeometry(52, 98, 48, 3);
+      apron.rotateX(-Math.PI / 2);
+      apron.translate(0, 0.003, 0);
+      {
+        const apos = apron.attributes.position;
+        const acol = new Float32Array(apos.count * 3);
+        const inner = new THREE.Color("#F1EFE8");
+        const outer = new THREE.Color("#E3E9D2");
+        const ac2 = new THREE.Color();
+        for (let vi = 0; vi < apos.count; vi++) {
+          const rr2 = Math.hypot(apos.getX(vi), apos.getZ(vi));
+          ac2.copy(inner).lerp(outer, THREE.MathUtils.clamp((rr2 - 52) / 46, 0, 1));
+          acol[vi * 3] = ac2.r;
+          acol[vi * 3 + 1] = ac2.g;
+          acol[vi * 3 + 2] = ac2.b;
+        }
+        apron.setAttribute("color", new THREE.BufferAttribute(acol, 3));
+      }
+      horizonGeos.push(apron);
     }
 
     /* WP4: 110² hash-mottle sheet under downtown (vertex noise ±0.02 L) */
@@ -1741,6 +1810,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       mfgGlow: mergeSafe(mfgGlowGeos),
       scWindow: mergeSafe(scWindowGeos),
       wet: mergeSafe(wetGeos),
+      horizon: mergeSafe(horizonGeos),
     };
   }, [high]);
 
@@ -1759,6 +1829,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       c.mfgGlow?.dispose();
       c.scWindow?.dispose();
       c.wet?.dispose();
+      c.horizon?.dispose();
       c.arcs.forEach((a) => {
         a.geo.dispose();
         a.mat.dispose();
@@ -1821,10 +1892,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#C5C1B6", 0.58, "#FAF9F5", 90, 230],
           [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F8F0E2", 80, 200],
           [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#DCD2DA", 60, 160], // THE FLIP
-          [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#CFC6D6", 55, 150],
-          [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#C4B8CC", 50, 140],
-          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#BCAFC4", 48, 135],
-          [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#C9BECE", 45, 120],
+          [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#CFC6D6", 55, 185],
+          [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#C4B8CC", 50, 175],
+          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#BCAFC4", 48, 175],
+          [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#C9BECE", 45, 160],
         ] as [number, string, number, string, string, number, string, number, number][]
       ).map(([pp, k, ki, hs, hg, hi, f, fn, ff]) => ({
         p: pp,
@@ -3173,6 +3244,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           </mesh>
         </group>
       </group>
+
+      {/* the paper horizon — pastel hills, turbines, meadow apron */}
+      {city.horizon && (
+        <mesh geometry={city.horizon}>
+          <meshStandardMaterial vertexColors roughness={1} />
+        </mesh>
+      )}
 
       {/* WP1: the night sky DOME — wraps the city, cream-topped */}
       <mesh geometry={skyGeo} position={[0, 58, 0]} renderOrder={-2}>
