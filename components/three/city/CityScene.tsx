@@ -10,6 +10,7 @@ import {
   window01,
   paint,
   mergeSafe,
+  paintGraded,
   popCellKey,
   popEase,
   setPopKey,
@@ -246,10 +247,25 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     // one city block is a park (green relief in the clay)
     const PARK = { bx: 2, bz: -2 };
     const parkGeos: THREE.BufferGeometry[] = [];
+    /* WP3/WP4 scratch + ground-life buckets */
+    const colCap = new THREE.Color();
+    const roofCapCol = new THREE.Color("#CBC2AE");
+    const padGeos: THREE.BufferGeometry[] = [];
 
     for (let bx = -SPAN; bx <= SPAN; bx++) {
       for (let bz = -SPAN; bz <= SPAN; bz++) {
         if (Math.abs(bx) < 1 && Math.abs(bz) < 1) continue; // plaza
+        /* WP4 ground life: per-block lot pad with seeded tonal jitter —
+           restores the block/street figure-ground from the god view */
+        if (high) {
+          const pad = new THREE.PlaneGeometry(8.8, 8.8);
+          pad.rotateX(-Math.PI / 2);
+          pad.translate(bx * BLOCK, 0.006, bz * BLOCK);
+          const hb = Math.abs(Math.sin(bx * 37.7 + bz * 91.3) * 43758.5453) % 1;
+          colCap.set("#EDE8DA").offsetHSL((hb - 0.5) * 0.016, 0, (hb - 0.5) * 0.05);
+          paint(pad, colCap);
+          padGeos.push(pad);
+        }
         // DISTRICT MASK (spec §1): these blocks are replaced by authored
         // sets built after the loop — same skip pattern as the PARK block.
         // The −z arm and the south-east quarter stay generic civilian tissue.
@@ -368,7 +384,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             if (hOrig < 9 && rand() < 0.12 && !retailZone) {
               const cyl = new THREE.CylinderGeometry(w * 0.55, w * 0.55, h, 14);
               cyl.translate(x, h / 2, z);
-              paint(cyl, col);
+              paintGraded(cyl, col);
               buildingGeos.push(cyl);
               colliders.push({ x, z, hw: w * 0.55, hd: w * 0.55, h });
               continue;
@@ -379,13 +395,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               const ph = 1.4;
               const podium = new RoundedBoxGeometry(w * 1.25, ph, d * 1.25, 2, 0.1);
               podium.translate(x, ph / 2, z);
-              paint(podium, col.clone().lerp(baseCream, 0.3));
+              paintGraded(podium, col.clone().lerp(baseCream, 0.3), { aoBand: 0.7 });
               buildingGeos.push(podium);
             }
 
             const body = new RoundedBoxGeometry(w, h, d, 2, 0.14);
             body.translate(x, h / 2, z);
-            paint(body, col);
+            paintGraded(body, col);
             // clearance collider: widest of body/podium footprint, +1.6 head-
             // room for rooftop furniture (AC/antenna) — generators own safety
             colliders.push({ x, z, hw: w * 0.7, hd: d * 0.7, h: h + 1.6 });
@@ -430,7 +446,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               const crown = new RoundedBoxGeometry(w * 0.62, ch, d * 0.62, 2, 0.12);
               crown.translate(x, h + ch / 2 - 0.05, z);
               col.lerp(CLAY_SOFT, 0.15);
-              paint(crown, col);
+              paintGraded(crown, col, { aoBand: 0.5 });
               buildingGeos.push(crown);
               roofs.push({ x, z, w: w * 0.62, d: d * 0.62, topY: h + ch });
               nodeCandidates.push({
@@ -446,6 +462,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
                   h,
                   roofIdx: roofs.length - 1,
                 });
+            }
+
+            /* WP3 cornice + roof-cap law: every building >4 reads as a
+               capped, trimmed mass instead of an extruded slab */
+            if (high && h > 4) {
+              const rr = roofs[roofs.length - 1];
+              const cap = new THREE.PlaneGeometry(
+                Math.max(0.5, rr.w - 0.25),
+                Math.max(0.5, rr.d - 0.25),
+              );
+              cap.rotateX(-Math.PI / 2);
+              cap.translate(rr.x, rr.topY + 0.012, rr.z);
+              paint(cap, colCap.copy(col).lerp(roofCapCol, 0.6));
+              buildingGeos.push(cap);
+              const cor = new THREE.BoxGeometry(rr.w + 0.05, 0.13, rr.d + 0.05);
+              cor.translate(rr.x, rr.topY + 0.058, rr.z);
+              paint(cor, colCap.copy(col).offsetHSL(0, 0, -0.07));
+              buildingGeos.push(cor);
             }
           }
         }
@@ -624,7 +658,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             : new THREE.BoxGeometry(w, hh, dd);
         if (ry) g.rotateY(ry);
         g.translate(x, y, z);
-        paint(g, dcol.set(hex));
+        if (hh > 1.4) paintGraded(g, dcol.set(hex));
+        else paint(g, dcol.set(hex));
         buildingGeos.push(g);
         if (arr !== buildingGeos) {
           buildingGeos.pop();
@@ -953,7 +988,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const roadCol = new THREE.Color("#E3DDCE");
     const sideCol = new THREE.Color("#F1ECDF");
     const dashCol = new THREE.Color("#FBF8F1");
-    const gridCol = new THREE.Color("#E8E2D2");
+    const gridCol = new THREE.Color("#DCD4BF"); // darker: streets read as figure
 
     // roundabout carriageway: clearly road-toned annulus + raised curbs so
     // the orbit lane (bows ride ~6.8–7.7) unmistakably reads as ROAD
@@ -1075,7 +1110,26 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     }
 
-    const roads = mergeSafe([...roadGeos, ...parkGeos]);
+    /* WP4: 110² hash-mottle sheet under downtown (vertex noise ±0.02 L) */
+    if (high) {
+      const mottle = new THREE.PlaneGeometry(110, 110, 44, 44);
+      mottle.rotateX(-Math.PI / 2);
+      mottle.translate(0, 0.004, 0);
+      const npos = mottle.attributes.position;
+      const ncol = new Float32Array(npos.count * 3);
+      const nc = new THREE.Color();
+      for (let i = 0; i < npos.count; i++) {
+        const hx2 = npos.getX(i) * 12.9898 + npos.getZ(i) * 78.233;
+        const jit = ((Math.abs(Math.sin(hx2) * 43758.5453) % 1) - 0.5) * 0.04;
+        nc.set("#F0EBDE").offsetHSL(0, 0, jit);
+        ncol[i * 3] = nc.r;
+        ncol[i * 3 + 1] = nc.g;
+        ncol[i * 3 + 2] = nc.b;
+      }
+      mottle.setAttribute("color", new THREE.BufferAttribute(ncol, 3));
+      padGeos.push(mottle);
+    }
+    const roads = mergeSafe([...padGeos, ...roadGeos, ...parkGeos]);
 
     /* car fleet state. Roundabout traversal done PROPERLY: each route is
        lane-straight → short tangent merge → a TRUE CIRCULAR ARC riding the

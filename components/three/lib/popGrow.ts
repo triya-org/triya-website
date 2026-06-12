@@ -26,6 +26,42 @@ export function window01(p: number, a: number, b: number) {
   return THREE.MathUtils.clamp((p - a) / (b - a), 0, 1);
 }
 
+/**
+ * Graded fill (polish WP3): flat vertex color + (a) an ambient-occlusion
+ * darkening band over the bottom `aoBand` units, (b) a faint lift at the
+ * top, (c) per-vertex hash noise — kills the "untextured CAD" read on
+ * large planes without any texture files.
+ */
+export function paintGraded(
+  geo: THREE.BufferGeometry,
+  color: THREE.Color,
+  { aoBand = 1.2, noise = 0.015 }: { aoBand?: number; noise?: number } = {},
+) {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox!;
+  const span = Math.max(0.001, bb.max.y - bb.min.y);
+  const posA = geo.attributes.position;
+  const n = posA.count;
+  const arr = new Float32Array(n * 3);
+  const c = new THREE.Color();
+  const hsl = { h: 0, s: 0, l: 0 };
+  color.getHSL(hsl);
+  for (let i = 0; i < n; i++) {
+    const y = posA.getY(i) - bb.min.y;
+    let l = hsl.l;
+    if (y < aoBand) l -= 0.08 * (1 - y / aoBand);
+    l += 0.02 * (y / span);
+    const hx = posA.getX(i) * 12.9898 + posA.getZ(i) * 78.233;
+    l += ((Math.abs(Math.sin(hx) * 43758.5453) % 1) - 0.5) * 2 * noise;
+    c.setHSL(hsl.h, hsl.s, THREE.MathUtils.clamp(l, 0, 1));
+    arr[i * 3] = c.r;
+    arr[i * 3 + 1] = c.g;
+    arr[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(arr, 3));
+  return geo;
+}
+
 /** flat-fill a geometry's vertex colors */
 export function paint(geo: THREE.BufferGeometry, color: THREE.Color) {
   const n = geo.attributes.position.count;
