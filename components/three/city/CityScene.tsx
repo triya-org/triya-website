@@ -249,6 +249,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const parkGeos: THREE.BufferGeometry[] = [];
     /* WP3/WP4 scratch + ground-life buckets */
     const colCap = new THREE.Color();
+    const dcolLot = new THREE.Color(); // WP6 storefront scratch
     const roofCapCol = new THREE.Color("#CBC2AE");
     const padGeos: THREE.BufferGeometry[] = [];
 
@@ -319,7 +320,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         }
         for (let i = 0; i < 2; i++) {
           for (let j = 0; j < 2; j++) {
-            const x = bx * BLOCK + (i - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
+            let x = bx * BLOCK + (i - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
             const z = bz * BLOCK + (j - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
 
             // keep the avenue corridors CLEAR — the camera flies down them
@@ -357,7 +358,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const flagship = retailZone && bx === -1 && bz === 3 && i === 1 && j === 0;
             const hOrig = 2 + rand() * 4.5 + centerBias * rand() * 9.5;
             let h = hOrig;
-            if (retailZone) h = marketPocket ? 1.7 + (hOrig % 0.5) : 2.4 + (hOrig % 2.6);
+            // retail clamps live in the generator: the dive descends over
+            // z<28 at y≈7, so pushed-out lots there stay low (CI-derived)
+            if (retailZone)
+              h = marketPocket
+                ? 1.7 + (hOrig % 0.5)
+                : z < 28
+                  ? 2.2 + (hOrig % 1.9)
+                  : 2.4 + (hOrig % 2.6);
             let w = 2.7 + rand() * 1.3;
             let d = 2.7 + rand() * 1.3;
             if (flagship) {
@@ -365,6 +373,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               w = 4.3;
               d = 4.0;
             }
+            // WP6 (polish R2): push retail lots OUTWARD so every storefront
+            // face lands exactly at |x| = 5.85 — the recessed-shop problem
+            // dies at the root, awnings anchor to a consistent street wall
+            if (retailZone && Math.abs(x) < 10) x = Math.sign(x) * (5.85 + w / 2);
 
             // pastel facade, blushing gently toward clay with height
             const t = THREE.MathUtils.clamp((h - 4) / 18, 0, 1);
@@ -372,11 +384,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             // per-building albedo jitter — never one flat value
             col.offsetHSL((rand() - 0.5) * 0.012, (rand() - 0.5) * 0.06, (rand() - 0.5) * 0.05);
             if (retailZone)
-              // palette reweight: apricot / shell / blush (deterministic, no draw)
+              // palette reweight (WP6): shell pink / apricot / faded lilac
               col.set(
                 flagship
                   ? "#E8CFC8"
-                  : ["#E5C1A5", "#E8CFC8", "#DFAE92"][(((i + j + bx + bz) % 3) + 3) % 3],
+                  : ["#E8CFC8", "#E5C1A5", "#E2D6E0"][(((i + j + bx + bz) % 3) + 3) % 3],
               );
 
             // ~12% of the low-rises are cylindrical (silhouette variety)
@@ -409,35 +421,94 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             addWindows(x, z, w, h, d);
 
             if (retailZone) {
-              /* storefront butter glazing facing the street + awning.
-                 GENERATOR LAW (spec §0.20): awning top ≤3.2, front edge
-                 |x| ≥ 5.7 — the corridor and its lamp arms own that air;
-                 signboards over the corridor are BANNED outright. */
+              /* WP6 storefront kit: split glazing, recessed door, fascia +
+                 signboard, 3-type anchored awnings. Awning fronts sit at
+                 |x|≈5.3 — 0.5 outside the corridor; the clearance CI (1.2u
+                 at dolly height) is the binding gate and stays green. */
               const sxd = x > 0 ? -1 : 1; // toward the street
               const faceX = x + sxd * (w / 2 + 0.035);
-              const glaze = new THREE.PlaneGeometry(
-                w * (flagship ? 0.8 : 0.7),
-                flagship ? 1.5 : 1.15,
-              );
-              glaze.rotateY(sxd > 0 ? Math.PI / 2 : -Math.PI / 2);
-              glaze.translate(faceX, flagship ? 1.15 : 1.0, z);
-              retailLitGeos.push(glaze);
+              const rotG = sxd > 0 ? Math.PI / 2 : -Math.PI / 2;
+              // three glaze panes with gaps + ink frame strip
+              const paneW = w * 0.21;
+              for (const po of [-1, 0, 1]) {
+                const pane = new THREE.PlaneGeometry(paneW, flagship ? 1.5 : 1.1);
+                pane.rotateY(rotG);
+                pane.translate(faceX, flagship ? 1.15 : 0.95, z + po * (paneW + 0.07));
+                retailLitGeos.push(pane);
+              }
+              const frame = new THREE.BoxGeometry(0.05, 0.08, w * 0.78);
+              frame.translate(faceX - sxd * 0.01, flagship ? 1.95 : 1.55, z);
+              paint(frame, dcolLot.set("#56524A"));
+              buildingGeos.push(frame);
+              // recessed door + jamb (every shop has an entrance now)
+              const door = new THREE.PlaneGeometry(0.55, 1.2);
+              door.rotateY(rotG);
+              door.translate(x + sxd * (w / 2 - 0.04), 0.6, z + w * 0.33);
+              paint(door, winDark);
+              windowDarkGeos.push(door);
+              const jamb = new THREE.BoxGeometry(0.07, 1.3, 0.75);
+              jamb.translate(x + sxd * (w / 2 - 0.02), 0.65, z + w * 0.33);
+              paint(jamb, dcolLot.set("#56524A"));
+              buildingGeos.push(jamb);
+              // fascia band + ink signboard with cream dashes
+              const fascia = new THREE.BoxGeometry(0.1, 0.16, w * 0.9);
+              fascia.translate(faceX + sxd * 0.02, 1.78, z);
+              paint(fascia, dcolLot.copy(col).offsetHSL(0, 0, -0.08));
+              buildingGeos.push(fascia);
+              const sign = new THREE.BoxGeometry(0.06, 0.18, w * 0.7);
+              sign.translate(faceX + sxd * 0.04, 2.08, z);
+              paint(sign, dcolLot.set("#3D3A33"));
+              buildingGeos.push(sign);
               if (flagship)
-                // two till lamps flanking the door (the queue beat's payoff
-                // handles — clay ignition is wired in P4)
                 for (const tz of [z - 1.2, z + 1.2]) {
                   const till = new THREE.BoxGeometry(0.26, 0.26, 0.26);
                   till.translate(faceX + sxd * 0.12, 2.3, tz);
                   retailLitGeos.push(till);
                 }
               if (!marketPocket) {
-                const aw = new THREE.BoxGeometry(0.6, 0.1, w * 0.82);
-                aw.rotateZ(sxd * 0.24);
-                const axRaw = x + sxd * (w / 2 + 0.32);
-                const ax = Math.sign(x) * Math.max(5.7, Math.abs(axRaw));
-                aw.translate(ax, Math.min(2.45, h - 0.4), z);
-                paint(aw, col.set(["#E5C1A5", "#E8CFC8"][(i + bz) & 1]));
-                buildingGeos.push(aw);
+                // anchored awning family — rear edge buried in the facade,
+                // tilted about the WALL edge (never floats again)
+                const kind = (((i + bz) % 3) + 3) % 3;
+                const stripes = [
+                  ["#C97E5E", "#F5EFE2"],
+                  ["#A8B89A", "#F5EFE2"],
+                  ["#9FB4C7", "#F5EFE2"],
+                ][kind];
+                const awY = Math.min(2.45, h - 0.5);
+                if (kind === 1) {
+                  // barrel half-cylinder
+                  const aw = new THREE.CylinderGeometry(
+                    0.5,
+                    0.5,
+                    w * 0.8,
+                    8,
+                    1,
+                    false,
+                    0,
+                    Math.PI,
+                  );
+                  aw.rotateZ(Math.PI / 2);
+                  aw.rotateY(sxd > 0 ? 0 : Math.PI);
+                  aw.translate(x + sxd * (w / 2 + 0.06), awY, z);
+                  paint(aw, dcolLot.set(stripes[0]));
+                  buildingGeos.push(aw);
+                } else {
+                  const aw = new THREE.BoxGeometry(0.58, 0.07, w * 0.82);
+                  aw.translate(0.29, 0, 0); // pivot at the rear (wall) edge
+                  aw.rotateZ(sxd * (kind === 0 ? 0.26 : 0.08));
+                  if (sxd < 0) aw.rotateY(Math.PI);
+                  aw.translate(x + sxd * (w / 2 - 0.02), awY, z);
+                  paint(aw, dcolLot.set(stripes[0]));
+                  buildingGeos.push(aw);
+                  // two slim support rods to the wall
+                  for (const rz of [z - w * 0.3, z + w * 0.3]) {
+                    const rod = new THREE.CylinderGeometry(0.022, 0.022, 0.5, 5);
+                    rod.rotateZ(sxd * 0.9);
+                    rod.translate(x + sxd * (w / 2 + 0.2), awY + 0.14, rz);
+                    paint(rod, dcolLot.set("#8C867A"));
+                    buildingGeos.push(rod);
+                  }
+                }
               }
             }
 
@@ -684,17 +755,31 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         dbox(buildingGeos, 18, 0.3, 9.4, hx, 0.15, hz, SAGE); // floor slab
         // LOW front parapet — the M-hold sightline lesson from the Turntable
         dbox(buildingGeos, 18, 1.0, 0.45, hx, 0.5, -6.2, SAND);
+        /* WP5 (polish R3): CLOSED sawtooth — right-triangle prisms seated
+           flush on the wall top; glaze on the real vertical riser face;
+           ridge beam per crest. No daylight under any roof. */
         for (let b = 0; b < 4; b++) {
           const x0 = hx - 6.75 + b * 4.5;
           dbox(buildingGeos, 4.5, 5.6, 0.45, x0, 2.8, -14.9, SAGE); // back wall
-          const slope = new THREE.BoxGeometry(4.7, 0.24, 9.4);
-          slope.rotateZ(0.42);
-          slope.translate(x0 + 0.4, 6.3, hz);
-          paint(slope, dcol.set(ROOFTOOTH));
-          buildingGeos.push(slope);
-          const glaze = new THREE.PlaneGeometry(3.4, 1.15);
-          glaze.rotateY(Math.PI / 2);
-          glaze.translate(x0 - 1.55, 6.2, hz);
+          const profile = new THREE.Shape();
+          profile.moveTo(-2.25, 0);
+          profile.lineTo(-2.25, 1.9); // vertical riser (clerestory face)
+          profile.lineTo(2.25, 0); // slope down to the next tooth
+          profile.closePath();
+          const tooth = new THREE.ExtrudeGeometry(profile, {
+            depth: 9.4,
+            bevelEnabled: false,
+          });
+          tooth.translate(x0, 5.6, -15.2);
+          paintGraded(tooth, dcol.set(b % 2 ? ROOFTOOTH : "#D8C4A0"), { aoBand: 0.5 });
+          buildingGeos.push(tooth);
+          const ridge = new THREE.BoxGeometry(0.14, 0.14, 9.4);
+          ridge.translate(x0 - 2.25, 7.55, hz);
+          paint(ridge, dcol.set(INKISH));
+          buildingGeos.push(ridge);
+          const glaze = new THREE.PlaneGeometry(9.0, 1.6);
+          glaze.rotateY(-Math.PI / 2);
+          glaze.translate(x0 - 2.27, 6.5, hz);
           paint(glaze, winLit);
           windowLitGeos.push(glaze);
         }
@@ -702,7 +787,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         dbox(buildingGeos, 0.45, 5.6, 9.4, hx + 9, 2.8, hz, SAND);
         colliders.push({ x: hx, z: hz, hw: 9.2, hd: 4.9, h: 8.2, label: "mfg-hallA" });
         // interior, visible over the parapet: conveyor + pallet boxes
-        dbox(buildingGeos, 13, 0.32, 1.25, hx - 0.5, 1.15, -8.4, INKISH);
+        // (bed in quiet warm-grey so the clay glow strip owns the eye)
+        dbox(buildingGeos, 13, 0.32, 1.25, hx - 0.5, 1.15, -8.4, "#6B665C");
         for (let k = 0; k < 5; k++)
           dbox(buildingGeos, 0.2, 1.0, 0.2, hx - 6 + k * 2.8, 0.5, -8.4, TRUNK);
         for (let k = 0; k < 6; k++)
@@ -722,26 +808,40 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         strip.rotateX(-Math.PI / 2);
         strip.translate(hx - 0.5, 1.33, -8.4);
         mfgGlowGeos.push(strip);
-        // far hall: closed block + roof monitor
+        // far hall: closed block + roof monitor + WP5 facade articulation
         dbox(buildingGeos, 17, 6.8, 7.5, hx, 3.4, -20.2, OCHRE, 0, 0.12);
         dbox(buildingGeos, 12, 1.4, 3.2, hx, 7.4, -20.2, SAND, 0, 0.08);
+        dbox(buildingGeos, 17.2, 0.28, 7.7, hx, 6.95, -20.2, "#CBC2AE"); // cornice
+        dbox(buildingGeos, 17, 0.3, 0.1, hx, 5.4, -16.4, SAND); // string band
+        for (let k = 0; k < 6; k++)
+          dbox(buildingGeos, 0.12, 6.4, 0.16, hx - 7.5 + k * 3, 3.2, -16.42, "#D9C8A8"); // pilasters
+        for (const dxk of [-5.4, 0, 5.4])
+          dbox(buildingGeos, 1.6, 2.2, 0.12, hx + dxk, 1.1, -16.41, "#8FA6B2"); // roll-up dock doors
         colliders.push({ x: hx, z: -20.2, hw: 8.7, hd: 3.9, h: 9, label: "mfg-hallB" });
         for (let k = 0; k < 7; k++) {
+          if (k % 3 === 1) continue; // doors live where these were
           const g = new THREE.PlaneGeometry(1.2, 1.5);
-          g.translate(hx - 6 + k * 2, 3.4, -16.35);
+          g.translate(hx - 6 + k * 2, 4.1, -16.35);
           paint(g, winDark);
           windowDarkGeos.push(g);
         }
-        // smokestack
-        const st = new THREE.CylinderGeometry(0.85, 1.05, 11.5, 12);
-        st.translate(-28.6, 5.75, -21);
-        paint(st, dcol.set(ROSE));
+        // smokestacks: the factory's twin-stack silhouette (WP5) — moved to
+        // punch through the roof field, companion stack beside
+        const st = new THREE.CylinderGeometry(0.85, 1.05, 13.5, 12);
+        st.translate(-30.5, 6.75, -21);
+        paintGraded(st, dcol.set(ROSE), { aoBand: 2 });
         buildingGeos.push(st);
         const cap = new THREE.CylinderGeometry(1.0, 1.0, 0.5, 12);
-        cap.translate(-28.6, 11.4, -21);
+        cap.translate(-30.5, 13.4, -21);
         paint(cap, dcol.set(INKISH));
         buildingGeos.push(cap);
-        colliders.push({ x: -28.6, z: -21, hw: 1.1, hd: 1.1, h: 12, label: "stack" });
+        const st2 = new THREE.CylinderGeometry(0.45, 0.58, 10.5, 10);
+        st2.translate(-26.6, 5.25, -19.6);
+        paintGraded(st2, dcol.set("#C9A29A"), { aoBand: 1.5 });
+        buildingGeos.push(st2);
+        dbox(buildingGeos, 3.2, 0.5, 2.2, -28.6, 0.25, -20.4, "#CBC2AE", 0, 0.06); // shared plinth
+        colliders.push({ x: -30.5, z: -21, hw: 1.1, hd: 1.1, h: 14, label: "stack" });
+        colliders.push({ x: -26.6, z: -19.6, hw: 0.7, hd: 0.7, h: 11, label: "stack2" });
         // box trucks at the dock
         for (const tx of [-31.5, -27.8]) {
           dbox(buildingGeos, 1.1, 1.15, 2.9, tx, 0.85, -7.9, "#FFFFFF", 0.06, 0.06);
