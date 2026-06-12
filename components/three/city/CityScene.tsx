@@ -753,7 +753,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [-44, 6.45, -6.4],
           [-30, 6.45, -6.4],
           [-37, 7.9, -15.2],
-          [36.2, 3.55, -8.2],
+          // gate cam on GATE-3's post (right of frame, where its payoff
+          // barrier swings) — gates 1-2 posts park ON the copy card from
+          // the E-hold sightline (panel finding, twice)
+          [40.95, 3.42, -8.2],
           [43, 5.1, -18.4],
         ] as const
       ).forEach(([nx, ny, nz], k) => {
@@ -1090,7 +1093,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       "#C2613F",
       "#A8B89A", // sage
       "#9FB4C7", // dusty blue
-      "#E5C97B", // butter
+      "#DCC9A0", // muted sand (butter screamed beside the clay dot)
       "#E5AFA3", // blossom pink
     ];
     type Car = {
@@ -1291,13 +1294,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         speed: 0,
         kind: q >= 3 ? 4 : 3,
       });
-    // SC: plaza-quarter pedestrians
+    // SC: avenue-sidewalk pedestrians — bases OUTSIDE the plaza bowl so no
+    // capsule ever strands on the hub island (panel finding)
     for (let k = 0; k < 12; k++) {
       const onX = k % 2 === 0;
       const side = k % 4 < 2 ? 3.9 : -3.9;
+      const band = (13 + arand() * 14) * (arand() < 0.5 ? -1 : 1);
       list.push({
-        bx: onX ? -16 + arand() * 32 : side,
-        bz: onX ? side : -16 + arand() * 32,
+        bx: onX ? band : side,
+        bz: onX ? side : band,
         amp: 2.5 + arand() * 3,
         axis: onX ? 0 : 1,
         phase: arand() * 20,
@@ -1365,7 +1370,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     return [
       mk(new THREE.Vector3(-36, 2.9, -7.2), 1), // M: hall mouth → parapet cam
       mk(new THREE.Vector3(-6.0, 2.4, 26.8), rIdx), // R: queue → street cam
-      mk(new THREE.Vector3(36.6, 4.2, -8.6), 3), // E: gate swell → gate cam
+      mk(new THREE.Vector3(38.5, 4.6, -10.5), 3), // E: gate swell → gate cam (clear of the copy card)
     ];
   }, [city]);
   useEffect(
@@ -1598,7 +1603,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       [
         { p: 0.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // A0 god
         { p: 0.06, pos: new THREE.Vector3(2.5, 16, 40), look: [0, 4, 10], xOff: -4 }, // A1 dive-in
-        { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 3, 4], xOff: -5 }, // A2 canyon floor
+        // A2 look down-street with less left bias — at xOff -5 a corridor-
+        // edge facade stacked dead-center over a passing car (panel finding)
+        { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 2.6, 6], xOff: -2 }, // A2 canyon floor
         { p: 0.11, pos: new THREE.Vector3(-7.5, 5.5, 6), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing
         // corridor pin: the annulus→sprint corner cut a facade at 0.79u (CI)
         { p: 0.118, pos: new THREE.Vector3(-13, 5.4, 2.2), look: [-22, 3, -2], xOff: -5 },
@@ -1930,7 +1937,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       rig.geo.setDrawRange(0, Math.floor(arcW * rig.total));
       rig.mat.opacity = 0.85 * arcW;
       if (bi === 1) dotScratch.set(-6.0, 2.3, 26.0);
-      if (bi === 3) dotScratch.set(36.6, 4.3, -8.6);
+      if (bi === 3) dotScratch.set(38.5, 4.6, -10.5);
     }
 
     /* ---- actor pools: walkers/queue/crowd, riding the bloom wave ---- */
@@ -2031,15 +2038,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* lights of the city come alive (capped so bloom stays elegant) */
     if (lampMatRef.current) lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05;
-    if (litWinMatRef.current) litWinMatRef.current.emissiveIntensity = 0.06 + wake * 1.3;
-    /* district interiors: approach-keyed ignition lands in P4; v2 rides the
-       park windows so each district is awake for its own hold */
+    /* KHAKI-MUD LAW (panel): every emissive is tint-capped at #FFDEBC in
+       the materials — the day ages via INTENSITY only, never chroma */
+    if (litWinMatRef.current) litWinMatRef.current.emissiveIntensity = 0.06 + wake * 0.95;
+    /* district interiors ride their own park windows */
     if (retailLitMatRef.current)
-      retailLitMatRef.current.emissiveIntensity = 0.15 + window01(p, 0.3, 0.36) * 1.1;
+      retailLitMatRef.current.emissiveIntensity = 0.15 + window01(p, 0.3, 0.36) * 0.75;
     if (eventsLitMatRef.current)
-      eventsLitMatRef.current.emissiveIntensity = 0.1 + window01(p, 0.7, 0.76) * 1.5;
+      eventsLitMatRef.current.emissiveIntensity = 0.1 + window01(p, 0.7, 0.76) * 1.05;
     if (mfgGlowMatRef.current)
-      mfgGlowMatRef.current.emissiveIntensity = 0.2 + window01(p, 0.1, 0.15) * 1.2;
+      mfgGlowMatRef.current.emissiveIntensity = 0.12 + window01(p, 0.1, 0.15) * 0.5;
     /* lenses ignite on wake; constellation glows brighter through the exit.
        HEARTBEAT (spec §4.2): one synchronized pulse as the bloom completes —
        every lens fires through the bloom threshold at once. */
@@ -2075,7 +2083,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* hub breathes; ring spins */
     if (hubRef.current) {
-      hubRef.current.scale.setScalar(1 + wake * 0.12 * Math.sin(t * 3));
+      // breathe ≤6%: at 12% the 1.56 core POKED past the 1.7 chassis and the
+      // hub read as two offset slabs at close range (panel finding)
+      hubRef.current.scale.setScalar(1 + wake * 0.035 * Math.sin(t * 3));
       (hubRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
         0.25 + wake * 0.7 + finale * 0.4 + 0.5 * exit + blinkW * 0.6;
     }
@@ -2232,7 +2242,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       {/* ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow={high}>
         <planeGeometry args={[420, 420]} />
-        <meshStandardMaterial color="#EFEADF" roughness={1} />
+        <meshStandardMaterial color="#F2EEE3" roughness={1} />
       </mesh>
 
       {/* street network (avenues, grid, sidewalks, dashes, crosswalks) */}
@@ -2274,7 +2284,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             }}
             vertexColors
             roughness={0.5}
-            emissive="#FFC98A"
+            emissive="#FFDEBC"
             emissiveIntensity={0.08}
           />
         </mesh>
@@ -2292,7 +2302,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             }}
             color="#FFEFD8"
             roughness={0.45}
-            emissive="#FFB45C"
+            emissive="#FFDEBC"
             emissiveIntensity={0.2}
           />
         </mesh>
@@ -2306,7 +2316,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             }}
             color="#FFE9C8"
             roughness={0.4}
-            emissive="#FFC98A"
+            emissive="#FFDEBC"
             emissiveIntensity={0.25}
           />
         </mesh>
@@ -2320,7 +2330,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             }}
             color="#FFE2B8"
             roughness={0.4}
-            emissive="#FFB45C"
+            emissive="#FFDEBC"
             emissiveIntensity={0.3}
           />
         </mesh>

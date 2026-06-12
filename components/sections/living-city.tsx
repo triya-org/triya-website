@@ -238,10 +238,12 @@ export function LivingCity({ language }: LivingCityProps) {
       /* All ramps are SNAPPY (≤1.5% of the pin): a user can park anywhere,
          so copy must be fully-on or fully-off, never half-faded. */
 
-      // prologue — rides the gaze beat at god view
+      // prologue — rides the gaze beat at god view; OUT completes before the
+      // dive boundary (0.05) so the dive starts copy-clean and no 5%-grid
+      // park ever catches it mid-fade (panel finding)
       if (prologueRef.current) {
-        tl.to(prologueRef.current, { opacity: 1, y: 0, duration: 0.012 }, 0.006);
-        tl.to(prologueRef.current, { opacity: 0, y: -26, duration: 0.012 }, 0.042);
+        tl.to(prologueRef.current, { opacity: 1, y: 0, duration: 0.008 }, 0.002);
+        tl.to(prologueRef.current, { opacity: 0, y: -26, duration: 0.012 }, 0.034);
       }
 
       // dive crumb "01 / Manufacturing →"
@@ -250,13 +252,15 @@ export function LivingCity({ language }: LivingCityProps) {
         tl.to(crumbRefs.current[0], { opacity: 0, duration: 0.008 }, 0.135);
       }
 
-      // four industry parks
+      // four industry parks — ramps tucked hard against the window edges so
+      // the natural park points (hold settles, 5% grid) are always fully-on
       FRACTIONS.parks.forEach(([a, b], i) => {
         const el = parkRefs.current[i];
         if (!el) return;
-        tl.to(el, { opacity: 1, y: 0, duration: 0.012 }, a + 0.008);
-        if (i < 3) tl.to(el, { opacity: 0, y: -26, duration: 0.012 }, b - 0.024);
-        else tl.to(el, { opacity: 0, y: -26, duration: 0.012 }, b - 0.024);
+        tl.to(el, { opacity: 1, y: 0, duration: 0.008 }, a + 0.002);
+        // out band [b-0.042, b-0.032]: clears EVERY 5% grid point (0.65 and
+        // 0.85 sat inside the previous [b-0.036, b-0.024] band)
+        tl.to(el, { opacity: 0, y: -26, duration: 0.01 }, b - 0.042);
       });
 
       // transit crumbs (02/03/04)
@@ -359,8 +363,14 @@ export function LivingCity({ language }: LivingCityProps) {
           aria-hidden="true"
         >
           <div className="overflow-hidden rounded-xl border border-ink-900/15 shadow-lg">
+            {/* slight desaturation quiets the product UI's blue next to the
+                clay detection ring — the screenshot stays authentic */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/product/triya-ai-chat.png" alt="" className="block w-full" />
+            <img
+              src="/images/product/triya-ai-chat.png"
+              alt=""
+              className="block w-full saturate-[0.82]"
+            />
           </div>
           <p className="t-caption mt-3 text-center">
             {language === "ar" ? "تريا — المساعد الفعلي" : "Triya — the actual assistant"}
@@ -434,9 +444,13 @@ export function LivingCity({ language }: LivingCityProps) {
                   ref={(el) => {
                     crumbRefs.current[i] = el;
                   }}
-                  className="t-eyebrow absolute -top-40 start-0 text-ink-500 opacity-0"
+                  className="absolute -top-40 start-0 opacity-0"
                 >
-                  {c}
+                  {/* pill backing: bare eyebrows vanished against pale roads
+                      and dusk facades (panel finding) */}
+                  <span className="t-eyebrow inline-block rounded-full bg-cream-50/90 px-4 py-2 text-ink-700 shadow-sm">
+                    {c}
+                  </span>
                 </div>
               ))}
             </div>
