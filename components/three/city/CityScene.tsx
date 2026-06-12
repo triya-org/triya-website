@@ -309,9 +309,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             trunk.translate(tx, th / 2, tz);
             paint(trunk, trunkCol);
             treeGeos.push(trunk);
-            const canopy = new THREE.IcosahedronGeometry(0.9 + rand() * 0.55, 1);
+            const cr = 0.9 + rand() * 0.55;
+            const canopy = new THREE.IcosahedronGeometry(cr, 1);
             canopy.scale(1, 0.85, 1);
-            canopy.translate(tx, th + 0.75, tz);
+            canopy.translate(tx, th + cr * 0.52, tz); // seats INTO the trunk (WP7)
             col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
             paint(canopy, col);
             treeGeos.push(canopy);
@@ -337,9 +338,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
                 trunk.translate(x, th / 2, z);
                 paint(trunk, trunkCol);
                 treeGeos.push(trunk);
-                const canopy = new THREE.IcosahedronGeometry(0.85 + rand() * 0.5, 1);
+                const cr2 = 0.85 + rand() * 0.5;
+                const canopy = new THREE.IcosahedronGeometry(cr2, 1);
                 canopy.scale(1, 0.85, 1);
-                canopy.translate(x, th + 0.7, z);
+                canopy.translate(x, th + cr2 * 0.52, z);
                 col.copy(rand() < 0.28 ? blossomCol : mossCol).offsetHSL(0, 0, (rand() - 0.5) * 0.06);
                 paint(canopy, col);
                 treeGeos.push(canopy);
@@ -660,6 +662,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           colArr[vi * 3 + 2] = vc.b;
         }
         g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+        g.deleteAttribute("uv");
         wetGeos.push(g);
       });
       // two teal pools at the hub
@@ -680,6 +683,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           colArr[vi * 3 + 2] = vc.b;
         }
         g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+        g.deleteAttribute("uv");
         wetGeos.push(g);
       }
     }
@@ -843,10 +847,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         colliders.push({ x: -30.5, z: -21, hw: 1.1, hd: 1.1, h: 14, label: "stack" });
         colliders.push({ x: -26.6, z: -19.6, hw: 0.7, hd: 0.7, h: 11, label: "stack2" });
         // box trucks at the dock
-        for (const tx of [-31.5, -27.8]) {
-          dbox(buildingGeos, 1.1, 1.15, 2.9, tx, 0.85, -7.9, "#FFFFFF", 0.06, 0.06);
-          dbox(buildingGeos, 1.05, 0.8, 0.9, tx, 0.62, -9.6, INKISH, 0.06, 0.08);
-        }
+        [-31.5, -27.8].forEach((tx, ti) => {
+          const tlen = ti ? 3.05 : 2.6;
+          const tyaw = ti ? -0.05 : 0.06;
+          dbox(buildingGeos, 1.1, 1.15, tlen, tx, 0.78, -7.9, ti ? SAND : "#FFFFFF", tyaw, 0.06);
+          if (ti) dbox(buildingGeos, 1.12, 0.16, tlen * 0.9, tx, 0.92, -7.9, "#D97757", tyaw); // clay side stripe
+          dbox(buildingGeos, 1.05, 0.8, 0.9, tx, 0.6, -9.6, INKISH, tyaw, 0.08);
+          for (const [wx2, wz2] of [[-0.45, -8.9], [0.45, -8.9], [-0.45, -7.0], [0.45, -7.0]] as const)
+            dbox(buildingGeos, 0.32, 0.45, 0.32, tx + wx2, 0.22, wz2, INKISH, tyaw);
+        });
         // gantry sky-bridge across the x-avenue (deck underside y=7.2 —
         // the dive's signature fly-under; deck is NOT a ground collider,
         // its clearance has a dedicated assertion)
@@ -854,7 +863,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           dbox(buildingGeos, 0.55, 7.2, 0.55, -30, 3.6, gz, "#C3CCC9");
           colliders.push({ x: -30, z: gz, hw: 0.35, hd: 0.35, h: 7.8, label: "gantry-leg" });
         }
-        dbox(buildingGeos, 2.6, 0.5, 12.4, -30, 7.45, 0, INKISH); // deck
+        dbox(buildingGeos, 2.6, 0.5, 14.0, -30, 7.45, 0, INKISH); // deck — south end buries into the sawtooth roof (R5)
+        // headhouse at the yard end: the bridge finally GOES somewhere
+        dbox(buildingGeos, 1.4, 8.2, 1.4, -29.3, 4.1, 6.9, SAND);
+        dbox(buildingGeos, 2.0, 0.9, 2.0, -29.3, 8.0, 6.9, INKISH);
+        colliders.push({ x: -29.3, z: 6.9, hw: 0.8, hd: 0.8, h: 8.6, label: "headhouse" });
+        for (const rx of [-1.25, 1.25])
+          dbox(buildingGeos, 0.06, 0.18, 13.8, -30 + rx, 7.8, 0, "#C3CCC9"); // handrails
         for (let k = 0; k < 5; k++)
           dbox(
             buildingGeos,
@@ -879,28 +894,101 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           const sx2 = -44.5 + cx * 3.9;
           const sz2 = 7.6 + cz * 4.1;
           const levels = drand() < 0.5 ? 1 : 2;
-          for (let l = 0; l < levels; l++)
-            dbox(
-              buildingGeos,
-              3.1,
-              1.32,
-              1.5,
-              sx2 + (drand() - 0.5) * 0.3,
-              0.7 + l * 1.36,
-              sz2 + (drand() - 0.5) * 0.3,
-              [OCHRE, SAGE, SAND, ROSE][(cx + cz + l) % 4],
-              0,
-              0.07,
-            );
+          for (let l = 0; l < levels; l++) {
+            // WP10 (R7): saturated cargo quartet, drand-indexed, jittered —
+            // freight finally reads as freight
+            const chex = ["#5F8E8B", "#D9A441", "#6E7FA0", "#E8E4D8"][Math.floor(drand() * 4)];
+            const cyaw = (drand() - 0.5) * 0.06;
+            const cx3 = sx2 + (drand() - 0.5) * 0.3;
+            const cz3 = sz2 + (drand() - 0.5) * 0.3;
+            dbox(buildingGeos, 3.6, 0.95, 1.3, cx3, 0.5 + l * 1.0, cz3, chex, cyaw, 0.05);
+            dbox(buildingGeos, 0.07, 0.82, 1.18, cx3 + 1.81, 0.5 + l * 1.0, cz3, "#3D3A33", cyaw); // door end
+          }
           colliders.push({
             x: sx2,
             z: sz2,
-            hw: 1.75,
+            hw: 2.0,
             hd: 0.95,
-            h: 0.74 + levels * 1.36, // ≤ 3.2 by construction
+            h: 0.5 + levels * 1.0 + 0.5, // ≤ 3.0 — pocket cap intact
             label: "container",
           });
         }
+
+      /* ---- WP10: yard floor, perimeter fence, floodlights ---- */
+      {
+        for (const lz of [8.5, 12.6, 16.7, 20.8])
+          dbox(buildingGeos, 19, 0.02, 0.25, -36.5, 0.018, lz, "#F5EFE2"); // lane stripes
+        // post-and-rail perimeter with an avenue gate + clay swing bar
+        const fence = (fx: number, fz: number, horiz: boolean, len: number) => {
+          for (let fp = 0; fp <= len; fp += 2.4)
+            dbox(
+              buildingGeos,
+              0.09,
+              0.85,
+              0.09,
+              horiz ? fx + fp : fx,
+              0.43,
+              horiz ? fz : fz + fp,
+              TRUNK,
+            );
+          for (const ry2 of [0.32, 0.68])
+            dbox(
+              buildingGeos,
+              horiz ? len : 0.05,
+              0.05,
+              horiz ? 0.05 : len,
+              horiz ? fx + len / 2 : fx,
+              0.85 * ry2,
+              horiz ? fz : fz + len / 2,
+              TRUNK,
+            );
+        };
+        fence(-46.5, 6.2, true, 9.5); // north-west run
+        fence(-32.5, 6.2, true, 5.5); // north-east run (4u gate gap at -37..-32.5)
+        fence(-46.5, 6.2, false, 17);
+        fence(-46.5, 23.2, true, 19.5);
+        fence(-27, 6.2, false, 17);
+        dbox(buildingGeos, 3.8, 0.1, 0.08, -34.8, 0.7, 6.2, "#D97757"); // swing-gate bar (static clay albedo)
+        for (const fz of [6.0, 20.8]) {
+          dbox(buildingGeos, 0.18, 7.5, 0.18, -47.5, 3.75, fz, TRUNK); // floodlight masts
+          dbox(buildingGeos, 1.4, 0.22, 0.3, -47.5, 7.4, fz, "#8C867A");
+          for (const hx2 of [-0.45, 0, 0.45]) {
+            const fl = new THREE.BoxGeometry(0.26, 0.12, 0.26);
+            fl.translate(-47.5 + hx2, 7.28, fz);
+            mfgGlowGeos.push(fl);
+          }
+          colliders.push({ x: -47.5, z: fz, hw: 0.8, hd: 0.3, h: 7.8, label: "floodmast" });
+        }
+      }
+
+      /* ---- WP11.3: the CONTROL TOWER — the only mass breaking the fog
+         line; the SC-hold's upper-left counterweight, clay-tipped ---- */
+      {
+        dbox(buildingGeos, 4.2, 10, 4.2, -13.5, 5, -15.5, "#C3CCC9", 0, 0.1);
+        dbox(buildingGeos, 3.0, 8, 3.0, -13.5, 14, -15.5, "#CDD4D0", 0, 0.08);
+        dbox(buildingGeos, 2.0, 6, 2.0, -13.5, 21, -15.5, "#C3CCC9", 0, 0.06);
+        const obs = new THREE.TorusGeometry(1.7, 0.12, 8, 24);
+        obs.rotateX(Math.PI / 2);
+        obs.translate(-13.5, 22.5, -15.5);
+        paint(obs, dcol.set("#56524A"));
+        buildingGeos.push(obs);
+        const ant = new THREE.CylinderGeometry(0.05, 0.08, 3.5, 6);
+        ant.translate(-13.5, 25.75, -15.5);
+        paint(ant, dcol.set("#D97757")); // clay tip — finale ember N
+        buildingGeos.push(ant);
+        colliders.push({ x: -13.5, z: -15.5, hw: 2.2, hd: 2.2, h: 27.6, label: "control-tower" });
+      }
+
+      /* ---- WP11.4: T3 banner pole — announces the turn to the gates ---- */
+      {
+        dbox(buildingGeos, 0.12, 5, 0.12, 29, 2.5, -6.5, TRUNK);
+        for (let fb = 0; fb < 3; fb++) {
+          const flag = new THREE.PlaneGeometry(1.1, 0.5);
+          flag.translate(29.6, 4.4 - fb * 0.75, -6.5);
+          paint(flag, dcol.set(["#D97757", "#A8B89A", "#E5B864"][fb]));
+          buildingGeos.push(flag);
+        }
+      }
 
       /* ---- EVENTS — east arm festival ground (§1.4) ---- */
       {
@@ -908,15 +996,73 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         pad.translate(37, 0.07, -14.5);
         paint(pad, dcol.set("#D8DCC4")); // festival green
         buildingGeos.push(pad);
-        // stage at (43,−18) facing southwest
+        // WP9 proscenium stage: deck, double backdrop, wings, canopy on a
+        // TRUNK truss (no more pink sticks), PA stacks, footlights, performer
         dbox(buildingGeos, 6.2, 1.1, 4.6, 43, 0.55, -18, INKISH, 0, 0.06);
-        dbox(buildingGeos, 6.2, 3.6, 0.5, 43, 2.9, -20, ROSE);
+        dbox(buildingGeos, 7.5, 4.6, 0.3, 43, 2.5, -20.6, "#3D3A33"); // ink back
+        dbox(buildingGeos, 7.1, 4.2, 0.12, 43, 2.4, -20.38, ROSE); // rose inner
+        for (let rb = 0; rb < 5; rb++)
+          dbox(buildingGeos, 0.1, 4.0, 0.06, 40.2 + rb * 1.4, 2.4, -20.3, "#C9A29A"); // ribs
+        dbox(buildingGeos, 2.6, 3.8, 0.3, 39.2, 1.9, -19.2, ROSE, 0.61); // wings
+        dbox(buildingGeos, 2.6, 3.8, 0.3, 46.8, 1.9, -19.2, ROSE, -0.61);
+        dbox(buildingGeos, 7.0, 0.35, 3.2, 43, 5.0, -18.8, INKISH); // canopy
         for (const px of [40.4, 45.6]) {
-          dbox(buildingGeos, 0.4, 4.6, 0.4, px, 2.3, -18.6, LILAC);
-          colliders.push({ x: px, z: -18.6, hw: 0.3, hd: 0.3, h: 5.2, label: "truss" });
+          dbox(buildingGeos, 0.4, 4.6, 0.4, px, 2.3, -18.6, TRUNK);
+          dbox(buildingGeos, 0.08, 3.6, 0.08, px + 0.7, 2.1, -18.6, TRUNK, 0.5); // X brace
+          dbox(buildingGeos, 0.08, 3.6, 0.08, px - 0.7, 2.1, -18.6, TRUNK, -0.5);
+          colliders.push({ x: px, z: -18.6, hw: 0.3, hd: 0.3, h: 5.4, label: "truss" });
         }
-        dbox(buildingGeos, 5.6, 0.3, 0.35, 43, 4.55, -18.6, LILAC); // truss beam
-        colliders.push({ x: 43, z: -19, hw: 3.3, hd: 1.6, h: 6.6, label: "stage" });
+        dbox(buildingGeos, 5.6, 0.3, 0.35, 43, 4.55, -18.6, TRUNK); // truss beam
+        // PA stacks on plinths + emissive indicator dots
+        for (const px of [39.2, 46.8]) {
+          dbox(buildingGeos, 1.1, 0.5, 1.1, px, 0.25, -17.2, "#CBC2AE");
+          dbox(buildingGeos, 0.9, 2.2, 0.9, px, 1.6, -17.2, "#3D3A33", 0, 0.05);
+          const pdot = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+          pdot.translate(px, 2.5, -16.78);
+          paint(pdot, dcol.set("#FFE2B8"));
+          eventsLitGeos.push(pdot);
+        }
+        // footlight strip at the deck lip
+        const foot = new THREE.BoxGeometry(5.8, 0.1, 0.14);
+        foot.translate(43, 1.16, -15.75);
+        paint(foot, dcol.set("#FFE2B8"));
+        eventsLitGeos.push(foot);
+        // performer + mic stand
+        {
+          const perf = new THREE.CapsuleGeometry(0.16, 0.42, 4, 8);
+          perf.translate(43, 1.55, -17.4);
+          paint(perf, dcol.set("#3D3A33"));
+          buildingGeos.push(perf);
+          dbox(buildingGeos, 0.04, 0.9, 0.04, 43.4, 1.55, -17.1, TRUNK);
+        }
+        // crossed stage beams (additive, ride the night gate via wet bucket)
+        for (const [byaw, bhex] of [[0.5, "#E8A8A0"], [-0.55, "#C8B8F0"]] as const) {
+          const beam = new THREE.BufferGeometry();
+          const apex = new THREE.Vector3(43, 4.6, -18.4);
+          const dirL = new THREE.Vector3(Math.sin(byaw) * 7, 6.5, Math.cos(byaw) * 5);
+          const a3 = apex.clone();
+          const b3 = apex.clone().add(dirL).add(new THREE.Vector3(-1.4, 0, 0.8));
+          const c3 = apex.clone().add(dirL).add(new THREE.Vector3(1.4, 0, -0.8));
+          beam.setFromPoints([a3, b3, c3]);
+          beam.computeVertexNormals();
+          const bcol = new THREE.Color(bhex);
+          const barr = new Float32Array(9);
+          for (let vi = 0; vi < 3; vi++) {
+            const fade = vi === 0 ? 0.55 : 0.0;
+            barr[vi * 3] = bcol.r * fade;
+            barr[vi * 3 + 1] = bcol.g * fade;
+            barr[vi * 3 + 2] = bcol.b * fade;
+          }
+          beam.setAttribute("color", new THREE.BufferAttribute(barr, 3));
+          wetGeos.push(beam); // (uv-free, like every wet geo)
+        }
+        colliders.push({ x: 43, z: -19, hw: 3.9, hd: 1.8, h: 6.6, label: "stage" });
+        // WP11.1 ferris wheel footing (the wheel itself is a rotating JSX
+        // group) — A-frame legs + hub pylon are static masses
+        for (const ls of [-0.9, 0.9]) {
+          dbox(buildingGeos, 0.22, 5.2, 0.22, 45.8 + ls, 2.5, -7.8 + ls * 0.35, "#A8A293", 0.18 * ls);
+        }
+        colliders.push({ x: 45.8, z: -7.8, hw: 4.5, hd: 1.0, h: 9.5, label: "ferris" });
         // three gate arches fronting the avenue (the crowd streams out of
         // downtown INTO the ground); the clay payoff hinge is wired in P4
         for (let g = 0; g < 3; g++) {
@@ -927,23 +1073,26 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           colliders.push({ x: gx, z: -8.2, hw: 1.7, hd: 0.3, h: 3.7, label: "gate" });
         }
         // tiered stand facing the stage
-        for (let s2 = 0; s2 < 3; s2++)
+        for (let s2 = 0; s2 < 3; s2++) {
+          const th2 = 0.55 + s2 * 0.42; // full-height tiers — no gaps (WP7)
           dbox(
             buildingGeos,
             1.3,
-            0.5,
+            th2,
             7.5,
             30.2 + s2 * 1.05,
-            0.3 + s2 * 0.42,
+            th2 / 2,
             -16.5,
             [SAND, OCHRE, SAND][s2],
           );
+        }
         colliders.push({ x: 31.3, z: -16.5, hw: 1.9, hd: 3.9, h: 1.9, label: "stand" });
         // barrier ribbons: three lanes, gates → stage
         for (let lane2 = 0; lane2 < 4; lane2++)
-          dbox(buildingGeos, 0.16, 0.5, 6.5, 31.2 + lane2 * 3.4, 0.32, -12.2, CREAM300);
+          dbox(buildingGeos, 0.16, 0.5, 6.5, 31.2 + lane2 * 3.4, 0.27, -12.2, CREAM300);
         // string lights: posts + sagging butter dot chains (own emissive
         // mesh — they ignite one-by-one through T3, independent of windows)
+        const lp3 = (x3: number, y3: number, z3: number) => new THREE.Vector3(x3, y3, z3);
         const posts: [number, number][] = [
           [33.5, -12.5],
           [39, -11.5],
@@ -951,38 +1100,86 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [36.5, -16.5],
         ];
         for (const [px, pz] of posts) dbox(buildingGeos, 0.14, 3.4, 0.14, px, 1.7, pz, TRUNK);
-        const spans: [[number, number], [number, number]][] = [
-          [posts[0], posts[1]],
-          [posts[1], posts[2]],
-          [posts[2], [43, -18]],
-          [posts[0], posts[3]],
-          [posts[3], [43, -18]],
+        // WP9.6 food stalls — the string lights hop between them
+        const stallTops: THREE.Vector3[] = [];
+        (
+          [
+            [29.4, -10.5],
+            [29.4, -12.2],
+            [29.4, -13.9],
+            [29.4, -15.6],
+          ] as const
+        ).forEach(([sx3, sz3], si) => {
+          dbox(buildingGeos, 1.0, 0.75, 1.0, sx3, 0.4, sz3, si % 2 ? "#F5EFE2" : "#D97757");
+          for (const [cx2, cz2] of [
+            [-0.42, -0.42],
+            [0.42, -0.42],
+            [-0.42, 0.42],
+            [0.42, 0.42],
+          ] as const)
+            dbox(buildingGeos, 0.06, 1.9, 0.06, sx3 + cx2, 0.95, sz3 + cz2, TRUNK);
+          const cone = new THREE.ConeGeometry(0.85, 0.55, 4);
+          cone.translate(sx3, 2.05, sz3);
+          paint(cone, dcol.set(si % 2 ? "#D97757" : "#E5B864"));
+          buildingGeos.push(cone);
+          stallTops.push(lp3(sx3, 2.1, sz3));
+        });
+        /* WP9.1 (R4): catenary WIRE as chained thin boxes — lights hang from
+           something real now; stage spans retarget to the truss posts */
+        const spans3: [THREE.Vector3, THREE.Vector3][] = [
+          [lp3(33.5, 3.4, -12.5), lp3(39, 3.4, -11.5)],
+          [lp3(39, 3.4, -11.5), lp3(44, 3.4, -13.5)],
+          [lp3(44, 3.4, -13.5), lp3(45.6, 4.5, -18.6)],
+          [lp3(33.5, 3.4, -12.5), lp3(36.5, 3.4, -16.5)],
+          [lp3(36.5, 3.4, -16.5), lp3(40.4, 4.5, -18.6)],
+          [stallTops[0], lp3(33.5, 3.4, -12.5)],
+          [stallTops[1], stallTops[0]],
+          [stallTops[2], stallTops[1]],
+          [stallTops[3], stallTops[2]],
         ];
-        for (const [[ax2, az2], [bx2, bz2]] of spans)
-          for (let k = 1; k < 12; k++) {
-            const tt = k / 12;
-            const dot = new THREE.BoxGeometry(0.11, 0.11, 0.11);
-            dot.translate(
-              ax2 + (bx2 - ax2) * tt,
-              3.3 - Math.sin(Math.PI * tt) * 0.55,
-              az2 + (bz2 - az2) * tt,
-            );
-            eventsLitGeos.push(dot);
+        const quartet = ["#FFE2B8", "#FFB5A0", "#BFEAD8", "#D8C8FF"]; // lantern tints
+        const zAxis = new THREE.Vector3(0, 0, 1);
+        const segQ = new THREE.Quaternion();
+        const segDir = new THREE.Vector3();
+        spans3.forEach(([A3, B3]) => {
+          const NS = 14;
+          let prev: THREE.Vector3 | null = null;
+          for (let k = 0; k <= NS; k++) {
+            const tt = k / NS;
+            const pt = A3.clone().lerp(B3, tt);
+            pt.y -= Math.sin(Math.PI * tt) * 0.7;
+            if (prev) {
+              const wire = new THREE.BoxGeometry(0.025, 0.025, prev.distanceTo(pt));
+              segDir.copy(pt).sub(prev).normalize();
+              segQ.setFromUnitVectors(zAxis, segDir);
+              wire.applyQuaternion(segQ);
+              wire.translate((prev.x + pt.x) / 2, (prev.y + pt.y) / 2, (prev.z + pt.z) / 2);
+              paint(wire, dcol.set(TRUNK));
+              buildingGeos.push(wire);
+            }
+            if (k > 0 && k < NS) {
+              const dot = new THREE.BoxGeometry(0.085, 0.085, 0.085);
+              dot.translate(pt.x, pt.y - 0.06, pt.z);
+              paint(dot, dcol.set(quartet[k % 4]));
+              eventsLitGeos.push(dot);
+            }
+            prev = pt;
           }
+        });
       }
 
       /* district CCTV re-seats (hall parapets + gate + stage truss) —
          forced into the constellation via sort height; slice keeps 30 total */
       (
         [
-          [-44, 6.45, -6.4],
-          [-30, 6.45, -6.4],
-          [-37, 7.9, -15.2],
-          // gate cam on GATE-3's post (right of frame, where its payoff
-          // barrier swings) — gates 1-2 posts park ON the copy card from
-          // the E-hold sightline (panel finding, twice)
-          [40.95, 3.42, -8.2],
-          [43, 5.1, -18.4],
+          [-46, 5.98, -10.5],
+          [-28, 5.98, -10.5],
+          [-37, 7.18, -15.8],
+          // WP8 seat law: lens y = support top + 0.38 (mast base flush).
+          // Gate cam on GATE-3's post (clear of the copy card); truss cam
+          // on the truss beam; hall cams on the flat side-wall tops 5.6
+          [40.95, 3.88, -8.2],
+          [43, 5.08, -18.55],
         ] as const
       ).forEach(([nx, ny, nz], k) => {
         nodeCandidates.push({ pos: new THREE.Vector3(nx, ny, nz), h: 99 - k, roofIdx: -1 });
@@ -1005,9 +1202,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           ? radialCellKey(roofs[c.roofIdx].x, roofs[c.roofIdx].z) // EXACT building key
           : radialCellKey(c.pos.x, c.pos.z);
       nodeKeys.push(popKey);
+      const jx = (rand() - 0.5) * 1.2;
+      const jz = (rand() - 0.5) * 1.2;
       const pos = c.pos
         .clone()
-        .add(new THREE.Vector3((rand() - 0.5) * 1.2, 0.46, (rand() - 0.5) * 1.2));
+        .add(new THREE.Vector3(c.roofIdx >= 0 ? jx : 0, 0.46, c.roofIdx >= 0 ? jz : 0));
+      if (c.roofIdx >= 0) {
+        // WP8: a lens never overhangs its roof (mast must have a foot)
+        const rf = roofs[c.roofIdx];
+        pos.x = THREE.MathUtils.clamp(pos.x, rf.x - rf.w / 2 + 0.18, rf.x + rf.w / 2 - 0.18);
+        pos.z = THREE.MathUtils.clamp(pos.z, rf.z - rf.d / 2 + 0.18, rf.z + rf.d / 2 - 0.18);
+      }
       nodes.push(pos);
       // each camera faces roughly toward the plaza core, with scatter
       const yaw = Math.atan2(-pos.x, -pos.z) + (rand() - 0.5) * 0.5;
@@ -1067,7 +1272,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* network arcs node → the hub's beacon dome (a visible anchor — arcs
        must not vanish into the chassis) */
-    const hub = new THREE.Vector3(0, 2.32, 0);
+    const hub = new THREE.Vector3(0, 2.22, 0);
     const arcs = nodes.map((n) => {
       const mid = n.clone().lerp(hub, 0.5);
       mid.y = Math.max(n.y, 6) + n.distanceTo(hub) * 0.16;
@@ -1588,15 +1793,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         speed: 0.5 + arand() * 0.3,
         kind: 5,
       });
-    for (let k = 0; k < 10; k++) {
-      const a = Math.PI * (0.9 + arand() * 1.2);
+    // WP9.5: the audience crescent — a real crowd faces the stage
+    for (let k = 0; k < 38; k++) {
+      const a = Math.PI * (0.7 + arand() * 0.7);
+      const rr2 = 2.5 + arand() * 4;
       list.push({
-        bx: 43 + Math.cos(a) * (3 + arand() * 2.2),
-        bz: -18 + Math.sin(a) * (2.5 + arand() * 2),
-        amp: 0.25,
+        bx: 43 + Math.cos(a) * rr2,
+        bz: -18 + Math.sin(a) * (rr2 * 0.8),
+        amp: 0.15,
         axis: 0,
         phase: arand() * 6,
-        speed: 0.25,
+        speed: 0.22,
         kind: 5,
       });
     }
@@ -1652,6 +1859,48 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const skyMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const scWindowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const wetMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const ferrisRef = useRef<THREE.Group>(null);
+  const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  /* WP11.1: the ferris wheel — rim + spokes (one geo) and 8 pastel
+     gondolas (own emissive bucket); rotation is pure f(p) */
+  const ferris = useMemo(() => {
+    const parts: THREE.BufferGeometry[] = [];
+    const rim = new THREE.TorusGeometry(4.2, 0.09, 8, 40);
+    paint(rim, new THREE.Color("#C9B8D8"));
+    parts.push(rim);
+    for (let sp = 0; sp < 8; sp++) {
+      const spoke = new THREE.BoxGeometry(0.08, 4.1, 0.08);
+      spoke.translate(0, 2.05, 0);
+      spoke.rotateZ((sp / 8) * Math.PI * 2);
+      paint(spoke, new THREE.Color("#B5A8C8"));
+      parts.push(spoke);
+    }
+    const hubP = new THREE.CylinderGeometry(0.35, 0.35, 0.5, 12);
+    hubP.rotateX(Math.PI / 2);
+    paint(hubP, new THREE.Color("#56524A"));
+    parts.push(hubP);
+    const structure = mergeSafe(parts)!;
+    const gParts: THREE.BufferGeometry[] = [];
+    const chorus = ["#E8CFC8", "#A8B89A", "#E5C1A5", "#9FB4C7", "#E2D6E0", "#D9BCAD", "#E5B864", "#C9A6A0"];
+    const gc = new THREE.Color();
+    for (let gi = 0; gi < 8; gi++) {
+      const a = (gi / 8) * Math.PI * 2;
+      const g = new RoundedBoxGeometry(0.5, 0.6, 0.5, 1, 0.08);
+      g.translate(Math.cos(a) * 4.2, Math.sin(a) * 4.2, 0);
+      paint(g, gc.set(chorus[gi]));
+      gParts.push(g);
+    }
+    const gondolas = mergeSafe(gParts)!;
+    return { structure, gondolas };
+  }, []);
+  useEffect(
+    () => () => {
+      ferris.structure.dispose();
+      ferris.gondolas.dispose();
+    },
+    [ferris],
+  );
 
   /* WP1 sky card: ONE vertex-graded plane far behind the city. Outer edge +
      top rows are CREAM so it melts into the page; the horizon band carries
@@ -1693,7 +1942,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const aP1 = new Float32Array(N * 3);
     const aP2 = new Float32Array(N * 3);
     const aSeed = new Float32Array(N);
-    const hub = new THREE.Vector3(0, 2.32, 0);
+    const hub = new THREE.Vector3(0, 2.22, 0);
     const mrand = mulberry32(777);
     for (let i = 0; i < N; i++) {
       const n = city.nodes[i % city.nodes.length];
@@ -2369,6 +2618,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // mid-flip (p=.50) never parks dark
       scWindowMatRef.current.emissiveIntensity = 1.7 * window01(p, 0.475, 0.545);
     if (wetMatRef.current) wetMatRef.current.opacity = night01;
+    /* ferris: rotation pure f(p); gondolas ignite through T3 with the
+       string lights */
+    if (ferrisRef.current) ferrisRef.current.rotation.z = p * Math.PI * 1.4;
+    if (ferrisLitMatRef.current)
+      ferrisLitMatRef.current.emissiveIntensity =
+        (0.05 + window01(p, 0.7, 0.76) * 0.9) * (1 + night01);
     /* lenses ignite on wake; constellation glows brighter through the exit.
        HEARTBEAT (spec §4.2): one synchronized pulse as the bloom completes —
        every lens fires through the bloom threshold at once. */
@@ -2636,7 +2891,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               (eventsLitMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
               popMat(m);
             }}
-            color="#FFE9C8"
+            vertexColors
             roughness={0.4}
             emissive="#FFDEBC"
             emissiveIntensity={0.25}
@@ -2765,6 +3020,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       ))}
       <primitive object={motes.pts} />
 
+      {/* WP11.1: the ferris wheel — the east skyline icon */}
+      <group position={[45.8, 4.9, -7.8]} rotation={[0, 0.6, 0]}>
+        <group ref={ferrisRef}>
+          <mesh geometry={ferris.structure}>
+            <meshStandardMaterial vertexColors roughness={0.7} />
+          </mesh>
+          <mesh geometry={ferris.gondolas}>
+            <meshStandardMaterial
+              ref={ferrisLitMatRef}
+              vertexColors
+              roughness={0.5}
+              emissive="#FFDEBC"
+              emissiveIntensity={0}
+            />
+          </mesh>
+        </group>
+      </group>
+
       {/* WP1: the night sky card — far behind the city, cream-edged */}
       <mesh geometry={skyGeo} position={[0, 55, -150]} renderOrder={-2}>
         <meshBasicMaterial
@@ -2815,7 +3088,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           (actorMeshRef as React.MutableRefObject<THREE.InstancedMesh | null>).current = m;
           if (m && !m.userData.colored) {
             m.userData.colored = true;
-            const pal = ["#8E8A7E", "#A8A293", "#B5A08E", "#9FB4C7", "#A8B89A", "#C9A6A0"];
+            // WP9.5 re-tint: rose/sage/cream/lilac + ~20% ink
+            const pal = ["#C9A6A0", "#A8B89A", "#E8E2D2", "#C8B8D8", "#3D3A33", "#D9BCAD"];
             const ac = new THREE.Color();
             for (let i = 0; i < ACTORS.length; i++)
               m.setColorAt(i, ac.set(pal[i % pal.length]));
@@ -2858,9 +3132,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         />
       </mesh>
       {/* gate-3 barrier — swings open on the E payoff (hinged at the post) */}
-      <group ref={gateBarRef} position={[38.25, 0.95, -8.2]}>
-        <mesh position={[1.2, 0, 0]}>
-          <boxGeometry args={[2.4, 0.12, 0.14]} />
+      <group ref={gateBarRef} position={[38.25, 0.45, -8.2]}>
+        <mesh position={[1.375, 0, 0]}>
+          <boxGeometry args={[2.75, 0.12, 0.14]} />
           <meshStandardMaterial
             color="#D97757"
             emissive="#D97757"
@@ -2911,8 +3185,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             <meshStandardMaterial color="#4A4842" roughness={0.8} fog={false} />
           </mesh>
         ))}
-        {/* beacon dome */}
-        <mesh position={[0, 2.3, 0]}>
+        {/* beacon dome — seated ON the chassis top (WP7) */}
+        <mesh position={[0, 2.19, 0]}>
           <sphereGeometry args={[0.22, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
           <meshStandardMaterial
             color="#E8A381"
