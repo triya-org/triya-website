@@ -18,6 +18,8 @@ interface CityCanvasProps {
   entryRef?: React.MutableRefObject<number>;
   /** true when the section is covered/off-screen → pause the render loop */
   coveredRef?: React.MutableRefObject<boolean>;
+  /** RTL composition mirror (look offsets only) */
+  dir?: 1 | -1;
 }
 
 /**
@@ -31,7 +33,7 @@ interface CityCanvasProps {
  *   · BrightnessContrast → a touch of clay-render contrast.
  * Mobile: lighter city, no shadows, no post (GPU budget).
  */
-export function CityCanvas({ progressRef, entryRef, coveredRef }: CityCanvasProps) {
+export function CityCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: CityCanvasProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [frameloop, setFrameloop] = useState<"always" | "never">("always");
 
@@ -60,6 +62,7 @@ export function CityCanvas({ progressRef, entryRef, coveredRef }: CityCanvasProp
         progressRef={progressRef}
         entryRef={entryRef}
         quality={isMobile ? "low" : "high"}
+        dir={dir}
       />
       {!isMobile && (
         <EffectComposer multisampling={4}>

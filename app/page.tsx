@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
-import { IndustriesJourney } from "@/components/sections/industries-journey";
 import { CTASection } from "@/components/sections/cta-section";
 import { ProductSchema } from "@/app/components/structured-data";
 import { HowItWorks } from "@/components/sections/how-it-works";
@@ -119,11 +118,10 @@ export default function Home() {
         {/* How It Works */}
         <HowItWorks language={language} />
 
-        {/* Industries Journey — "The Turntable" (falls back to the classic
-            cards on mobile / reduced motion / no WebGL) */}
-        <IndustriesJourney language={language} />
+        {/* (industries now live INSIDE the Living City above — the four
+            park beats of the unified 800% journey) */}
 
-        {/* CTA Section — rides its own cover layer over the journey's exit */}
+        {/* CTA Section */}
         <div className="relative z-30 bg-background">
           <CTASection language={language} />
         </div>

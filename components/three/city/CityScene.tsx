@@ -45,6 +45,9 @@ interface CitySceneProps {
       Defaults to 1 (fully developed) when no entry trigger drives it. */
   entryRef?: React.MutableRefObject<number>;
   quality?: "high" | "low";
+  /** RTL composition mirror: flips look-target x-offsets only — the world
+      geometry is never mirrored (spec §0.21) */
+  dir?: 1 | -1;
 }
 
 const PAPER = "#FAF9F5"; // brand cream-50 — seam-free with the page background
@@ -66,7 +69,7 @@ const INK = new THREE.Color("#3D3A33");
 
 
 
-export function CityScene({ progressRef, entryRef, quality = "high" }: CitySceneProps) {
+export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: CitySceneProps) {
   const { scene, gl } = useThree();
   const high = quality === "high";
 
@@ -960,42 +963,61 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   };
 
-  /* ================= camera rig ================= */
-  /* The flight path hugs the carved avenue corridors (z≈0) so the camera
-     is always in open air: overview → descend over the +x avenue → street
-     level approaching the plaza → glide out the −x avenue past the query
-     block → rise out for the finale. */
-  const camAnchors = useMemo(
-    () => [
-      new THREE.Vector3(0, 52, 92),
-      new THREE.Vector3(32, 13, 1.5),
-      // NOTE: the clearance CI reports ~62 near-clips on this LEGACY spline
-      // (descent bows to z≈-3.6 at y≈7-10, shaving towers at the +x avenue
-      // mouth with as little as 0.22u). Corridor pins can't fully fix it —
-      // the entry leg's tangent is the cause. The P1 respline (spec §3.3)
-      // replaces this path with corridor-true anchors; CI goes green there.
-      new THREE.Vector3(12, 4.2, 2.5),
-      new THREE.Vector3(-4, 24, 16), // high oblique: the query block held in frame
-      new THREE.Vector3(0, 66, 98),
-    ],
+  /* ================= camera rig — the unified journey (spec §3.3) ================= */
+  /* One continuous flight: god view → +z canyon dive → annulus swing →
+     west sprint to the M-hold → T1 rise past the hub → the +z high-street
+     dolly (R-hold) → T2 crane → the golden-hour high oblique (SC-hold,
+     the CFO screenshot) → T3 descent to the gates (E-hold) → closed-loop
+     crane back to the ENTRY FRAMING (same shot, city transformed).
+
+     v1 NOTE: the M/E holds ride the west/east avenue corridors until
+     their authored pockets land in P2 (container yard ≤3.2, gates apron).
+
+     Every key: scroll-p stop · spline position · look SUBJECT (world) ·
+     compositional x-offset (subject sits right-of-center, copy owns the
+     left third). xOff flips with `dir` for RTL — the world is never
+     mirrored, only the composition. */
+  const CAM_KEYS = useMemo(
+    () =>
+      [
+        { p: 0.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // A0 god
+        { p: 0.06, pos: new THREE.Vector3(2.5, 16, 40), look: [0, 4, 10], xOff: -4 }, // A1 dive-in
+        { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 3, 4], xOff: -5 }, // A2 canyon floor
+        { p: 0.11, pos: new THREE.Vector3(-7.5, 5.5, 6), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing
+        { p: 0.125, pos: new THREE.Vector3(-20, 5.2, 1.6), look: [-28, 3, -3], xOff: -6 }, // A4 west sprint
+        { p: 0.135, pos: new THREE.Vector3(-30, 4.7, 1.2), look: [-34, 3, -4], xOff: -6 }, // A5 gantry line
+        { p: 0.14, pos: new THREE.Vector3(-34, 6.3, 1.8), look: [-36, 2.5, -6], xOff: -6 }, // A6 M-HOLD
+        { p: 0.27, pos: new THREE.Vector3(-37, 6.5, 1.8), look: [-36, 2.5, -6], xOff: -6 }, //    (push-in)
+        { p: 0.305, pos: new THREE.Vector3(-12, 16, 2), look: [0, 2, 0], xOff: -2 }, // T1 hub pass
+        // T1→A7 routing: ride the TRANSIT band to the +z avenue mouth, then
+        // descend INSIDE the corridor (a direct diagonal crosses tower blocks
+        // at y≈14 — caught by the clearance CI)
+        { p: 0.315, pos: new THREE.Vector3(1.5, 14, 12), look: [0, 3, 24], xOff: -5 },
+        { p: 0.328, pos: new THREE.Vector3(1.9, 8.5, 28), look: [0, 2.6, 34], xOff: -6 },
+        { p: 0.34, pos: new THREE.Vector3(1.8, 5.8, 38), look: [0, 2.6, 18], xOff: -7 }, // A7 R-HOLD
+        { p: 0.47, pos: new THREE.Vector3(1.6, 5.2, 31), look: [0, 2.6, 14], xOff: -7 }, //    (dolly north)
+        { p: 0.5, pos: new THREE.Vector3(3, 15, 14), look: [5, 4, 3], xOff: -2 }, // T2 crane (tower wipe at 2.5u+)
+        { p: 0.53, pos: new THREE.Vector3(16, 24, 18), look: [2, 2, -2], xOff: -6 }, // A8 SC-HOLD
+        { p: 0.68, pos: new THREE.Vector3(20, 23, 8), look: [2, 2, -2], xOff: -6 }, //    (drift)
+        { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [35, 3, -7], xOff: -2 }, // T3 toward gates
+        { p: 0.75, pos: new THREE.Vector3(33, 5.2, 2), look: [46, 3, -14], xOff: -2 }, // A9 E-HOLD
+        { p: 0.88, pos: new THREE.Vector3(34.5, 5.4, 1), look: [46, 3, -14], xOff: -2 }, //    (push-in)
+        // steep first climb so the crane clears the (27.9,7.7) tower block
+        { p: 0.91, pos: new THREE.Vector3(31, 20, 10), look: [10, 1, 5], xOff: -4 },
+        { p: 0.94, pos: new THREE.Vector3(20, 38, 40), look: [0, 1, 2], xOff: -4 }, // A10 crane out
+        { p: 1.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // closed loop
+      ] as { p: number; pos: THREE.Vector3; look: [number, number, number]; xOff: number }[],
     [],
   );
   const camPath = useMemo(
-    () => new THREE.CatmullRomCurve3(camAnchors, false, "catmullrom", 0.5),
-    [camAnchors],
-  );
-  /* look targets are offset LEFT of each subject so the subject renders in
-     the right two-thirds of frame — the copy owns the left third. */
-  const lookTargets = useMemo(
-    () => [
-      new THREE.Vector3(-8, 0, 4),
-      new THREE.Vector3(-6, 2, 3),
-      new THREE.Vector3(-6, 3, 3),
-      // aimed left of the block so it sits right-of-center, pins in frame
-      new THREE.Vector3(-18, 4, -8),
-      new THREE.Vector3(-6, 4, 2),
-    ],
-    [],
+    () =>
+      new THREE.CatmullRomCurve3(
+        CAM_KEYS.map((k) => k.pos),
+        false,
+        "catmullrom",
+        0.5,
+      ),
+    [CAM_KEYS],
   );
   const lookCur = useMemo(() => new THREE.Vector3(0, 0, 0), []);
   const posCur = useMemo(() => new THREE.Vector3(0, 52, 92), []);
@@ -1013,33 +1035,39 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
        beat 3 (.5–.72)  street-level glide (query)     u .46→.58
        beat 4 (.72–1)   pull up and out                u .58→1   */
   const remapU = useMemo(() => {
-    // ANCHOR-TRUE U (ported from JourneyScene): CatmullRom anchors do NOT sit
-    // at i/N along arc length — derive each beat anchor's u by nearest-
-    // distance sampling so the corridor pin can't skew the beat pacing.
-    const beatAnchors = [0, 1, 2, 3, 4]; // entry, dive-start, plaza, oblique, exit
+    // ANCHOR-TRUE U: CatmullRom anchors do NOT sit at i/N along arc length —
+    // derive each key's u by MONOTONIC nearest-distance sampling (the scan
+    // window starts at the previous key's u, which disambiguates the
+    // closed-loop duplicate endpoint and near-identical hold pairs).
     const probe = new THREE.Vector3();
-    const U = beatAnchors.map((ai) => {
-      let bestU = 0;
+    const N = 800;
+    const U: number[] = [];
+    let s0 = 0;
+    CAM_KEYS.forEach((k, i) => {
+      let bestU = s0 / N;
       let bestD = Infinity;
-      for (let s = 0; s <= 400; s++) {
-        camPath.getPointAt(s / 400, probe);
-        const d = probe.distanceToSquared(camAnchors[ai]);
+      for (let s = s0; s <= N; s++) {
+        camPath.getPointAt(s / N, probe);
+        const d = probe.distanceToSquared(k.pos);
         if (d < bestD) {
           bestD = d;
-          bestU = s / 400;
+          bestU = s / N;
         }
       }
-      return bestU;
+      const u =
+        i === 0 ? 0 : i === CAM_KEYS.length - 1 ? 1 : Math.max(bestU, U[i - 1] + 0.002);
+      U.push(u);
+      s0 = Math.min(N, Math.ceil(u * N));
     });
-    U[0] = 0;
-    U[U.length - 1] = 1;
-    const P = [0, 0.25, 0.5, 0.72, 1];
     return (p: number) => {
       let i = 0;
-      while (i < 3 && p > P[i + 1]) i++;
-      return U[i] + ((U[i + 1] - U[i]) * (p - P[i])) / (P[i + 1] - P[i]);
+      while (i < CAM_KEYS.length - 2 && p > CAM_KEYS[i + 1].p) i++;
+      const a = CAM_KEYS[i];
+      const b = CAM_KEYS[i + 1];
+      const t = THREE.MathUtils.clamp((p - a.p) / (b.p - a.p), 0, 1);
+      return U[i] + (U[i + 1] - U[i]) * t;
     };
-  }, [camPath, camAnchors]);
+  }, [camPath, CAM_KEYS]);
 
   useMemo(() => {
     scene.background = new THREE.Color(PAPER);
@@ -1088,7 +1116,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
        (nodes/arcs/hub) is fog-exempt, so it survives the exit whiteout. ---- */
     const eRaw = entryRef ? entryRef.current : 1;
     const e = 1 - Math.pow(1 - THREE.MathUtils.clamp(eRaw, 0, 1), 3); // easeOutCubic
-    const exit = window01(p, 0.9, 1.0);
+    const exit = window01(p, 0.93, 1.0);
     // No exit mist — the next section physically slides OVER the city
     // (analog.io cover pattern); fog only serves the entry develop, and it
     // clears EARLY so the pop-up growth happens in clear air, on screen.
@@ -1098,8 +1126,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     fog.far = 24 + veil * 176; // 24 → 200
 
     /* pop-up-book entry: half the growth during the slide-in, the rest
-       through beat 1 — so the waves play while the city is ON SCREEN */
-    const pop = Math.min(1, e * 0.45 + window01(p, 0, 0.2) * 0.55);
+       through the GAZE beat — the wave completes as the prologue scrim
+       releases, so the heartbeat (P3) lands on a fully-stood city */
+    const pop = Math.min(1, e * 0.45 + window01(p, 0, 0.06) * 0.55);
     const popE = 1 - Math.pow(1 - pop, 3);
     popShaders.current.forEach((sh) => {
       sh.uniforms.uPop.value = pop;
@@ -1135,18 +1164,30 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     posCur.z += (1 - e) * 12;
     camera.position.copy(posCur);
 
-    // look: same smoothed scalar for the segment, 3D lerp kept for the
-    // target only (look lag cannot clip geometry)
-    const seg = Math.min(3, Math.floor(pS * 4));
-    const segT = pS * 4 - seg;
-    tmp.copy(lookTargets[seg]).lerp(lookTargets[seg + 1], segT);
+    // look: keyframe-interpolated subject + dir-flipped composition offset;
+    // 3D lerp kept for the target only (look lag cannot clip geometry)
+    let ki = 0;
+    while (ki < CAM_KEYS.length - 2 && pS > CAM_KEYS[ki + 1].p) ki++;
+    const ka = CAM_KEYS[ki];
+    const kb = CAM_KEYS[ki + 1];
+    const kt = THREE.MathUtils.clamp((pS - ka.p) / (kb.p - ka.p), 0, 1);
+    const lax = ka.look[0] + ka.xOff * dir;
+    const lbx = kb.look[0] + kb.xOff * dir;
+    tmp.set(
+      lax + (lbx - lax) * kt,
+      ka.look[1] + (kb.look[1] - ka.look[1]) * kt,
+      ka.look[2] + (kb.look[2] - ka.look[2]) * kt,
+    );
     lookCur.lerp(tmp, 0.08);
     camera.lookAt(lookCur);
 
-    const wake = window01(p, 0.22, 0.42);
-    // timed to the elevated tracking shot, when the camera faces the block
-    const querySpot = window01(p, 0.52, 0.6) * (1 - window01(p, 0.74, 0.82));
-    const finale = window01(p, 0.78, 0.92);
+    /* narrative windows — keyed to the unified FRACTIONS (spec §5.1):
+       wake = the silhouette overture (lenses/lamps/skyline rows ramp as the
+       bloom completes and the dive flies); querySpot rides the SC park;
+       finale arcs draw through the closed-loop crane */
+    const wake = window01(p, 0.01, 0.1);
+    const querySpot = window01(p, 0.555, 0.615) * (1 - window01(p, 0.67, 0.7));
+    const finale = window01(p, 0.88, 0.97);
 
     /* CCTV lenses: the wake IGNITES them (emissive, via nodeMatRef) rather
        than ballooning them — a lens bigger than its camera reads absurd */
@@ -1177,9 +1218,10 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       nodeMatRef.current.emissiveIntensity =
         0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9;
 
-    /* arcs draw on (brighten through the exit whiteout) */
+    /* arcs draw on across the whole journey (the network learns the city
+       park by park), all at full draw through the finale crane */
     city.arcs.forEach((arc) => {
-      const local = window01(p, 0.3 + arc.delay * 0.3, 0.55 + arc.delay * 0.3);
+      const local = window01(p, 0.22 + arc.delay * 0.5, 0.55 + arc.delay * 0.5);
       arc.geo.setDrawRange(0, Math.floor(local * arc.total));
       arc.mat.opacity = Math.min(0.9, 0.55 * local + 0.3 * finale + 0.25 * exit);
     });
