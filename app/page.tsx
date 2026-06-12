@@ -31,6 +31,9 @@ export default function Home() {
     const savedLang = localStorage.getItem("language") as "en" | "ar";
     if (savedLang) {
       setLanguage(savedLang);
+      // every other page re-applies dir after the toggle's reload — the
+      // homepage never did, so rtl: variants silently stayed LTR here
+      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
     }
     
     // Lazy load video when user is likely to see it
