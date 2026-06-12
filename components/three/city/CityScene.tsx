@@ -1410,10 +1410,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
 
     /* ============== street network ============== */
     const roadGeos: THREE.BufferGeometry[] = [];
-    const roadCol = new THREE.Color("#B9B2A4"); // warm asphalt — streets read as figure
+    const roadCol = new THREE.Color("#45423C"); // INK asphalt — founder spec: black roads, white stripes
     const sideCol = new THREE.Color("#F1ECDF");
     const dashCol = new THREE.Color("#FBF8F1");
-    const gridCol = new THREE.Color("#C9C2B2"); // side streets: one step lighter
+    const gridCol = new THREE.Color("#57534B"); // side streets: one step lighter ink
 
     // roundabout carriageway: clearly road-toned annulus + raised curbs so
     // the orbit lane (bows ride ~6.8–7.7) unmistakably reads as ROAD
@@ -1421,7 +1421,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const ringRoad = new THREE.RingGeometry(6.0, 8.6, 64);
       ringRoad.rotateX(-Math.PI / 2);
       ringRoad.translate(0, 0.013, 0);
-      paint(ringRoad, new THREE.Color("#B4ADA0")); // carriageway asphalt
+      paint(ringRoad, new THREE.Color("#45423C")); // carriageway ink asphalt
       roadGeos.push(ringRoad);
       // dashed centerline on the carriageway — reads as a real ring road
       for (let k = 0; k < 22; k++) {
@@ -1535,73 +1535,244 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     }
 
-    /* THE PAPER HORIZON (founder: "the missing piece"): pastel hill rings
-       layering into the haze + wind turbines on the near ridge + a meadow
-       apron bridging city edge to hills. ONE merged mesh. The +z sector
-       stays open — the camera lives there. */
+    /* THE BACKGROUND — "Between the Guardian and the Lagoon" (artist spec):
+       a delta town pinched between a paper-fold mountain wall NW (crowned
+       by the snow-capped GUARDIAN) and a milky LAGOON east with a baked
+       sun-glint path, a sleeping sister harbor + striped lighthouse, paper
+       sailboats, contour-banded shores and Provence field patches. The
+       value structure daylight was missing: city → pale shore → mid lagoon
+       & foothills → light far wall → one dark/snow accent → cream sky. */
     const horizonGeos: THREE.BufferGeometry[] = [];
     if (high) {
       const hrand = mulberry32(515151);
-      const RINGS3: [number, number, string][] = [
-        [84, 1.0, "#BFD0B0"], // near: sage meadow hills
-        [114, 1.5, "#C2D5CC"], // mid: blue-green
-        [150, 2.2, "#D3DDDA"], // far: misty blue-cream
-      ];
-      RINGS3.forEach(([rr, hs, hex], ri) => {
-        const n = 16 + ri * 4;
-        for (let i = 0; i < n; i++) {
-          const a = (i / n) * Math.PI * 2 + hrand() * 0.25;
-          if (Math.cos(a) > 0.78) continue; // the camera's sector stays open
-          const w2 = (14 + hrand() * 16) * hs;
-          const hh2 = (5 + hrand() * 7) * hs;
-          const hill = new THREE.SphereGeometry(1, 10, 7);
-          hill.scale(w2, hh2, w2 * (0.7 + hrand() * 0.4));
-          hill.translate(Math.sin(a) * (rr + hrand() * 10), 0, Math.cos(a) * (rr + hrand() * 10));
-          paintGraded(hill, colCap.set(hex).offsetHSL(0, 0, (hrand() - 0.5) * 0.04), {
-            aoBand: hh2 * 0.4,
-            noise: 0.01,
-          });
-          horizonGeos.push(hill);
+      const hcol = new THREE.Color();
+      const hbase = new THREE.Color();
+      const hsummit = new THREE.Color();
+      /* faceted paper-fold massif: low-seg cones, flat facets, painted
+         light baked in (warm +x facets — the east sun) */
+      const massif = (
+        az: number,
+        rr: number,
+        baseHex: string,
+        summitHex: string,
+        peaks: [number, number][],
+        snow = false,
+      ) => {
+        hbase.set(baseHex);
+        hsummit.set(summitHex);
+        peaks.forEach(([w2, h2], pi) => {
+          const cone = new THREE.ConeGeometry(1, 1, 5 + Math.floor(hrand() * 3), 1);
+          cone.scale(w2, h2, w2 * (0.55 + hrand() * 0.25));
+          cone.rotateY(hrand() * Math.PI);
+          cone.translate(0, h2 / 2 - 0.5, 0);
+          const a2 = az + ((pi - (peaks.length - 1) / 2) * (w2 * 0.8)) / rr;
+          cone.translate(
+            Math.sin(a2) * rr + (hrand() - 0.5) * 6,
+            0,
+            Math.cos(a2) * rr + (hrand() - 0.5) * 6,
+          );
+          const g = cone.toNonIndexed();
+          g.computeVertexNormals();
+          const pos2 = g.attributes.position;
+          const nor2 = g.attributes.normal;
+          const carr = new Float32Array(pos2.count * 3);
+          for (let f = 0; f < pos2.count; f += 3) {
+            const fy = (pos2.getY(f) + pos2.getY(f + 1) + pos2.getY(f + 2)) / 3;
+            const fx = (pos2.getX(f) + pos2.getX(f + 1) + pos2.getX(f + 2)) / 3;
+            const t2 = THREE.MathUtils.clamp(fy / h2, 0, 1);
+            hcol.copy(hbase).lerp(hsummit, t2);
+            hcol.offsetHSL(0, 0, (hrand() - 0.5) * 0.06); // facet jitter
+            const nx = nor2.getX(f);
+            if (nx > 0.3) hcol.offsetHSL(0.01, 0.05, 0.03); // sun side
+            else if (nx < -0.3) hcol.offsetHSL(-0.005, -0.02, -0.02);
+            if (snow && fy > 0.62 * h2 + 3 * Math.sin(fx * 0.7))
+              hcol.set(nx > 0.3 ? "#F9EDE0" : "#F7F4EC"); // wobbly snowline
+            for (let v3 = 0; v3 < 3; v3++) {
+              carr[(f + v3) * 3] = hcol.r;
+              carr[(f + v3) * 3 + 1] = hcol.g;
+              carr[(f + v3) * 3 + 2] = hcol.b;
+            }
+          }
+          g.setAttribute("color", new THREE.BufferAttribute(carr, 3));
+          horizonGeos.push(g);
+        });
+      };
+      const D2R = Math.PI / 180;
+      // Range 1 — near olive foothills, west
+      for (let az = 215; az <= 310; az += 19)
+        massif(az * D2R, 76 + hrand() * 20, "#C8CFB4", "#9DAF85", [
+          [14 + hrand() * 6, 7 + hrand() * 4],
+          [11 + hrand() * 5, 6 + hrand() * 3],
+        ]);
+      // Range 2 — dusty viridian
+      for (let az = 165; az <= 300; az += 21)
+        massif(az * D2R, 112 + hrand() * 26, "#BFD0C8", "#7E9C94", [
+          [20 + hrand() * 8, 15 + hrand() * 6],
+          [16 + hrand() * 6, 12 + hrand() * 5],
+        ]);
+      // Range 3 — hazy steel far wall
+      for (let az = 150; az <= 320; az += 20)
+        massif(az * D2R, 158 + hrand() * 24, "#D7DEE6", "#93A6BE", [
+          [28 + hrand() * 12, 28 + hrand() * 9],
+          [22 + hrand() * 8, 22 + hrand() * 7],
+        ]);
+      // THE GUARDIAN — the snow-capped focal anchor, NNW
+      massif(210 * D2R, 148, "#AEB9CC", "#6F7E9C", [[36, 56]], true);
+      massif(217 * D2R, 152, "#AEB9CC", "#6F7E9C", [[26, 38]], true);
+      massif(203 * D2R, 144, "#AEB9CC", "#6F7E9C", [[22, 30]], true);
+
+      // THE LAGOON — milky jade east, glint path baked toward az 75°
+      {
+        const lag = new THREE.RingGeometry(58, 185, 72, 5, -50 * D2R, 110 * D2R);
+        lag.rotateX(-Math.PI / 2);
+        lag.translate(0, 0.02, 0);
+        const lpos = lag.attributes.position;
+        const lcol = new Float32Array(lpos.count * 3);
+        const shore = new THREE.Color("#C9E0DA");
+        const mid2 = new THREE.Color("#B9D2D6");
+        const melt = new THREE.Color("#E9ECEA");
+        const glint = new THREE.Color("#FBF0D8");
+        const gdx = Math.sin(75 * D2R);
+        const gdz = Math.cos(75 * D2R);
+        for (let vi = 0; vi < lpos.count; vi++) {
+          const vx = lpos.getX(vi);
+          const vz = lpos.getZ(vi);
+          const vr = Math.hypot(vx, vz);
+          hcol.copy(shore).lerp(mid2, THREE.MathUtils.clamp((vr - 58) / 60, 0, 1));
+          if (vr > 130) hcol.lerp(melt, THREE.MathUtils.clamp((vr - 130) / 55, 0, 1));
+          const dline = Math.abs(vx * gdz - vz * gdx);
+          const gw = 2 + ((vr - 58) / 127) * 12;
+          if (dline < gw && vx > 0)
+            hcol.lerp(glint, 0.85 * (1 - dline / gw));
+          lcol[vi * 3] = hcol.r;
+          lcol[vi * 3 + 1] = hcol.g;
+          lcol[vi * 3 + 2] = hcol.b;
         }
-      });
-      // wind turbines on the near ridge — the smart-city wink
-      for (const ta of [2.4, 2.9, 3.5, 5.6, 6.1]) {
-        if (Math.cos(ta) > 0.78) continue;
-        const tx2 = Math.sin(ta) * 88;
-        const tz2 = Math.cos(ta) * 88;
-        const pole = new THREE.CylinderGeometry(0.18, 0.32, 11, 6);
-        pole.translate(tx2, 8.5, tz2);
-        paint(pole, colCap.set("#F0EEE6"));
-        horizonGeos.push(pole);
-        for (let bl = 0; bl < 3; bl++) {
-          const blade = new THREE.BoxGeometry(0.35, 4.2, 0.12);
-          blade.translate(0, 2.1, 0);
-          blade.rotateZ((bl / 3) * Math.PI * 2 + ta * 1.7);
-          blade.translate(tx2, 14, tz2);
-          paint(blade, colCap.set("#F0EEE6"));
-          horizonGeos.push(blade);
+        lag.setAttribute("color", new THREE.BufferAttribute(lcol, 3));
+        horizonGeos.push(lag);
+      }
+
+      // SISTER HARBOR on a spit (NE, across the water) + striped lighthouse
+      {
+        const taz = 132 * D2R;
+        const tcx = Math.sin(taz) * 132;
+        const tcz = Math.cos(taz) * 132;
+        const spit = new THREE.BoxGeometry(26, 1, 9);
+        spit.rotateY(-taz + Math.PI / 2);
+        spit.translate(tcx, 0.4, tcz);
+        paint(spit, hcol.set("#D9CDB2"));
+        horizonGeos.push(spit);
+        const SISTER = ["#D9A8A0", "#A9C4BD", "#D6BE8C", "#B7C3D9", "#C9A0A8"];
+        const sisterWinSpots: [number, number, number][] = [];
+        for (let sb = 0; sb < 14; sb++) {
+          const sw = 0.9 + hrand() * 1.3;
+          const sh2 = 1.2 + hrand() * 2.4;
+          const off = (sb - 7) * 1.6 + (hrand() - 0.5);
+          const sx2 = tcx + Math.cos(taz) * off + (hrand() - 0.5) * 2.5;
+          const sz2 = tcz - Math.sin(taz) * off + (hrand() - 0.5) * 2.5;
+          const bgeo = new THREE.BoxGeometry(sw, sh2, sw * 0.9);
+          bgeo.translate(sx2, 0.9 + sh2 / 2, sz2);
+          paint(bgeo, hcol.set(SISTER[sb % 5]));
+          horizonGeos.push(bgeo);
+          if (sb % 2 === 0) sisterWinSpots.push([sx2, 1.4 + sh2 * 0.5, sz2]);
+        }
+        // campanile
+        const camp = new THREE.BoxGeometry(1.1, 8.5, 1.1);
+        camp.translate(tcx + 3, 5.1, tcz - 2);
+        paint(camp, hcol.set("#E5DDD0"));
+        horizonGeos.push(camp);
+        const croof = new THREE.ConeGeometry(1.0, 1.6, 4);
+        croof.translate(tcx + 3, 10.1, tcz - 2);
+        paint(croof, hcol.set("#C97B6A"));
+        horizonGeos.push(croof);
+        // lighthouse at the spit tip — stacked stripe cylinders
+        const lx2 = tcx - Math.cos(taz) * 13;
+        const lz2 = tcz + Math.sin(taz) * 13;
+        ["#EFE9DC", "#CE7B66", "#EFE9DC", "#CE7B66", "#EFE9DC"].forEach((sh3, si2) => {
+          const seg = new THREE.CylinderGeometry(0.9 - si2 * 0.07, 0.95 - si2 * 0.07, 1.45, 10);
+          seg.translate(lx2, 1.1 + si2 * 1.42, lz2);
+          paint(seg, hcol.set(sh3));
+          horizonGeos.push(seg);
+        });
+        const lamp2 = new THREE.CylinderGeometry(0.45, 0.55, 0.8, 8);
+        lamp2.translate(lx2, 8.6, lz2);
+        paint(lamp2, hcol.set("#56524A"));
+        horizonGeos.push(lamp2);
+        // the far shore ANSWERS the city at the flip: sister windows +
+        // lighthouse lamp ride the existing scWindow ignition (0 draws)
+        sisterWinSpots.forEach(([wx3, wy3, wz3]) => {
+          const wq = new THREE.PlaneGeometry(0.18, 0.25);
+          wq.rotateY(taz + Math.PI);
+          wq.translate(wx3, wy3, wz3 - 0.01);
+          paint(wq, hcol.set("#FFD9A0"));
+          scWindowGeos.push(wq);
+        });
+        const llit = new THREE.BoxGeometry(0.5, 0.45, 0.5);
+        llit.translate(lx2, 8.6, lz2);
+        paint(llit, hcol.set("#FFD9A0"));
+        scWindowGeos.push(llit);
+        // paper sailboats on the glint
+        for (let sbt = 0; sbt < 4; sbt++) {
+          const ba = (88 + sbt * 14) * D2R;
+          const br = 78 + sbt * 11;
+          const bx4 = Math.sin(ba) * br;
+          const bz4 = Math.cos(ba) * br;
+          const hull = new THREE.BoxGeometry(1.8, 0.35, 0.6);
+          hull.rotateY(hrand() * Math.PI);
+          hull.translate(bx4, 0.2, bz4);
+          paint(hull, hcol.set(sbt === 1 ? "#D08A78" : "#D9CDBB"));
+          horizonGeos.push(hull);
+          const sail = new THREE.BufferGeometry();
+          sail.setFromPoints([
+            new THREE.Vector3(bx4, 0.4, bz4),
+            new THREE.Vector3(bx4, 2.0, bz4),
+            new THREE.Vector3(bx4 + 0.9, 0.5, bz4 + 0.2),
+          ]);
+          sail.computeVertexNormals();
+          sail.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(6), 2));
+          paint(sail, hcol.set("#F8F5EC"));
+          horizonGeos.push(sail);
         }
       }
-      // meadow apron: city edge → hills, cream fading to pale sage
-      const apron = new THREE.RingGeometry(52, 98, 48, 3);
-      apron.rotateX(-Math.PI / 2);
-      apron.translate(0, 0.003, 0);
+
+      // BANDED SHORE APRON — contour terraces W, sand lip toward the water E
       {
+        const apron = new THREE.RingGeometry(52, 100, 64, 6);
+        apron.rotateX(-Math.PI / 2);
+        apron.translate(0, 0.003, 0);
         const apos = apron.attributes.position;
         const acol = new Float32Array(apos.count * 3);
-        const inner = new THREE.Color("#F1EFE8");
-        const outer = new THREE.Color("#E3E9D2");
-        const ac2 = new THREE.Color();
+        const tA = new THREE.Color("#F1EFE6");
+        const tB = new THREE.Color("#E7EADA");
+        const sand = new THREE.Color("#EFE4CB");
         for (let vi = 0; vi < apos.count; vi++) {
-          const rr2 = Math.hypot(apos.getX(vi), apos.getZ(vi));
-          ac2.copy(inner).lerp(outer, THREE.MathUtils.clamp((rr2 - 52) / 46, 0, 1));
-          acol[vi * 3] = ac2.r;
-          acol[vi * 3 + 1] = ac2.g;
-          acol[vi * 3 + 2] = ac2.b;
+          const vx = apos.getX(vi);
+          const vz = apos.getZ(vi);
+          const vr = Math.hypot(vx, vz);
+          const vaz = Math.atan2(vx, vz);
+          if (vaz > 40 * D2R && vaz < 150 * D2R) {
+            hcol.copy(tA).lerp(sand, THREE.MathUtils.clamp((vr - 70) / 30, 0, 1));
+          } else {
+            hcol.copy(Math.floor((vr - 52) / 8) % 2 ? tB : tA); // contour bands
+          }
+          acol[vi * 3] = hcol.r;
+          acol[vi * 3 + 1] = hcol.g;
+          acol[vi * 3 + 2] = hcol.b;
         }
         apron.setAttribute("color", new THREE.BufferAttribute(acol, 3));
+        horizonGeos.push(apron);
       }
-      horizonGeos.push(apron);
+      // Provence field patchwork, lower-west
+      for (let fp2 = 0; fp2 < 7; fp2++) {
+        const fa = (250 + fp2 * 8) * D2R;
+        const fr = 60 + (fp2 % 3) * 9;
+        const fq = new THREE.PlaneGeometry(4 + hrand() * 4, 7 + hrand() * 5);
+        fq.rotateX(-Math.PI / 2);
+        fq.rotateY(hrand() * 0.6);
+        fq.translate(Math.sin(fa) * fr, 0.01, Math.cos(fa) * fr);
+        paint(fq, hcol.set(["#E3D4A8", "#D8CFE8", "#C9D9B2"][fp2 % 3]));
+        horizonGeos.push(fq);
+      }
     }
 
     /* WP4: 110² hash-mottle sheet under downtown (vertex noise ±0.02 L) */
@@ -1886,16 +2057,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         [
           // hemi GROUND is cool stone, never brown — shadows stop filling
           // with khaki; god-view fog pulled back so distant color survives
-          [0.0, "#FFF6E8", 1.6, "#FFF4E4", "#CDC9C2", 0.6, "#FAF9F5", 125, 260],
-          [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#CDC9C2", 0.58, "#FAF9F5", 90, 230],
-          [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#C5C1B6", 0.55, "#F7F3E9", 85, 220],
-          [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#C5C1B6", 0.58, "#FAF9F5", 90, 230],
-          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F8F0E2", 80, 200],
-          [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#DCD2DA", 60, 160], // THE FLIP
-          [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#CFC6D6", 55, 185],
-          [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#C4B8CC", 50, 175],
-          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#BCAFC4", 48, 175],
-          [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#C9BECE", 45, 160],
+          [0.0, "#FFF6E8", 1.6, "#FFF4E4", "#CDC9C2", 0.6, "#F2EDDF", 115, 320],
+          [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#CDC9C2", 0.58, "#F7F3E9", 80, 230],
+          [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#C5C1B6", 0.55, "#F5F0E3", 85, 230],
+          [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#C5C1B6", 0.58, "#F8F3E8", 90, 240],
+          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F3DFC2", 70, 210], // peach golden haze
+          [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#C8BCD0", 58, 185], // lilac flip
+          [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#A99FC0", 55, 210],
+          [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#9C92B4", 50, 205],
+          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#968CB0", 48, 205],
+          [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#A89DBE", 46, 195],
         ] as [number, string, number, string, string, number, string, number, number][]
       ).map(([pp, k, ki, hs, hg, hi, f, fn, ff]) => ({
         p: pp,
@@ -2099,16 +2270,22 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   /* WP1 sky card: ONE vertex-graded plane far behind the city. Outer edge +
      top rows are CREAM so it melts into the page; the horizon band carries
      blush→indigo night. Fog-exempt; opacity rides the flip. */
+  const skyShaderRef = useRef<{ uniforms: { uDay: { value: number } } } | null>(null);
   const skyGeo = useMemo(() => {
-    // a DOME (open cylinder, inside faces): the night wraps every camera
-    // yaw — a flat card left a raw-paper void looking east (founder catch)
+    // a DOME (open cylinder, inside faces) with TWO bakes: the night
+    // gradient in "color" and a peach→aqua→cream DAY sky in "aColorDay",
+    // lerped by uDay — the cream void above the horizon was daylight
+    // blandness culprit #1 (artist spec §4)
     const g = new THREE.CylinderGeometry(200, 200, 150, 48, 24, true);
     const pos = g.attributes.position;
     const colArr = new Float32Array(pos.count * 3);
+    const dayArr = new Float32Array(pos.count * 3);
     const cream = new THREE.Color("#FAF9F5");
     const blush = new THREE.Color("#C98D7E");
     const dusk = new THREE.Color("#5E5680");
     const indigo = new THREE.Color("#383454");
+    const peach = new THREE.Color("#F6E8D2");
+    const aqua = new THREE.Color("#DCE9EC");
     const vc = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const ty = (pos.getY(i) + 75) / 150; // 0 bottom → 1 top
@@ -2118,10 +2295,74 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       colArr[i * 3] = vc.r;
       colArr[i * 3 + 1] = vc.g;
       colArr[i * 3 + 2] = vc.b;
+      if (ty < 0.18) vc.copy(peach).lerp(aqua, ty / 0.18);
+      else if (ty < 0.5) vc.copy(aqua);
+      else vc.copy(aqua).lerp(cream, (ty - 0.5) / 0.5);
+      dayArr[i * 3] = vc.r;
+      dayArr[i * 3 + 1] = vc.g;
+      dayArr[i * 3 + 2] = vc.b;
     }
     g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+    g.setAttribute("aColorDay", new THREE.BufferAttribute(dayArr, 3));
     return g;
   }, []);
+
+  /* paper-cut clouds (artist Mesh B, +1 draw): flat-based blob clusters,
+     gilded at golden hour, moonlit dark paper at night */
+  const cloudGeo = useMemo(() => {
+    const crand = mulberry32(909090);
+    const parts: THREE.BufferGeometry[] = [];
+    const crown = new THREE.Color("#FDFCF6");
+    const belly = new THREE.Color("#F2DCC9");
+    const cc2 = new THREE.Color();
+    const CLOUDS: [number, number, number, number][] = [
+      // [azimuth°, radius, altitude, scale]
+      [205, 150, 55, 1.3],
+      [215, 145, 63, 0.9],
+      [95, 120, 42, 0.8],
+      [120, 135, 46, 0.6],
+      [265, 130, 50, 1.0],
+      [165, 150, 58, 1.1],
+    ];
+    CLOUDS.forEach(([azd, rr, alt, sc2]) => {
+      const az = (azd * Math.PI) / 180;
+      const cx2 = Math.sin(az) * rr;
+      const cz2 = Math.cos(az) * rr;
+      const blobs = 3 + Math.floor(crand() * 3);
+      for (let b2 = 0; b2 < blobs; b2++) {
+        const blob = new THREE.SphereGeometry(1, 7, 5);
+        const bpos = blob.attributes.position;
+        for (let vi = 0; vi < bpos.count; vi++)
+          if (bpos.getY(vi) < -0.3) bpos.setY(vi, -0.3); // flat paper base
+        blob.scale(
+          (7 + crand() * 8) * sc2,
+          (1.8 + crand() * 1.4) * sc2,
+          (4 + crand() * 4) * sc2,
+        );
+        blob.translate(
+          cx2 + (b2 - blobs / 2) * 6 * sc2,
+          alt + crand() * 2,
+          cz2 + (crand() - 0.5) * 4,
+        );
+        const bp2 = blob.attributes.position;
+        const bcol = new Float32Array(bp2.count * 3);
+        blob.computeBoundingBox();
+        const bb2 = blob.boundingBox!;
+        for (let vi = 0; vi < bp2.count; vi++) {
+          const tt2 = (bp2.getY(vi) - bb2.min.y) / Math.max(0.01, bb2.max.y - bb2.min.y);
+          cc2.copy(belly).lerp(crown, tt2);
+          bcol[vi * 3] = cc2.r;
+          bcol[vi * 3 + 1] = cc2.g;
+          bcol[vi * 3 + 2] = cc2.b;
+        }
+        blob.setAttribute("color", new THREE.BufferAttribute(bcol, 3));
+        parts.push(blob);
+      }
+    });
+    return mergeSafe(parts)!;
+  }, []);
+  useEffect(() => () => cloudGeo.dispose(), [cloudGeo]);
+  const cloudMatRef = useRef<THREE.MeshBasicMaterial>(null);
   useEffect(() => () => skyGeo.dispose(), [skyGeo]);
 
   /* FINALE MOTES (spec §8): 140 clay fireflies riding the EXISTING arc
@@ -2646,10 +2887,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       fog.near = THREE.MathUtils.lerp(4, fn, veil);
       fog.far = THREE.MathUtils.lerp(24, ff, veil);
     }
-    // sky card fades in at the flip and holds — its cream edges keep the
-    // page seam invisible; the city silhouettes against indigo
+    // sky script (artist §4): day bake → gilded golden hour → night bake
     if (skyMatRef.current)
-      skyMatRef.current.opacity = window01(p, 0.47, 0.53) * 0.96;
+      skyMatRef.current.opacity = 0.85 + 0.15 * window01(p, 0.2, 0.5);
+    if (skyShaderRef.current)
+      skyShaderRef.current.uniforms.uDay.value =
+        1 - 0.3 * window01(p, 0.3, 0.42) - 0.7 * window01(p, 0.42, 0.6);
+    // clouds: white → gilded #FFE6C6 → lilac → moonlit dark paper
+    if (cloudMatRef.current) {
+      const cm = cloudMatRef.current;
+      const gild = window01(p, 0.3, 0.42) * (1 - window01(p, 0.45, 0.55));
+      const nightC = window01(p, 0.45, 0.62);
+      cm.color.setRGB(
+        1 - 0.0 * gild - 0.55 * nightC,
+        1 - 0.1 * gild - 0.54 * nightC,
+        1 - 0.22 * gild - 0.39 * nightC,
+      );
+      cm.opacity = 0.95 + 0.05 * gild - 0.6 * nightC;
+    }
 
     /* ---- SURVEILLANCE BEATS (spec §7): dot → arc to district lens →
        two-hop hub brighten → hub blink → exactly ONE clay payoff.
@@ -3252,17 +3507,43 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         </mesh>
       )}
 
-      {/* WP1: the night sky DOME — wraps the city, cream-topped */}
+      {/* the sky DOME — alive in daylight too (peach→aqua→cream), night
+          bake lerped in by uDay; cream top melts into the page */}
       <mesh geometry={skyGeo} position={[0, 58, 0]} renderOrder={-2}>
         <meshBasicMaterial
           ref={skyMatRef}
           vertexColors
           transparent
-          opacity={0}
+          opacity={0.85}
           fog={false}
           depthWrite={false}
           toneMapped={false}
           side={THREE.BackSide}
+          onBeforeCompile={(sh) => {
+            sh.uniforms.uDay = { value: 1 };
+            (skyShaderRef as React.MutableRefObject<unknown>).current = sh;
+            sh.vertexShader = sh.vertexShader
+              .replace(
+                "#include <common>",
+                "#include <common>\nattribute vec3 aColorDay;\nuniform float uDay;",
+              )
+              .replace(
+                "#include <color_vertex>",
+                "#include <color_vertex>\n vColor.rgb = mix(vColor.rgb, aColorDay, uDay);",
+              );
+          }}
+        />
+      </mesh>
+      {/* paper-cut clouds — gilded at golden hour, dark paper at night */}
+      <mesh geometry={cloudGeo} renderOrder={-1}>
+        <meshBasicMaterial
+          ref={cloudMatRef}
+          vertexColors
+          transparent
+          opacity={0.95}
+          fog={false}
+          toneMapped={false}
+          depthWrite={false}
         />
       </mesh>
 

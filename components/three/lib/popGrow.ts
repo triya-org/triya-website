@@ -87,6 +87,17 @@ export function mergeSafe(geos: THREE.BufferGeometry[]): THREE.BufferGeometry | 
     g.dispose();
     return ni;
   });
+  // ATTRIBUTE HARMONY: mergeGeometries hard-fails if any geometry differs in
+  // attribute set (a hand-built triangle without uv, etc). Keep only the
+  // attributes present on EVERY input — robust against procedural variety.
+  const common = Object.keys(normalized[0].attributes).filter((name) =>
+    normalized.every((g) => g.attributes[name]),
+  );
+  normalized.forEach((g) => {
+    Object.keys(g.attributes).forEach((name) => {
+      if (!common.includes(name)) g.deleteAttribute(name);
+    });
+  });
   const merged = mergeGeometries(normalized, false);
   normalized.forEach((g) => g.dispose());
   return merged;
