@@ -18,6 +18,7 @@ import {
   makePopDepthMaterial,
   type PopShaderStore,
 } from "@/components/three/lib/popGrow";
+import { assertClearance, type Collider } from "@/components/three/city/clearance";
 
 /* ============================================================
    The Living City v3 — Triya's clay-miniature world, detailed.
@@ -115,6 +116,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
     const range = SPAN * BLOCK - 4;
 
     const buildingGeos: THREE.BufferGeometry[] = [];
+    const colliders: Collider[] = []; // camera-clearance AABBs (spec §3.4)
     const windowDarkGeos: THREE.BufferGeometry[] = [];
     const windowLitGeos: THREE.BufferGeometry[] = [];
     const treeGeos: THREE.BufferGeometry[] = [];
@@ -317,6 +319,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
               cyl.translate(x, h / 2, z);
               paint(cyl, col);
               buildingGeos.push(cyl);
+              colliders.push({ x, z, hw: w * 0.55, hd: w * 0.55, h });
               continue;
             }
 
@@ -332,6 +335,9 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
             const body = new RoundedBoxGeometry(w, h, d, 2, 0.14);
             body.translate(x, h / 2, z);
             paint(body, col);
+            // clearance collider: widest of body/podium footprint, +1.6 head-
+            // room for rooftop furniture (AC/antenna) — generators own safety
+            colliders.push({ x, z, hw: w * 0.7, hd: d * 0.7, h: h + 1.6 });
             buildingGeos.push(body);
             addWindows(x, z, w, h, d);
 
@@ -808,6 +814,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       roads,
       cars,
       range,
+      colliders,
     };
   }, [high]);
 
@@ -958,21 +965,24 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
      is always in open air: overview → descend over the +x avenue → street
      level approaching the plaza → glide out the −x avenue past the query
      block → rise out for the finale. */
-  const camPath = useMemo(
-    () =>
-      new THREE.CatmullRomCurve3(
-        [
-          new THREE.Vector3(0, 52, 92),
-          new THREE.Vector3(32, 13, 1.5),
-          new THREE.Vector3(12, 4.2, 2.5),
-          new THREE.Vector3(-4, 24, 16), // high oblique: the query block held in frame
-          new THREE.Vector3(0, 66, 98),
-        ],
-        false,
-        "catmullrom",
-        0.5,
-      ),
+  const camAnchors = useMemo(
+    () => [
+      new THREE.Vector3(0, 52, 92),
+      new THREE.Vector3(32, 13, 1.5),
+      // NOTE: the clearance CI reports ~62 near-clips on this LEGACY spline
+      // (descent bows to z≈-3.6 at y≈7-10, shaving towers at the +x avenue
+      // mouth with as little as 0.22u). Corridor pins can't fully fix it —
+      // the entry leg's tangent is the cause. The P1 respline (spec §3.3)
+      // replaces this path with corridor-true anchors; CI goes green there.
+      new THREE.Vector3(12, 4.2, 2.5),
+      new THREE.Vector3(-4, 24, 16), // high oblique: the query block held in frame
+      new THREE.Vector3(0, 66, 98),
+    ],
     [],
+  );
+  const camPath = useMemo(
+    () => new THREE.CatmullRomCurve3(camAnchors, false, "catmullrom", 0.5),
+    [camAnchors],
   );
   /* look targets are offset LEFT of each subject so the subject renders in
      the right two-thirds of frame — the copy owns the left third. */
@@ -989,6 +999,7 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
   );
   const lookCur = useMemo(() => new THREE.Vector3(0, 0, 0), []);
   const posCur = useMemo(() => new THREE.Vector3(0, 52, 92), []);
+  const pSmoothRef = useRef(0); // 1D smoothed progress — see MOTION LAW below
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const carPos = useMemo(() => new THREE.Vector3(), []);
   const carTan = useMemo(() => new THREE.Vector3(), []);
@@ -1001,23 +1012,76 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
        beat 2 (.25–.5)  dive to the plaza/hub          u .38→.46
        beat 3 (.5–.72)  street-level glide (query)     u .46→.58
        beat 4 (.72–1)   pull up and out                u .58→1   */
-  const remapU = (p: number) => {
+  const remapU = useMemo(() => {
+    // ANCHOR-TRUE U (ported from JourneyScene): CatmullRom anchors do NOT sit
+    // at i/N along arc length — derive each beat anchor's u by nearest-
+    // distance sampling so the corridor pin can't skew the beat pacing.
+    const beatAnchors = [0, 1, 2, 3, 4]; // entry, dive-start, plaza, oblique, exit
+    const probe = new THREE.Vector3();
+    const U = beatAnchors.map((ai) => {
+      let bestU = 0;
+      let bestD = Infinity;
+      for (let s = 0; s <= 400; s++) {
+        camPath.getPointAt(s / 400, probe);
+        const d = probe.distanceToSquared(camAnchors[ai]);
+        if (d < bestD) {
+          bestD = d;
+          bestU = s / 400;
+        }
+      }
+      return bestU;
+    });
+    U[0] = 0;
+    U[U.length - 1] = 1;
     const P = [0, 0.25, 0.5, 0.72, 1];
-    const U = [0, 0.38, 0.46, 0.58, 1];
-    let i = 0;
-    while (i < 3 && p > P[i + 1]) i++;
-    return U[i] + ((U[i + 1] - U[i]) * (p - P[i])) / (P[i + 1] - P[i]);
-  };
+    return (p: number) => {
+      let i = 0;
+      while (i < 3 && p > P[i + 1]) i++;
+      return U[i] + ((U[i + 1] - U[i]) * (p - P[i])) / (P[i + 1] - P[i]);
+    };
+  }, [camPath, camAnchors]);
 
   useMemo(() => {
     scene.background = new THREE.Color(PAPER);
     scene.fog = new THREE.Fog(PAPER, 75, 200);
   }, [scene]);
 
+  /* clearance CI (dev only, spec §3.4): sweep the spline AND the pSmooth-
+     simulated worst-case scrub path against generator-captured colliders
+     (buildings + antenna headroom + lamp heads). Runs before districts
+     land so every later geometry change is tested from day one. */
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const lampColliders: Collider[] = city.lampPositions.map((pp) => ({
+      x: pp.x,
+      z: pp.z,
+      hw: 1.15, // arm reach |x|≈1.1
+      hd: 1.15,
+      h: 3.0, // lamp head ≈2.78
+      label: "lamp",
+    }));
+    assertClearance(
+      [...city.colliders, ...lampColliders],
+      (u, out) => camPath.getPointAt(u, out),
+      remapU,
+    );
+  }, [city, camPath, remapU]);
+
+  /* perf budget (dev, spec §2): ≤55 draw calls / ≤450k triangles */
+  const budgetFrameRef = useRef(0);
+
   /* ================= frame loop ================= */
   useFrame(({ camera, clock }, delta) => {
     const p = THREE.MathUtils.clamp(progressRef.current, 0, 1);
     const t = clock.elapsedTime;
+
+    if (process.env.NODE_ENV !== "production" && ++budgetFrameRef.current === 90) {
+      const r = gl.info.render;
+      if (r.calls > 55 || r.triangles > 450_000)
+        console.error(
+          `[city-budget] ${r.calls} draw calls / ${r.triangles} tris (caps: 55 / 450k)`,
+        );
+    }
 
     /* ---- entry/exit fog veil: paper gives the world, paper takes it back.
        veil 0 = blank paper sheet, veil 1 = clear air. The constellation
@@ -1058,16 +1122,23 @@ export function CityScene({ progressRef, entryRef, quality = "high" }: CityScene
       }
     }
 
-    camPath.getPointAt(remapU(p), tmp);
+    /* MOTION LAW (spec §3.1): smooth the PROGRESS SCALAR, never the 3D
+       position — the camera is evaluated exactly ON the spline, so the
+       clearance sweep certifies the path actually flown. Frame-rate
+       invariant lag (k = 1 - e^(-λ·dt); λ≈6.5 ≈ the old 0.10@60fps). */
+    pSmoothRef.current += (p - pSmoothRef.current) * (1 - Math.exp(-6.5 * delta));
+    const pS = pSmoothRef.current;
+    camPath.getPointAt(remapU(pS), posCur);
     // entry pre-roll: start higher/farther, settle onto the spline as the
-    // world develops (the lerp below absorbs it smoothly)
-    tmp.y += (1 - e) * 16;
-    tmp.z += (1 - e) * 12;
-    posCur.lerp(tmp, 0.08);
+    // world develops (offset rides ABOVE the tested path — adds clearance)
+    posCur.y += (1 - e) * 16;
+    posCur.z += (1 - e) * 12;
     camera.position.copy(posCur);
 
-    const seg = Math.min(3, Math.floor(p * 4));
-    const segT = p * 4 - seg;
+    // look: same smoothed scalar for the segment, 3D lerp kept for the
+    // target only (look lag cannot clip geometry)
+    const seg = Math.min(3, Math.floor(pS * 4));
+    const segT = pS * 4 - seg;
     tmp.copy(lookTargets[seg]).lerp(lookTargets[seg + 1], segT);
     lookCur.lerp(tmp, 0.08);
     camera.lookAt(lookCur);
