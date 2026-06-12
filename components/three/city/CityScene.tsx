@@ -125,6 +125,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const retailLitGeos: THREE.BufferGeometry[] = [];
     const eventsLitGeos: THREE.BufferGeometry[] = [];
     const mfgGlowGeos: THREE.BufferGeometry[] = [];
+    /* WP2: Smart-Cities night bucket — downtown windows that IGNITE through
+       the flip, plus the steady civic-teal accents (the ONE cool family) */
+    const scWindowGeos: THREE.BufferGeometry[] = [];
+    /* WP2: wet-street reflection streaks (additive, night-gated) */
+    const wetGeos: THREE.BufferGeometry[] = [];
     const windowDarkGeos: THREE.BufferGeometry[] = [];
     const windowLitGeos: THREE.BufferGeometry[] = [];
     const treeGeos: THREE.BufferGeometry[] = [];
@@ -173,6 +178,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const rows = Math.floor((h - 2.2) / 1.5);
       const colsX = Math.max(2, Math.floor(w / 1.15));
       const colsZ = Math.max(2, Math.floor(d / 1.15));
+      /* WP2 routing: downtown dark windows (r<26, hash-picked — NO extra
+         rand draws) move to the SC night bucket so the district can ignite
+         through the flip; per-building tint alternates warm/teal */
+      const scTintWarm = new THREE.Color("#FFDEBC");
+      const scTintTeal = new THREE.Color("#BFD8D2");
+      const pushWin = (g: THREE.BufferGeometry, lit: boolean) => {
+        if (!lit && Math.hypot(x, z) < 26 && popCellKey(x + 1.7, z - 2.3) < 0.55) {
+          paint(g, popCellKey(x, z) > 0.35 ? scTintWarm : scTintTeal);
+          scWindowGeos.push(g);
+          return;
+        }
+        paint(g, lit ? winLit : winDark);
+        (lit ? windowLitGeos : windowDarkGeos).push(g);
+      };
       for (let r = 0; r < rows; r++) {
         const wy = 1.6 + r * 1.5;
         // ±Z facades
@@ -183,9 +202,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const g = new THREE.PlaneGeometry(0.55, 0.85);
             if (sz < 0) g.rotateY(Math.PI);
             g.translate(wx, wy, z + sz * (d / 2 + 0.02));
-            const lit = rand() < 0.12;
-            paint(g, lit ? winLit : winDark);
-            (lit ? windowLitGeos : windowDarkGeos).push(g);
+            pushWin(g, rand() < 0.12);
           }
         }
         // ±X facades
@@ -196,9 +213,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const g = new THREE.PlaneGeometry(0.55, 0.85);
             g.rotateY(sx > 0 ? Math.PI / 2 : -Math.PI / 2);
             g.translate(x + sx * (w / 2 + 0.02), wy, wz);
-            const lit = rand() < 0.12;
-            paint(g, lit ? winLit : winDark);
-            (lit ? windowLitGeos : windowDarkGeos).push(g);
+            pushWin(g, rand() < 0.12);
           }
         }
       }
@@ -486,6 +501,81 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         lampPositions.push(
           new THREE.Vector3(lx + towardRoad[0] * 1.8, 2.64, lz + towardRoad[1] * 1.8),
         );
+      }
+    }
+
+    /* WP2: civic-teal accents (#6FE3DC, STEADY, Smart Cities only — the one
+       admitted cool family) + wet-street reflection streaks for the night */
+    if (high) {
+      const TEAL = new THREE.Color("#6FE3DC");
+      // hub skirt underglow ring
+      const skirt = new THREE.RingGeometry(1.78, 2.08, 40);
+      skirt.rotateX(-Math.PI / 2);
+      skirt.translate(0, 0.315, 0);
+      paint(skirt, TEAL);
+      scWindowGeos.push(skirt);
+      // crosswalk studs across the four avenue mouths at the plaza rim
+      for (const [ax2, az2, horiz] of [
+        [12.2, 0, false],
+        [-12.2, 0, false],
+        [0, 12.2, true],
+        [0, -12.2, true],
+      ] as const) {
+        for (let st = -2; st <= 2; st++) {
+          const stud = new THREE.BoxGeometry(horiz ? 0.5 : 0.1, 0.035, horiz ? 0.1 : 0.5);
+          stud.translate(ax2 + (horiz ? st * 0.95 : 0), 0.045, az2 + (horiz ? 0 : st * 0.95));
+          paint(stud, TEAL);
+          scWindowGeos.push(stud);
+        }
+      }
+      // wet-street streaks: radial gradient quads under plaza-rim lamps —
+      // additive, vertex-faded to black, butter/teal alternating
+      const wetButter = new THREE.Color("#E8B070");
+      const wetTeal = new THREE.Color("#4FBDB6");
+      const black = new THREE.Color("#000000");
+      let wi = 0;
+      lampPositions.forEach((lp) => {
+        if (Math.hypot(lp.x, lp.z) > 17) return;
+        const g = new THREE.PlaneGeometry(0.85, 3.6, 1, 4);
+        g.rotateX(-Math.PI / 2);
+        // orient the streak away from the plaza center
+        const ang = Math.atan2(lp.x, lp.z);
+        g.rotateY(ang);
+        g.translate(lp.x + Math.sin(ang) * 1.9, 0.022, lp.z + Math.cos(ang) * 1.9);
+        // fade along the streak length via vertex color (additive ⇒ black = invisible)
+        const pos = g.attributes.position;
+        const colArr = new Float32Array(pos.count * 3);
+        const base = wi++ % 2 === 0 ? wetButter : wetTeal;
+        const vc = new THREE.Color();
+        for (let vi = 0; vi < pos.count; vi++) {
+          const ly = (vi / pos.count) * 1.0;
+          vc.copy(base).lerp(black, Math.min(1, ly * 1.35));
+          colArr[vi * 3] = vc.r;
+          colArr[vi * 3 + 1] = vc.g;
+          colArr[vi * 3 + 2] = vc.b;
+        }
+        g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+        wetGeos.push(g);
+      });
+      // two teal pools at the hub
+      for (const [px2, pz2] of [
+        [2.6, 1.2],
+        [-2.2, -1.8],
+      ] as const) {
+        const g = new THREE.CircleGeometry(1.05, 14);
+        g.rotateX(-Math.PI / 2);
+        g.translate(px2, 0.02, pz2);
+        const pos = g.attributes.position;
+        const colArr = new Float32Array(pos.count * 3);
+        const vc = new THREE.Color();
+        for (let vi = 0; vi < pos.count; vi++) {
+          vc.copy(wetTeal).multiplyScalar(vi === 0 ? 0.8 : 0.06);
+          colArr[vi * 3] = vc.r;
+          colArr[vi * 3 + 1] = vc.g;
+          colArr[vi * 3 + 2] = vc.b;
+        }
+        g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+        wetGeos.push(g);
       }
     }
 
@@ -832,6 +922,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     bakeRadial(retailLitGeos);
     bakeRadial(eventsLitGeos);
     bakeRadial(mfgGlowGeos);
+    bakeRadial(scWindowGeos);
 
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
@@ -1169,6 +1260,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       retailLit: mergeSafe(retailLitGeos),
       eventsLit: mergeSafe(eventsLitGeos),
       mfgGlow: mergeSafe(mfgGlowGeos),
+      scWindow: mergeSafe(scWindowGeos),
+      wet: mergeSafe(wetGeos),
     };
   }, [high]);
 
@@ -1185,6 +1278,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       c.retailLit?.dispose();
       c.eventsLit?.dispose();
       c.mfgGlow?.dispose();
+      c.scWindow?.dispose();
+      c.wet?.dispose();
       c.arcs.forEach((a) => {
         a.geo.dispose();
         a.mat.dispose();
@@ -1231,18 +1326,36 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const lastBeatRef = useRef(-1);
   const gzWasRef = useRef(false);
 
-  /* day-aging light stops: p → key color / key intensity / hemi intensity */
+  /* COLOR SCRIPT (polish spec §3): morning → noon peak → retail golden →
+     THE FLIP at T2 → Smart-Cities blue-hour → plum T3 → festival night →
+     lit-city finale. scene.background stays cream FOREVER — night lives
+     entirely in key/hemi/fog + the sky card. */
   const LIGHT_STOPS = useMemo(
     () =>
       (
         [
-          [0.0, "#FFF6E8", 1.6, 0.6],
-          [0.34, "#FFF0DC", 1.65, 0.56],
-          [0.55, "#FFE7CC", 1.7, 0.5],
-          [0.8, "#FFDEBC", 1.3, 0.42],
-          [1.0, "#FFDEBC", 1.25, 0.4],
-        ] as [number, string, number, number][]
-      ).map(([pp, hex, ki, hi]) => ({ p: pp, col: new THREE.Color(hex), ki, hi })),
+          [0.0, "#FFF6E8", 1.6, "#FFF4E4", "#E2C4B4", 0.6, "#FAF9F5", 95, 200],
+          [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#E2C4B4", 0.58, "#FAF9F5", 75, 200],
+          [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#CBBFA8", 0.55, "#F7F3E9", 70, 190],
+          [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#CBBFA8", 0.58, "#FAF9F5", 75, 200],
+          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#D8B9A4", 0.52, "#F8F0E2", 70, 180],
+          [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#DCD2DA", 60, 160], // THE FLIP
+          [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#CFC6D6", 55, 150],
+          [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#C4B8CC", 50, 140],
+          [0.8, "#9FA8D4", 0.38, "#565E8C", "#34323F", 0.24, "#BCAFC4", 48, 135],
+          [0.93, "#A8B0DA", 0.35, "#565E8C", "#34323F", 0.22, "#C9BECE", 45, 120],
+        ] as [number, string, number, string, string, number, string, number, number][]
+      ).map(([pp, k, ki, hs, hg, hi, f, fn, ff]) => ({
+        p: pp,
+        key: new THREE.Color(k),
+        ki,
+        hemiSky: new THREE.Color(hs),
+        hemiGround: new THREE.Color(hg),
+        hi,
+        fog: new THREE.Color(f),
+        fn,
+        ff,
+      })),
     [],
   );
 
@@ -1382,6 +1495,38 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     [beatRigs],
   );
   const dotScratch = useMemo(() => new THREE.Vector3(), []);
+  const skyMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const scWindowMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const wetMatRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  /* WP1 sky card: ONE vertex-graded plane far behind the city. Outer edge +
+     top rows are CREAM so it melts into the page; the horizon band carries
+     blush→indigo night. Fog-exempt; opacity rides the flip. */
+  const skyGeo = useMemo(() => {
+    const g = new THREE.PlaneGeometry(360, 140, 8, 24);
+    const pos = g.attributes.position;
+    const colArr = new Float32Array(pos.count * 3);
+    const cream = new THREE.Color("#FAF9F5");
+    const blush = new THREE.Color("#C98D7E");
+    const dusk = new THREE.Color("#5E5680");
+    const indigo = new THREE.Color("#383454");
+    const vc = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const ty = (pos.getY(i) + 70) / 140; // 0 bottom → 1 top
+      const tx = Math.abs(pos.getX(i)) / 180;
+      if (ty < 0.16) vc.copy(blush).lerp(dusk, ty / 0.16);
+      else if (ty < 0.55) vc.copy(dusk).lerp(indigo, (ty - 0.16) / 0.39);
+      else vc.copy(indigo).lerp(cream, (ty - 0.55) / 0.45);
+      // edge melt into the cream page
+      vc.lerp(cream, THREE.MathUtils.clamp((tx - 0.72) / 0.28, 0, 1));
+      colArr[i * 3] = vc.r;
+      colArr[i * 3 + 1] = vc.g;
+      colArr[i * 3 + 2] = vc.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+    return g;
+  }, []);
+  useEffect(() => () => skyGeo.dispose(), [skyGeo]);
 
   /* FINALE MOTES (spec §8): 140 clay fireflies riding the EXISTING arc
      bezier geometry home — tributaries converging on the hub; convergence,
@@ -1782,12 +1927,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     // clears EARLY so the pop-up growth happens in clear air, on screen.
     const veil = Math.min(1, e * 1.8);
     const fog = scene.fog as THREE.Fog;
-    // SOFTENED exit veil (spec §5.3): a partial pinch (~60% of clear) so the
-    // lit city stays visible under the incoming cover — covered mid-breath,
-    // alive, never faded. Constellation/hub/motes are fog-exempt.
-    const exitVeil = window01(p, 0.93, 1.0);
-    fog.near = THREE.MathUtils.lerp(4 + veil * 71, 45, exitVeil); // 4 → 75 → 45
-    fog.far = THREE.MathUtils.lerp(24 + veil * 176, 120, exitVeil); // 24 → 200 → 120
+    // fog near/far/color are written by the COLOR SCRIPT below (the stops
+    // table carries the entry develop, the night flip AND the softened exit
+    // — 45/120 at p.93 keeps the lit city visible under the cover)
 
     /* pop-up-book entry: half the growth during the slide-in, the rest
        through the GAZE beat — the wave completes as the prologue scrim
@@ -1883,17 +2025,30 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const querySpot = window01(p, 0.555, 0.615) * (1 - window01(p, 0.67, 0.7));
     const finale = window01(p, 0.88, 0.97);
 
-    /* ---- day-aging light script (spec §6.5) ---- */
+    /* ---- the color script (polish WP1): full day→night grade ---- */
+    const night01 = window01(p, 0.47, 0.56); // THE FLIP — gates every night ride
     if (cityKeyRef.current && cityHemiRef.current) {
       let si = 0;
       while (si < LIGHT_STOPS.length - 2 && p > LIGHT_STOPS[si + 1].p) si++;
       const A = LIGHT_STOPS[si];
       const B = LIGHT_STOPS[si + 1];
       const lt = THREE.MathUtils.clamp((p - A.p) / (B.p - A.p), 0, 1);
-      cityKeyRef.current.color.copy(A.col).lerp(B.col, lt);
+      cityKeyRef.current.color.copy(A.key).lerp(B.key, lt);
       cityKeyRef.current.intensity = THREE.MathUtils.lerp(A.ki, B.ki, lt);
+      cityHemiRef.current.color.copy(A.hemiSky).lerp(B.hemiSky, lt);
+      cityHemiRef.current.groundColor.copy(A.hemiGround).lerp(B.hemiGround, lt);
       cityHemiRef.current.intensity = THREE.MathUtils.lerp(A.hi, B.hi, lt);
+      // fog rides the same stops (color + range), gated by the entry veil
+      fog.color.copy(A.fog).lerp(B.fog, lt);
+      const fn = THREE.MathUtils.lerp(A.fn, B.fn, lt);
+      const ff = THREE.MathUtils.lerp(A.ff, B.ff, lt);
+      fog.near = THREE.MathUtils.lerp(4, fn, veil);
+      fog.far = THREE.MathUtils.lerp(24, ff, veil);
     }
+    // sky card fades in at the flip and holds — its cream edges keep the
+    // page seam invisible; the city silhouettes against indigo
+    if (skyMatRef.current)
+      skyMatRef.current.opacity = window01(p, 0.47, 0.53) * 0.96;
 
     /* ---- SURVEILLANCE BEATS (spec §7): dot → arc to district lens →
        two-hop hub brighten → hub blink → exactly ONE clay payoff.
@@ -2037,24 +2192,36 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     }
 
     /* lights of the city come alive (capped so bloom stays elegant) */
-    if (lampMatRef.current) lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05;
-    /* KHAKI-MUD LAW (panel): every emissive is tint-capped at #FFDEBC in
-       the materials — the day ages via INTENSITY only, never chroma */
-    if (litWinMatRef.current) litWinMatRef.current.emissiveIntensity = 0.06 + wake * 0.95;
-    /* district interiors ride their own park windows */
+    if (lampMatRef.current)
+      lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05 + night01 * 0.55;
+    /* KHAKI-MUD LAW (amended, polish R1): incandescent family stays capped
+       at #FFDEBC; civic teal #6FE3DC is the ONE admitted cool family (SC,
+       steady); clay remains the only moving light. The night flip boosts
+       every emissive — the city becomes the light source. */
+    if (litWinMatRef.current)
+      litWinMatRef.current.emissiveIntensity = 0.06 + wake * 0.95 + night01 * 1.35;
     if (retailLitMatRef.current)
-      retailLitMatRef.current.emissiveIntensity = 0.15 + window01(p, 0.3, 0.36) * 0.75;
+      retailLitMatRef.current.emissiveIntensity =
+        (0.15 + window01(p, 0.3, 0.36) * 0.75) * (1 + 1.2 * night01);
     if (eventsLitMatRef.current)
-      eventsLitMatRef.current.emissiveIntensity = 0.1 + window01(p, 0.7, 0.76) * 1.05;
+      eventsLitMatRef.current.emissiveIntensity =
+        (0.1 + window01(p, 0.7, 0.76) * 1.05) * (1 + 1.2 * night01);
     if (mfgGlowMatRef.current)
       mfgGlowMatRef.current.emissiveIntensity = 0.12 + window01(p, 0.1, 0.15) * 0.5;
+    /* WP2: Smart-Cities ignition — downtown windows + the civic-teal layer
+       detonate through the flip and hold lit to the end */
+    if (scWindowMatRef.current)
+      // ignition chases the flip: windows catch as the daylight leaves, so
+      // mid-flip (p=.50) never parks dark
+      scWindowMatRef.current.emissiveIntensity = 1.7 * window01(p, 0.475, 0.545);
+    if (wetMatRef.current) wetMatRef.current.opacity = night01;
     /* lenses ignite on wake; constellation glows brighter through the exit.
        HEARTBEAT (spec §4.2): one synchronized pulse as the bloom completes —
        every lens fires through the bloom threshold at once. */
     const heart = Math.sin(Math.PI * window01(p, 0.028, 0.062));
     if (nodeMatRef.current)
       nodeMatRef.current.emissiveIntensity =
-        0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9 + heart * 1.7;
+        (0.35 + wake * 0.85 + finale * 0.25 + exit * 0.9 + heart * 1.7) * (1 + 0.45 * night01);
 
     /* finale motes: the network exhales home (0.89–0.97) */
     const moteW = window01(p, 0.89, 0.97);
@@ -2087,7 +2254,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // hub read as two offset slabs at close range (panel finding)
       hubRef.current.scale.setScalar(1 + wake * 0.035 * Math.sin(t * 3));
       (hubRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
-        0.25 + wake * 0.7 + finale * 0.4 + 0.5 * exit + blinkW * 0.6;
+        (0.25 + wake * 0.7 + finale * 0.4 + 0.5 * exit + blinkW * 0.6) * (1 + 0.4 * night01);
     }
     if (hubRingRef.current) {
       hubRingRef.current.rotation.z = t * 0.4;
@@ -2095,7 +2262,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     }
 
     if (highlightRef.current) {
-      (highlightRef.current.material as THREE.MeshBasicMaterial).opacity = querySpot * 0.22;
+      (highlightRef.current.material as THREE.MeshBasicMaterial).opacity =
+        querySpot * (0.22 + 0.18 * night01);
     }
     resultPinRefs.current.forEach((pin, i) => {
       if (!pin) return;
@@ -2104,7 +2272,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       pin.rotation.y = t * 1.2 + i;
       pin.scale.setScalar(querySpot * (1 + 0.15 * Math.sin(t * 3 + i)));
       (pin.material as THREE.MeshStandardMaterial).emissiveIntensity =
-        0.8 + querySpot * 1.2;
+        0.8 + querySpot * (1.2 + 0.8 * night01); // 2.8 at night — the neon detonation
     });
 
     /* cars: body + cabin + 4 wheels per car, all instanced */
@@ -2442,6 +2610,49 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         <primitive key={`beat-${i}`} object={rig.line} />
       ))}
       <primitive object={motes.pts} />
+
+      {/* WP1: the night sky card — far behind the city, cream-edged */}
+      <mesh geometry={skyGeo} position={[0, 55, -150]} renderOrder={-2}>
+        <meshBasicMaterial
+          ref={skyMatRef}
+          vertexColors
+          transparent
+          opacity={0}
+          fog={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* WP2: SC ignition windows + civic-teal accents (one mesh) */}
+      {city.scWindow && (
+        <mesh geometry={city.scWindow}>
+          <meshStandardMaterial
+            ref={(m) => {
+              (scWindowMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
+            vertexColors
+            roughness={0.5}
+            emissive="#E9E4D4"
+            emissiveIntensity={0}
+          />
+        </mesh>
+      )}
+      {/* WP2: wet-street reflections — additive, night-gated */}
+      {city.wet && (
+        <mesh geometry={city.wet} renderOrder={2}>
+          <meshBasicMaterial
+            ref={wetMatRef}
+            vertexColors
+            transparent
+            opacity={0}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            fog={false}
+          />
+        </mesh>
+      )}
 
       {/* actor pools — ONE capsule mesh for all four districts + hat discs
           (five butter hats, one conspicuously bare head: the M beat) */}
