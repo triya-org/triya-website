@@ -2767,16 +2767,19 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     // No exit mist — the next section physically slides OVER the city
     // (analog.io cover pattern); fog only serves the entry develop, and it
     // clears EARLY so the pop-up growth happens in clear air, on screen.
-    const veil = Math.min(1, e * 1.8);
+    // veil FLOOR 0.55: the city is visible through light haze from the very
+    // first pixel of the slide-in (a zero floor put the whole city beyond
+    // the fog wall — the founder saw white screen, then a sudden pop)
+    const veil = Math.min(1, 0.55 + e * 0.85);
     const fog = scene.fog as THREE.Fog;
     // fog near/far/color are written by the COLOR SCRIPT below (the stops
     // table carries the entry develop, the night flip AND the softened exit
     // — 45/120 at p.93 keeps the lit city visible under the cover)
 
-    /* pop-up-book entry: half the growth during the slide-in, the rest
-       through the GAZE beat — the wave completes as the prologue scrim
-       releases, so the heartbeat (P3) lands on a fully-stood city */
-    const pop = Math.min(1, e * 0.45 + window01(p, 0, 0.06) * 0.55);
+    /* pop-up-book entry: the hub + inner ring already stand at first sight
+       (floor 0.22 — emerging from mist, never a blank void), the wave rolls
+       through the slide-in, completing as the prologue scrim releases */
+    const pop = Math.min(1, 0.22 + e * 0.38 + window01(p, 0, 0.06) * 0.55);
     const popE = 1 - Math.pow(1 - pop, 3);
     popShaders.current.forEach((sh) => {
       sh.uniforms.uPop.value = pop;
@@ -2823,10 +2826,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     pSmoothRef.current += (p - pSmoothRef.current) * (1 - Math.exp(-6.5 * delta));
     const pS = pSmoothRef.current;
     camPath.getPointAt(remapU(pS), posCur);
-    // entry pre-roll: start higher/farther, settle onto the spline as the
-    // world develops (offset rides ABOVE the tested path — adds clearance)
-    posCur.y += (1 - e) * 16;
-    posCur.z += (1 - e) * 12;
+    // entry pre-roll: gentler — start a touch higher/farther and settle
+    // (the old 16/12 offsets pushed the whole city past the fog wall)
+    posCur.y += (1 - e) * 9;
+    posCur.z += (1 - e) * 7;
     camera.position.copy(posCur);
 
     // look: keyframe-interpolated subject + dir-flipped composition offset;
