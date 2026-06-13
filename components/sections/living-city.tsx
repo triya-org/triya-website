@@ -352,28 +352,37 @@ export function LivingCity({ language }: LivingCityProps) {
           />
         </div>
 
-        {/* top feather into the page */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-24 bg-gradient-to-b from-cream-50 to-transparent" />
+        {/* top feather REMOVED (r3): it stacked on the hero's own bottom-0
+            to-cream-50 gradient + the city entry fog veil, producing a fat
+            ~150–200px milky band across the hero→city handoff. The hero
+            gradient + a higher veil floor cover the seam without it. */}
 
         {/* SC park proof: the real Triya assistant answering, question and
             in-world result pins in the SAME frame (the CFO screenshot) */}
         <div
           ref={productCardRef}
-          className="pointer-events-none absolute top-1/2 end-8 z-10 hidden w-[460px] -translate-y-1/2 opacity-0 lg:block xl:end-16 xl:w-[520px]"
+          className="pointer-events-none absolute top-1/2 end-8 z-10 hidden w-[520px] -translate-y-1/2 opacity-0 lg:block xl:end-16 xl:w-[580px]"
           aria-hidden="true"
         >
-          <div className="overflow-hidden rounded-xl border border-ink-900/15 shadow-lg">
+          {/* r3: enlarged (460→520/520→580) + a solid cream backing panel so
+              the chat body copy is legible at 1:1 and does not read as a small
+              dark card competing with the bright neon tower behind it */}
+          <div className="overflow-hidden rounded-2xl bg-cream-50 p-2 shadow-xl ring-1 ring-ink-900/15">
             {/* slight desaturation quiets the product UI's blue next to the
                 clay detection ring — the screenshot stays authentic */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/product/triya-ai-chat.png"
               alt=""
-              className="block w-full saturate-[0.82]"
+              className="block w-full rounded-xl saturate-[0.82]"
             />
           </div>
-          <p className="t-caption mt-3 text-center">
-            {language === "ar" ? "تريا — المساعد الفعلي" : "Triya — the actual assistant"}
+          {/* r3: caption given the same legibility pill as the breadcrumbs —
+              it sat as light text over the dark night city (low-contrast seam) */}
+          <p className="mt-3 text-center">
+            <span className="t-caption inline-block rounded-full bg-cream-50/90 px-4 py-1.5 text-ink-700 shadow-sm">
+              {language === "ar" ? "تريا — المساعد الفعلي" : "Triya — the actual assistant"}
+            </span>
           </p>
         </div>
 
