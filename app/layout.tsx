@@ -15,6 +15,7 @@ const dmSans = localFont({
 
 export const metadata: Metadata = {
   ...pageMetadata.home,
+  metadataBase: new URL("https://www.triya.ai"),
   authors: [{ name: "Triya.ai" }],
   robots: {
     index: true,
@@ -26,10 +27,6 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  },
-  verification: {
-    google: 'add-your-google-verification-code',
-    yandex: 'add-your-yandex-verification-code',
   },
 };
 

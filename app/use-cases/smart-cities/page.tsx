@@ -23,9 +23,9 @@ export default function SmartCitiesPage() {
   const content = {
       hero: {
         badge: "Smart Cities",
-        title: "Intelligent Urban Surveillance for",
-        titleHighlight: "Safer Cities",
-        subtitle: "Transform urban infrastructure with AI-powered monitoring for traffic management, public safety, and city analytics."
+        title: "Smart City Video Analytics",
+        titleHighlight: "for Safer Cities",
+        subtitle: "Transform urban infrastructure with AI CCTV video analytics for traffic management, crowd monitoring, real-time incident detection, and city-wide insights."
       },
       challenges: {
         title: "Urban Security & Management Challenges",

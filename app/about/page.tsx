@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/button";
 export default function AboutPage() {
   const content = {
     hero: {
-      title: "Building the Future of",
-      titleHighlight: "Intelligent Security",
-      subtitle: "Triya.ai is revolutionizing surveillance with edge AI technology, bringing real-time intelligence to security operations across the GCC region."
+      title: "Triya is an AI Video Analytics Company",
+      titleHighlight: "in Abu Dhabi & the GCC",
+      subtitle: "Triya.ai builds edge AI video analytics that turn existing CCTV cameras into real-time intelligence, bringing smarter security operations to organizations across the GCC region."
     },
     mission: {
       title: "Our Mission",

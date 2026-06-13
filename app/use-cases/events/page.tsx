@@ -25,9 +25,9 @@ export default function EventsPage() {
   const content = {
       hero: {
         badge: "Event Management",
-        title: "AI-Powered Security for",
-        titleHighlight: "Major Events",
-        subtitle: "Ensure attendee safety, optimize crowd flow, and enhance event experiences with intelligent surveillance."
+        title: "Event Video Analytics",
+        titleHighlight: "for Major Events",
+        subtitle: "Use AI CCTV video analytics for real-time crowd monitoring, incident detection, and VIP protection to keep attendees safe, optimize crowd flow, and enhance every event experience."
       },
       caseStudy: {
         badge: "Case Study",

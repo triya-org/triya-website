@@ -23,9 +23,9 @@ export default function ManufacturingPage() {
   const content = {
       hero: {
         badge: "Manufacturing",
-        title: "AI-Powered Safety and Security for",
-        titleHighlight: "Manufacturing Facilities",
-        subtitle: "Ensure worker safety, prevent equipment theft, and optimize production with edge AI surveillance tailored for industrial environments."
+        title: "Manufacturing Video Analytics",
+        titleHighlight: "for Safer Factories",
+        subtitle: "Turn your existing CCTV cameras into edge AI video analytics that monitor PPE compliance and worker safety, prevent equipment theft, and optimize production across industrial environments."
       },
       challenges: {
         title: "Manufacturing Security Challenges",

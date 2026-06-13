@@ -19,9 +19,9 @@ export default function RetailPage() {
   const content = {
       hero: {
         badge: "Retail",
-        title: "Intelligent Security and Analytics for",
-        titleHighlight: "Retail Environments",
-        subtitle: "Prevent losses, enhance customer experience, and optimize operations with AI-powered surveillance designed for modern retail."
+        title: "Retail Video Analytics",
+        titleHighlight: "for Loss Prevention & Growth",
+        subtitle: "Turn your store CCTV cameras into AI video analytics that prevent theft and shrinkage, deliver customer analytics, and optimize operations for modern retail."
       },
       challenges: {
         title: "Retail Security & Operations Challenges",
