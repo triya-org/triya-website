@@ -260,6 +260,11 @@ export function CinematicHero({
         </button>
       </div>
 
+      {/* bottom feather into the page — mirrors the city section's top
+          gradient so every hero state (especially dark slides) melts into
+          #FAF9F5 instead of hard-cutting at the section boundary */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-24 bg-gradient-to-b from-transparent to-cream-50" />
+
       {/* Scroll cue */}
       <div
         ref={cueRef}

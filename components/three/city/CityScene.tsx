@@ -125,6 +125,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
        is a material write, never a vertex-color rewrite — spec §0.4) */
     const retailLitGeos: THREE.BufferGeometry[] = [];
     const eventsLitGeos: THREE.BufferGeometry[] = [];
+    /* gate lintel caps ride a CAPPED ramp of their own — at full eventsLit
+       intensity the three near-camera beams bloomed white and bisected the
+       E-HOLD copy card */
+    const gateGlowGeos: THREE.BufferGeometry[] = [];
     const mfgGlowGeos: THREE.BufferGeometry[] = [];
     /* WP2: Smart-Cities night bucket — downtown windows that IGNITE through
        the flip, plus the steady civic-teal accents (the ONE cool family) */
@@ -505,18 +509,36 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
                   paint(aw, dcolLot.set(stripes[0]));
                   buildingGeos.push(aw);
                 } else {
-                  const aw = new THREE.BoxGeometry(0.58, 0.07, w * 0.82);
+                  // r2: thicker slab + front VALANCE lip so the edge-on view
+                  // from the R-hold/T2 family still reads as a canopy (the
+                  // 0.07 slab read as a detached diagonal plank); span inset
+                  // to w*0.7 so nothing crosses the facade corner
+                  const tilt = kind === 0 ? 0.26 : 0.08;
+                  const aw = new THREE.BoxGeometry(0.58, 0.12, w * 0.7);
                   aw.translate(0.29, 0, 0); // pivot at the rear (wall) edge
-                  aw.rotateZ(sxd * (kind === 0 ? 0.26 : 0.08));
+                  aw.rotateZ(sxd * tilt);
                   if (sxd < 0) aw.rotateY(Math.PI);
                   aw.translate(x + sxd * (w / 2 - 0.02), awY, z);
                   paint(aw, dcolLot.set(stripes[0]));
                   buildingGeos.push(aw);
-                  // two slim support rods to the wall
-                  for (const rz of [z - w * 0.3, z + w * 0.3]) {
-                    const rod = new THREE.CylinderGeometry(0.022, 0.022, 0.5, 5);
-                    rod.rotateZ(sxd * 0.9);
-                    rod.translate(x + sxd * (w / 2 + 0.2), awY + 0.14, rz);
+                  const lip = new THREE.BoxGeometry(0.05, 0.2, w * 0.7);
+                  lip.translate(0.56, -0.07, 0); // hangs off the outer edge
+                  lip.rotateZ(sxd * tilt);
+                  if (sxd < 0) lip.rotateY(Math.PI);
+                  lip.translate(x + sxd * (w / 2 - 0.02), awY, z);
+                  paint(lip, dcolLot.set(stripes[0]).offsetHSL(0, 0, -0.06));
+                  buildingGeos.push(lip);
+                  // two slim TIE RODS — wall anchor above → buried in the
+                  // slab's front edge, both ends terminating (the old rods
+                  // poked past the facade corner into the sky)
+                  for (const rz of [z - w * 0.27, z + w * 0.27]) {
+                    const rod = new THREE.CylinderGeometry(0.022, 0.022, 0.62, 5);
+                    rod.rotateZ(sxd * 1.03);
+                    rod.translate(
+                      x + sxd * (w / 2 + 0.265),
+                      awY + (kind === 0 ? 0.34 : 0.25),
+                      rz,
+                    );
                     paint(rod, dcolLot.set("#8C867A"));
                     buildingGeos.push(rod);
                   }
@@ -768,7 +790,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         const hz = -10.5; // near hall center
         dbox(buildingGeos, 18, 0.3, 9.4, hx, 0.15, hz, SAGE); // floor slab
         // LOW front parapet — the M-hold sightline lesson from the Turntable
-        dbox(buildingGeos, 18, 1.0, 0.45, hx, 0.5, -6.2, SAND);
+        // (0.7: the hold's sightline grazed a 1.0 top — worker bodies were
+        // occluded down to floating hats)
+        dbox(buildingGeos, 18, 0.7, 0.45, hx, 0.35, -6.2, SAND);
         /* WP5 (polish R3): CLOSED sawtooth — right-triangle prisms seated
            flush on the wall top; glaze on the real vertical riser face;
            ridge beam per crest. No daylight under any roof. */
@@ -1069,10 +1093,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         colliders.push({ x: 43, z: -19, hw: 3.9, hd: 1.8, h: 6.6, label: "stage" });
         // WP11.1 ferris wheel footing (the wheel itself is a rotating JSX
         // group) — A-frame legs + hub pylon are static masses
+        // (r2: wheel pushed DEEP into the festival bowl behind the gate
+        // line + hub lowered to 4.6 + the E-family look targets raised/
+        // biased east — at 44/-7.4 the disc bisected the right frame edge
+        // at every Events beat; at 45.5/-13 the full 9u disc lands inside
+        // the 0.72–0.86 frusta)
         for (const ls of [-0.9, 0.9]) {
-          dbox(buildingGeos, 0.22, 5.2, 0.22, 45.8 + ls, 2.5, -7.8 + ls * 0.35, "#A8A293", 0.18 * ls);
+          dbox(buildingGeos, 0.22, 4.6, 0.22, 45.5 + ls, 2.3, -13.0 + ls * 0.35, "#A8A293", 0.18 * ls);
         }
-        colliders.push({ x: 45.8, z: -7.8, hw: 4.5, hd: 1.0, h: 9.5, label: "ferris" });
+        colliders.push({ x: 45.5, z: -13.0, hw: 4.5, hd: 1.0, h: 9.0, label: "ferris" });
         // the gate camera's GROUND POLE (founder: "still slightly levitating")
         dbox(buildingGeos, 0.18, 4.1, 0.18, 41.8, 2.05, -8.4, CREAM300);
         dbox(buildingGeos, 0.5, 0.12, 0.5, 41.8, 0.06, -8.4, "#CBC2AE"); // base
@@ -1082,7 +1111,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         // striped pavilion tents, flanking the gate run
         for (const [tx2, tz2, tr] of [
           [29.8, -8.8, 1.7],
-          [43.0, -9.7, 1.5],
+          // tent 2 moved west of the gate run (r2) — its old (43,-9.7) seat
+          // is on the ferris wheel's new sight-line
+          [30.6, -13.8, 1.5],
         ] as const) {
           const wall = new THREE.CylinderGeometry(tr * 0.92, tr, 1.5, 12);
           wall.translate(tx2, 0.75, tz2);
@@ -1115,19 +1146,22 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         }
         // balloon clusters on the gate posts + stalls (festival color!)
         const BALLOONS = ["#E8826B", "#7FA8C9", "#E3B23C", "#93B17C", "#D98C9C"];
-        for (const [bx3, bz3] of [
-          [31.4, -8.2],
-          [41.0, -8.2],
-          [29.4, -10.5],
-          [29.4, -15.6],
-          [43.0, -9.7],
+        // cluster bases: gate posts touch the lintels at 3.6; the stall and
+        // tent clusters rest ON their roof apexes (stall cone apex ≈2.32,
+        // tent finial ≈2.95) — they floated 0.5–1.3u in empty air before
+        for (const [bx3, bz3, bbase] of [
+          [31.4, -8.2, 3.6],
+          [41.0, -8.2, 3.6],
+          [29.4, -10.5, 2.45],
+          [29.4, -15.6, 2.45],
+          [43.0, -9.7, 2.95],
         ] as const)
           for (let bb = 0; bb < 4; bb++) {
             const bl = new THREE.SphereGeometry(0.16 + drand() * 0.07, 8, 6);
             bl.scale(1, 1.18, 1);
             bl.translate(
               bx3 + (drand() - 0.5) * 0.5,
-              3.6 + drand() * 0.7,
+              bbase + drand() * 0.7,
               bz3 + (drand() - 0.5) * 0.5,
             );
             paint(bl, dcol.set(BALLOONS[Math.floor(drand() * 5)]));
@@ -1168,7 +1202,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const cap2 = new THREE.BoxGeometry(2.9, 0.07, 0.1);
             cap2.translate(gx, 3.54, -8.0);
             paint(cap2, dcol.set("#FFE2B8"));
-            eventsLitGeos.push(cap2); // lit lintel caps — festive, not funereal
+            gateGlowGeos.push(cap2); // lit lintel caps — festive, capped glow
           }
           colliders.push({ x: gx, z: -8.2, hw: 1.7, hd: 0.3, h: 3.7, label: "gate" });
         }
@@ -1255,12 +1289,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             const pt = A3.clone().lerp(B3, tt);
             pt.y -= Math.sin(Math.PI * tt) * 0.7;
             if (prev) {
-              const wire = new THREE.BoxGeometry(0.025, 0.025, prev.distanceTo(pt));
+              // mid-warm grey, 0.04 thick — subliminal by day but the
+              // catenary reads as a physical wire at night (TRUNK at 0.025
+              // vanished and the lanterns hung as dotted arcs in mid-air)
+              const wire = new THREE.BoxGeometry(0.04, 0.04, prev.distanceTo(pt));
               segDir.copy(pt).sub(prev).normalize();
               segQ.setFromUnitVectors(zAxis, segDir);
               wire.applyQuaternion(segQ);
               wire.translate((prev.x + pt.x) / 2, (prev.y + pt.y) / 2, (prev.z + pt.z) / 2);
-              paint(wire, dcol.set(TRUNK));
+              paint(wire, dcol.set("#8A8273"));
               buildingGeos.push(wire);
             }
             if (k > 0 && k < NS) {
@@ -1321,13 +1358,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         pos.z = THREE.MathUtils.clamp(pos.z, rf.z - rf.d / 2 + 0.18, rf.z + rf.d / 2 - 0.18);
       }
       nodes.push(pos);
-      // each camera faces roughly toward the plaza core, with scatter
-      const yaw = Math.atan2(-pos.x, -pos.z) + (rand() - 0.5) * 0.5;
-      nodeYaws.push(yaw);
-      // mast set BEHIND the body + L-bracket arm reaching forward to it
       const isSeat = c.roofIdx < 0; // district re-seats get HEAVY mounts
-      const mx = pos.x - Math.sin(yaw) * (isSeat ? 0.3 : 0.5);
-      const mz = pos.z - Math.cos(yaw) * (isSeat ? 0.3 : 0.5);
+      // each camera faces roughly toward the plaza core, with scatter —
+      // EXCEPT the district re-seats: their masts must land exactly on the
+      // authored pole axis / parapet, so no yaw scatter and no lateral
+      // offset (the scatter cantilevered the gate-cam mast off its pole —
+      // it read as a levitating assembly at night). The rand() draw is kept
+      // so the shared stream stays byte-identical downstream.
+      const yawScatter = (rand() - 0.5) * 0.5;
+      const yaw = Math.atan2(-pos.x, -pos.z) + (isSeat ? 0 : yawScatter);
+      nodeYaws.push(yaw);
+      // mast set BEHIND the body (roof cams) / centered on the seat (poles)
+      // + L-bracket arm reaching forward to the bullet
+      const mx = pos.x - Math.sin(yaw) * (isSeat ? 0 : 0.5);
+      const mz = pos.z - Math.cos(yaw) * (isSeat ? 0 : 0.5);
       const roofY = pos.y - 0.46;
       const mast = new THREE.CylinderGeometry(
         isSeat ? 0.09 : 0.04,
@@ -1381,6 +1425,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     bakeRadial(poleGeos);
     bakeRadial(retailLitGeos);
     bakeRadial(eventsLitGeos);
+    bakeRadial(gateGlowGeos);
     bakeRadial(mfgGlowGeos);
     bakeRadial(scWindowGeos);
 
@@ -1521,14 +1566,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     }
 
-    // crosswalks at the plaza ring and the first block ring
+    // crosswalks at the plaza ring and the first block ring — true zebra:
+    // each bar spans the carriageway width, bars REPEAT along the road axis
+    // (the old z-offsets stacked all five bars into one solid salmon slab
+    // that read as a misplaced decal lying across the avenue)
     const walkCol = new THREE.Color("#D97757").lerp(new THREE.Color("#FFFFFF"), 0.45);
     for (const dist of [16.5, -16.5]) {
       for (let k = -2; k <= 2; k++) {
         for (const horizontal of [true, false]) {
           const bar = new THREE.PlaneGeometry(horizontal ? 0.55 : 4.0, horizontal ? 4.0 : 0.55);
           bar.rotateX(-Math.PI / 2);
-          bar.translate(horizontal ? dist : k * 1.0, 0.02, horizontal ? k * 1.0 : dist);
+          bar.translate(horizontal ? dist + k * 1.0 : 0, 0.02, horizontal ? 0 : dist + k * 1.0);
           paint(bar, walkCol);
           roadGeos.push(bar);
         }
@@ -1583,9 +1631,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             hcol.copy(hbase).lerp(hsummit, t2);
             hcol.offsetHSL(0, 0, (hrand() - 0.5) * 0.06); // facet jitter
             const nx = nor2.getX(f);
-            if (nx > 0.3) hcol.offsetHSL(0.01, 0.05, 0.03); // sun side
-            else if (nx < -0.3) hcol.offsetHSL(-0.005, -0.02, -0.02);
-            if (snow && fy > 0.62 * h2 + 3 * Math.sin(fx * 0.7))
+            // r2: stronger two-value paper-fold so the warm/cool facet
+            // split survives the golden-hour fog (far 245)
+            if (nx > 0.3) hcol.offsetHSL(0.015, 0.08, 0.07); // sun side
+            else if (nx < -0.3) hcol.offsetHSL(-0.01, -0.04, -0.05);
+            if (snow && fy > 0.4 * h2 + 3 * Math.sin(fx * 0.7))
               hcol.set(nx > 0.3 ? "#F9EDE0" : "#F7F4EC"); // wobbly snowline
             for (let v3 = 0; v3 < 3; v3++) {
               carr[(f + v3) * 3] = hcol.r;
@@ -1598,40 +1648,51 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         });
       };
       const D2R = Math.PI / 180;
-      // Range 1 — near olive foothills, west
+      // Paper-cut atmospheric perspective (artist re-grade): near range
+      // darkest/warmest → far range lightest/bluest, so the NW wall reads
+      // as three separated planes instead of one olive smear.
+      // Range 1 — near olive foothills, west (darkest, warmest — anchors near)
       for (let az = 215; az <= 310; az += 19)
-        massif(az * D2R, 76 + hrand() * 20, "#C8CFB4", "#9DAF85", [
+        massif(az * D2R, 76 + hrand() * 20, "#C2CBA4", "#7E9460", [
           [14 + hrand() * 6, 7 + hrand() * 4],
           [11 + hrand() * 5, 6 + hrand() * 3],
         ]);
-      // Range 2 — dusty viridian
+      // Range 2 — dusty viridian (mid value)
       for (let az = 165; az <= 300; az += 21)
-        massif(az * D2R, 112 + hrand() * 26, "#BFD0C8", "#7E9C94", [
+        massif(az * D2R, 112 + hrand() * 26, "#C5D6CE", "#8AA89E", [
           [20 + hrand() * 8, 15 + hrand() * 6],
           [16 + hrand() * 6, 12 + hrand() * 5],
         ]);
-      // Range 3 — hazy steel far wall
+      // Range 3 — hazy steel far wall (lightest, bluest)
       for (let az = 150; az <= 320; az += 20)
-        massif(az * D2R, 158 + hrand() * 24, "#D7DEE6", "#93A6BE", [
+        massif(az * D2R, 158 + hrand() * 24, "#E2E8F0", "#A8B8D0", [
           [28 + hrand() * 12, 28 + hrand() * 9],
           [22 + hrand() * 8, 22 + hrand() * 7],
         ]);
-      // THE GUARDIAN — the snow-capped focal anchor, NNW
-      massif(210 * D2R, 148, "#AEB9CC", "#6F7E9C", [[36, 56]], true);
-      massif(217 * D2R, 152, "#AEB9CC", "#6F7E9C", [[26, 38]], true);
-      massif(203 * D2R, 144, "#AEB9CC", "#6F7E9C", [[22, 30]], true);
+      // THE GUARDIAN — r2: pulled IN (r 148→124) and grown to 72 so it
+      // punches through the fog falloff and crests Range 3; body deepened
+      // so residual blue survives the cream fog; az 218 lands it in the p0
+      // god-view top-left and the p0.2 Manufacturing backdrop
+      massif(218 * D2R, 124, "#7E94B8", "#44567E", [[42, 72]], true);
+      massif(226 * D2R, 140, "#7E94B8", "#44567E", [[26, 38]], true);
+      massif(209 * D2R, 136, "#7E94B8", "#44567E", [[22, 30]], true);
 
       // THE LAGOON — milky jade east, glint path baked toward az 75°
       {
-        const lag = new THREE.RingGeometry(58, 185, 72, 5, -50 * D2R, 110 * D2R);
+        // r2: sector widened (-65°, 140°) + an ANGULAR MELT at both theta
+        // edges — the old hard sector terminus was a razor diagonal where
+        // flat teal met the page (read as a geometric glitch, not a sea)
+        const lag = new THREE.RingGeometry(58, 185, 72, 5, -65 * D2R, 140 * D2R);
         lag.rotateX(-Math.PI / 2);
         lag.translate(0, 0.02, 0);
         const lpos = lag.attributes.position;
         const lcol = new Float32Array(lpos.count * 3);
-        const shore = new THREE.Color("#C9E0DA");
-        const mid2 = new THREE.Color("#B9D2D6");
+        // two steps deeper than page cream so the water separates from sky
+        // and shore at every beat (was invisible — read as blank void)
+        const shore = new THREE.Color("#B5D8CF");
+        const mid2 = new THREE.Color("#8FC0CB");
         const melt = new THREE.Color("#E9ECEA");
-        const glint = new THREE.Color("#FBF0D8");
+        const glint = new THREE.Color("#FFD98C");
         const gdx = Math.sin(75 * D2R);
         const gdz = Math.cos(75 * D2R);
         for (let vi = 0; vi < lpos.count; vi++) {
@@ -1639,11 +1700,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           const vz = lpos.getZ(vi);
           const vr = Math.hypot(vx, vz);
           hcol.copy(shore).lerp(mid2, THREE.MathUtils.clamp((vr - 58) / 60, 0, 1));
-          if (vr > 130) hcol.lerp(melt, THREE.MathUtils.clamp((vr - 130) / 55, 0, 1));
+          if (vr > 150) hcol.lerp(melt, THREE.MathUtils.clamp((vr - 150) / 35, 0, 1));
           const dline = Math.abs(vx * gdz - vz * gdx);
-          const gw = 2 + ((vr - 58) / 127) * 12;
+          const gw = 6 + ((vr - 58) / 127) * 16;
           if (dline < gw && vx > 0)
-            hcol.lerp(glint, 0.85 * (1 - dline / gw));
+            hcol.lerp(glint, 0.95 * (1 - dline / gw));
+          // angular melt: water dissolves into the page at the sector edges
+          // (mirrors the radial melt at vr>150)
+          const th = Math.atan2(-vz, vx); // RingGeometry theta after rotateX
+          const edge = Math.min(th + 65 * D2R, 75 * D2R - th);
+          if (edge < 0.22)
+            hcol.lerp(melt, THREE.MathUtils.clamp(1 - edge / 0.22, 0, 1));
           lcol[vi * 3] = hcol.r;
           lcol[vi * 3 + 1] = hcol.g;
           lcol[vi * 3 + 2] = hcol.b;
@@ -1711,22 +1778,23 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         llit.translate(lx2, 8.6, lz2);
         paint(llit, hcol.set("#FFD9A0"));
         scWindowGeos.push(llit);
-        // paper sailboats on the glint
+        // paper sailboats on the glint — 2x scale, nearest pulled in to r=68
+        // so at least one reads at the p0.2/p0.4 horizon distance
         for (let sbt = 0; sbt < 4; sbt++) {
           const ba = (88 + sbt * 14) * D2R;
-          const br = 78 + sbt * 11;
+          const br = 68 + sbt * 11;
           const bx4 = Math.sin(ba) * br;
           const bz4 = Math.cos(ba) * br;
-          const hull = new THREE.BoxGeometry(1.8, 0.35, 0.6);
+          const hull = new THREE.BoxGeometry(3.2, 0.5, 1.0);
           hull.rotateY(hrand() * Math.PI);
-          hull.translate(bx4, 0.2, bz4);
+          hull.translate(bx4, 0.25, bz4);
           paint(hull, hcol.set(sbt === 1 ? "#D08A78" : "#D9CDBB"));
           horizonGeos.push(hull);
           const sail = new THREE.BufferGeometry();
           sail.setFromPoints([
-            new THREE.Vector3(bx4, 0.4, bz4),
-            new THREE.Vector3(bx4, 2.0, bz4),
-            new THREE.Vector3(bx4 + 0.9, 0.5, bz4 + 0.2),
+            new THREE.Vector3(bx4, 0.5, bz4),
+            new THREE.Vector3(bx4, 3.6, bz4),
+            new THREE.Vector3(bx4 + 1.7, 0.7, bz4 + 0.35),
           ]);
           sail.computeVertexNormals();
           sail.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(6), 2));
@@ -1742,9 +1810,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         apron.translate(0, 0.003, 0);
         const apos = apron.attributes.position;
         const acol = new Float32Array(apos.count * 3);
+        // r2: alternate band + sand lip deepened (the old #E7EADA delta
+        // vanished under fog + grain) and the band stride made irregular so
+        // the terracing reads as hand-cut topo lines from the god view
         const tA = new THREE.Color("#F1EFE6");
-        const tB = new THREE.Color("#E7EADA");
-        const sand = new THREE.Color("#EFE4CB");
+        const tB = new THREE.Color("#DDE4C8");
+        const sand = new THREE.Color("#EAD7AE");
         for (let vi = 0; vi < apos.count; vi++) {
           const vx = apos.getX(vi);
           const vz = apos.getZ(vi);
@@ -1753,7 +1824,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           if (vaz > 40 * D2R && vaz < 150 * D2R) {
             hcol.copy(tA).lerp(sand, THREE.MathUtils.clamp((vr - 70) / 30, 0, 1));
           } else {
-            hcol.copy(Math.floor((vr - 52) / 8) % 2 ? tB : tA); // contour bands
+            const b0 = Math.floor((vr - 52) / 8);
+            const band = Math.floor((vr - 52) / (7 + (b0 % 3) * 2));
+            hcol.copy(band % 2 ? tB : tA); // irregular contour bands
           }
           acol[vi * 3] = hcol.r;
           acol[vi * 3 + 1] = hcol.g;
@@ -1762,16 +1835,73 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         apron.setAttribute("color", new THREE.BufferAttribute(acol, 3));
         horizonGeos.push(apron);
       }
-      // Provence field patchwork, lower-west
-      for (let fp2 = 0; fp2 < 7; fp2++) {
-        const fa = (250 + fp2 * 8) * D2R;
-        const fr = 60 + (fp2 % 3) * 9;
-        const fq = new THREE.PlaneGeometry(4 + hrand() * 4, 7 + hrand() * 5);
-        fq.rotateX(-Math.PI / 2);
-        fq.rotateY(hrand() * 0.6);
-        fq.translate(Math.sin(fa) * fr, 0.01, Math.cos(fa) * fr);
-        paint(fq, hcol.set(["#E3D4A8", "#D8CFE8", "#C9D9B2"][fp2 % 3]));
-        horizonGeos.push(fq);
+      // Provence field QUILT, lower-west — a contiguous 3×3 tilled grid
+      // (shared rotation + shared edges + hedge lines) instead of the old
+      // seven confetti diamonds floating on the apron
+      {
+        const qa = 258 * D2R;
+        const qcx = Math.sin(qa) * 64;
+        const qcz = Math.cos(qa) * 64;
+        const QROT = 0.3;
+        const cell = 7.5;
+        const QUILT = [
+          "#E3D4A8", "#C9D9B2", "#D8CFE8",
+          "#C9D9B2", "#D9A8A0", "#E3D4A8",
+          "#D8CFE8", "#E3D4A8", "#C9D9B2",
+        ];
+        const ux = Math.cos(QROT);
+        const uz = -Math.sin(QROT);
+        const vxq = Math.sin(QROT);
+        const vzq = Math.cos(QROT);
+        for (let qi = -1; qi <= 1; qi++)
+          for (let qj = -1; qj <= 1; qj++) {
+            const fq = new THREE.PlaneGeometry(cell, cell);
+            fq.rotateX(-Math.PI / 2);
+            fq.rotateY(QROT + (hrand() - 0.5) * 0.2);
+            fq.translate(
+              qcx + (qi * ux + qj * vxq) * cell,
+              0.01,
+              qcz + (qi * uz + qj * vzq) * cell,
+            );
+            paint(fq, hcol.set(QUILT[(qi + 1) * 3 + (qj + 1)]));
+            horizonGeos.push(fq);
+          }
+        // hedge rows along the grid lines — tilled-field read from the god view
+        for (let ql = -1; ql <= 2; ql++)
+          for (const alongU of [true, false]) {
+            const hedge = new THREE.BoxGeometry(
+              alongU ? cell * 3 : 0.18,
+              0.12,
+              alongU ? 0.18 : cell * 3,
+            );
+            hedge.rotateY(QROT);
+            const off = (ql - 0.5) * cell;
+            hedge.translate(
+              qcx + (alongU ? vxq : ux) * off,
+              0.07,
+              qcz + (alongU ? vzq : uz) * off,
+            );
+            paint(hedge, hcol.set("#8FA06F"));
+            horizonGeos.push(hedge);
+          }
+      }
+
+      // NIGHT STARS — ~36 tiny paper quads on the dome shell, riding the
+      // EXISTING scWindow ignition ramp at the flip (zero extra draw calls;
+      // static — clay stays the only moving light)
+      {
+        const srand = mulberry32(83501);
+        for (let st = 0; st < 60; st++) {
+          const saz = srand() * Math.PI * 2;
+          // low band (alt 10–44): the night cameras pitch DOWN, so only the
+          // dome's lower third is ever in frame — stars hug the skyline
+          const salt = 10 + srand() * 34;
+          const sq = new THREE.PlaneGeometry(0.35, 0.35);
+          sq.rotateY(saz + Math.PI); // face back toward the city center
+          sq.translate(Math.sin(saz) * 188, salt, Math.cos(saz) * 188);
+          paint(sq, hcol.set(srand() < 0.25 ? "#DCE8FF" : "#FFE2B8"));
+          scWindowGeos.push(sq);
+        }
       }
     }
 
@@ -1978,6 +2108,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       radialKey: radialCellKey, // actors ride the same bloom wave
       retailLit: mergeSafe(retailLitGeos),
       eventsLit: mergeSafe(eventsLitGeos),
+      gateGlow: mergeSafe(gateGlowGeos),
       mfgGlow: mergeSafe(mfgGlowGeos),
       scWindow: mergeSafe(scWindowGeos),
       wet: mergeSafe(wetGeos),
@@ -1997,6 +2128,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       c.roads?.dispose();
       c.retailLit?.dispose();
       c.eventsLit?.dispose();
+      c.gateGlow?.dispose();
       c.mfgGlow?.dispose();
       c.scWindow?.dispose();
       c.wet?.dispose();
@@ -2030,6 +2162,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const litWinMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const retailLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const eventsLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const gateGlowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const mfgGlowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const bodyMeshRef = useRef<THREE.InstancedMesh>(null);
   const cabinMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -2061,7 +2194,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [0.1, "#FFF2DE", 1.65, "#FFF4E4", "#CDC9C2", 0.58, "#F7F3E9", 80, 230],
           [0.2, "#FFEFD2", 1.72, "#FFF1DC", "#C5C1B6", 0.55, "#F5F0E3", 85, 230],
           [0.3, "#FFF6E8", 1.78, "#FFF1DC", "#C5C1B6", 0.58, "#F8F3E8", 90, 240],
-          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F3DFC2", 70, 210], // peach golden haze
+          [0.4, "#FFE7C4", 1.6, "#FFE9CE", "#CCC0B2", 0.52, "#F6D8B2", 70, 245], // peach golden haze (far 245 + warmer fog: gilded peaks survive)
           [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#C8BCD0", 58, 185], // lilac flip
           [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#A99FC0", 55, 210],
           [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#9C92B4", 50, 205],
@@ -2095,9 +2228,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       phase: number;
       speed: number;
       kind: number;
+      /** ground offset — actors standing on raised decks (hall floor slab) */
+      baseY?: number;
     };
     const list: Actor[] = [];
-    // M: six workers pacing the hall mouth (visible over the LOW parapet)
+    // M: six workers pacing the hall mouth — they stand ON the hall floor
+    // slab (top 0.3), so bodies clear the front parapet instead of sinking
+    // to disembodied hats
     for (let k = 0; k < 6; k++)
       list.push({
         bx: -43 + k * 2.5,
@@ -2107,6 +2244,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         phase: arand() * 10,
         speed: 0.45 + arand() * 0.25,
         kind: k === 2 ? 2 : 1,
+        baseY: 0.3,
       });
     // R: high-street shoppers on both sidewalks
     for (let k = 0; k < 12; k++)
@@ -2119,10 +2257,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         speed: 0.5 + arand() * 0.35,
         kind: 0,
       });
-    // R: the flagship queue (last two split at the payoff)
+    // R: the flagship queue — on the camera-facing FORECOURT (x −5.0,
+    // between sidewalk and storefront face at −5.85; the old −6.1 stood
+    // the whole queue inside the flagship's walls, invisible from A7)
     for (let q = 0; q < 5; q++)
       list.push({
-        bx: -6.1,
+        bx: -5.0,
         bz: 26.2 + q * 0.62,
         amp: 0,
         axis: 1,
@@ -2157,6 +2297,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         speed: 0.5 + arand() * 0.3,
         kind: 5,
       });
+    // the gate-3 ENTRANT (r2) — the Events detection SUBJECT: shuffles at
+    // the barrier lane; the beat dot rides this head and the payoff
+    // barrier swings open FOR them (the old fixed dot floated in night air)
+    list.push({ bx: 39.6, bz: -9.6, amp: 0, axis: 1, phase: 2, speed: 0, kind: 5 });
     // WP9.5 + founder round: a real festival crowd
     for (let k = 0; k < 58; k++) {
       const a = Math.PI * (0.7 + arand() * 0.7);
@@ -2177,14 +2321,21 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     () => ACTORS.map((a) => city.radialKey(a.bx, a.bz)),
     [ACTORS, city],
   );
+  // the Events detection SUBJECT (r2): the gate-3 entrant capsule —
+  // the dot tracks its head like the M beat tracks the bare-headed worker
+  const eSubjectIdx = useMemo(
+    () => ACTORS.findIndex((a) => a.kind === 5 && a.bx === 39.6 && a.bz === -9.6),
+    [ACTORS],
+  );
 
   /* beat arc rigs: dot anchor → district lens (drawRange bezier, the house
      arc grammar); node indices: 1 = hall parapet cam, 3 = gate cam */
   const beatRigs = useMemo(() => {
-    const mk = (from: THREE.Vector3, lensIdx: number) => {
+    const mk = (from: THREE.Vector3, lensIdx: number, lift = 0.25, bowZ = 0) => {
       const to = city.nodes[Math.min(lensIdx, city.nodes.length - 1)];
       const mid = from.clone().lerp(to, 0.5);
-      mid.y = Math.max(from.y, to.y) + from.distanceTo(to) * 0.25;
+      mid.y = Math.max(from.y, to.y) + from.distanceTo(to) * lift;
+      mid.z += bowZ; // bow toward the hold camera so the arc rides open air
       const pts = new THREE.QuadraticBezierCurve3(from, mid, to).getPoints(36);
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       geo.setDrawRange(0, 0);
@@ -2206,9 +2357,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       }
     });
     return [
-      mk(new THREE.Vector3(-36, 2.9, -7.2), 1), // M: hall mouth → parapet cam
-      mk(new THREE.Vector3(-6.0, 2.4, 26.8), rIdx), // R: queue → street cam
-      mk(new THREE.Vector3(38.5, 4.6, -10.5), 3), // E: gate swell → gate cam (clear of the copy card)
+      // M: starts AT the worker line in front of the hall face (r2 — the
+      // old hall-mouth start hid behind the front wall, so only the mid-air
+      // segment showed: a thread dangling in space) and bows hard toward
+      // the A6 hold camera through the open yard air
+      mk(new THREE.Vector3(-38, 1.9, -7.0), 2, 0.12, 9.5),
+      mk(new THREE.Vector3(-5.0, 1.7, 26.8), rIdx), // R: queue heads → street cam
+      // E: starts over the GATE-3 ENTRANT the dot now tracks (r2 — the
+      // old (38.5,4.6) anchor floated in open night air with no subject)
+      mk(new THREE.Vector3(39.6, 2.1, -9.6), 3),
     ];
   }, [city]);
   useEffect(
@@ -2221,11 +2378,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   );
   const dotScratch = useMemo(() => new THREE.Vector3(), []);
   const skyMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const skyCapMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const horizonMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const scWindowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const wetMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const camBodyMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const ferrisRef = useRef<THREE.Group>(null);
   const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  // the wheel SKELETON glows lavender at night so the gondola lights read
+  // as a wheel even when partially framed (unlit it rendered near-black and
+  // the gondolas read as disembodied blobs)
+  const ferrisStructMatRef = useRef<THREE.MeshStandardMaterial>(null);
 
   /* WP11.1: the ferris wheel — rim + spokes (one geo) and 8 pastel
      gondolas (own emissive bucket); rotation is pure f(p) */
@@ -2252,7 +2415,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     for (let gi = 0; gi < 8; gi++) {
       const a = (gi / 8) * Math.PI * 2;
       const g = new RoundedBoxGeometry(0.5, 0.6, 0.5, 1, 0.08);
-      g.translate(Math.cos(a) * 4.2, Math.sin(a) * 4.2, 0);
+      // orbit pulled INSIDE the 4.2 rim (r2): at 4.2 the glowing rim torus
+      // bisected every cabin, and bottom cabins grazed the ground slab —
+      // 3.8 rings the rim outside the cabins and buys ~0.8 ground clearance
+      g.translate(Math.cos(a) * 3.8, Math.sin(a) * 3.8, 0);
       paint(g, gc.set(chorus[gi]));
       gParts.push(g);
     }
@@ -2290,8 +2456,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     for (let i = 0; i < pos.count; i++) {
       const ty = (pos.getY(i) + 75) / 150; // 0 bottom → 1 top
       if (ty < 0.2) vc.copy(blush).lerp(dusk, ty / 0.2);
+      // night top stays DARK (30% melt only) — the full cream melt made the
+      // night sky brighten toward the frame top; the cap disc above carries
+      // the matching #726F84 so the page never leaks through at night
       else if (ty < 0.58) vc.copy(dusk).lerp(indigo, (ty - 0.2) / 0.38);
-      else vc.copy(indigo).lerp(cream, (ty - 0.58) / 0.42); // melts into page
+      else vc.copy(indigo).lerp(cream, 0.3 * ((ty - 0.58) / 0.42));
       colArr[i * 3] = vc.r;
       colArr[i * 3 + 1] = vc.g;
       colArr[i * 3 + 2] = vc.b;
@@ -2312,17 +2481,25 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const cloudGeo = useMemo(() => {
     const crand = mulberry32(909090);
     const parts: THREE.BufferGeometry[] = [];
-    const crown = new THREE.Color("#FDFCF6");
-    const belly = new THREE.Color("#F2DCC9");
+    // r2 deepened bake: the old #FDFCF6 crown was indistinguishable from the
+    // #FAF9F5 page and the belly matched the fogged far wall — the clouds
+    // were invisible at every beat. Crown/belly two steps deeper + a drawn
+    // SHADOW UNDERSIDE so each blob reads as cut paper.
+    const crown = new THREE.Color("#F2EBDB");
+    const belly = new THREE.Color("#DCC2A9");
+    const under = new THREE.Color("#C9AE96");
     const cc2 = new THREE.Color();
     const CLOUDS: [number, number, number, number][] = [
-      // [azimuth°, radius, altitude, scale]
+      // [azimuth°, radius, altitude, scale] — east pair RAISED to alt 46/50
+      // (r2: at 31/33 they hid behind the pyramid summits) + one wide hero
+      // cloud riding the NW mountain wall
       [205, 150, 55, 1.3],
       [215, 145, 63, 0.9],
-      [95, 120, 42, 0.8],
-      [120, 135, 46, 0.6],
+      [95, 128, 46, 0.9],
+      [120, 140, 50, 0.8],
       [265, 130, 50, 1.0],
       [165, 150, 58, 1.1],
+      [355, 145, 36, 1.4],
     ];
     CLOUDS.forEach(([azd, rr, alt, sc2]) => {
       const az = (azd * Math.PI) / 180;
@@ -2350,7 +2527,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         const bb2 = blob.boundingBox!;
         for (let vi = 0; vi < bp2.count; vi++) {
           const tt2 = (bp2.getY(vi) - bb2.min.y) / Math.max(0.01, bb2.max.y - bb2.min.y);
-          cc2.copy(belly).lerp(crown, tt2);
+          // flat base row = drawn shadow underside (paper-cut read)
+          if (tt2 < 0.08) cc2.copy(under);
+          else cc2.copy(belly).lerp(crown, tt2);
           bcol[vi * 3] = cc2.r;
           bcol[vi * 3 + 1] = cc2.g;
           bcol[vi * 3 + 2] = cc2.b;
@@ -2364,6 +2543,53 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   useEffect(() => () => cloudGeo.dispose(), [cloudGeo]);
   const cloudMatRef = useRef<THREE.MeshBasicMaterial>(null);
   useEffect(() => () => skyGeo.dispose(), [skyGeo]);
+
+  /* r2 (artist): a static PAPER MOON + star quads for the night chapters.
+     NOTE: every night HOLD camera pitches below horizontal — the p0.8
+     "dead mauve" band is the dome's BOTTOM rows, not open sky — so no sky
+     object can render at the holds themselves. The moon sits mid-dome at
+     az 119 (over the lagoon, answering the lighthouse) where the pitch-up
+     scrub moments between beats catch it. ONE merged mesh (+1 draw),
+     opacity rides the flip window — static and pale, the clay stays the
+     only signal light. */
+  const moonGeo = useMemo(() => {
+    const D2R = Math.PI / 180;
+    const srand = mulberry32(771177);
+    const parts: THREE.BufferGeometry[] = [];
+    const mc = new THREE.Color();
+    const maz = 119 * D2R;
+    const face = maz + Math.PI; // disc normal points back at the city core
+    const mx = Math.sin(maz) * 170;
+    const mz = Math.cos(maz) * 170;
+    const disc = new THREE.CircleGeometry(5.5, 32);
+    disc.rotateY(face);
+    disc.translate(mx, 45, mz);
+    paint(disc, mc.set("#EFE8D6"));
+    parts.push(disc);
+    // a slim dusk-tone bite makes it a WAXING moonrise, not a dome
+    const cut = new THREE.CircleGeometry(5.5, 32);
+    cut.translate(2.6, 0.8, 0.25);
+    cut.rotateY(face);
+    cut.translate(mx, 45, mz);
+    paint(cut, mc.set("#5E5680"));
+    parts.push(cut);
+    // stars stay high on the dome — they catch the scrub moments when the
+    // camera pitches up between beats (invisible at the holds, 0 cost)
+    for (let st = 0; st < 12; st++) {
+      const saz = (60 + srand() * 100) * D2R;
+      const sr = 168 + srand() * 8;
+      const sy = 70 + srand() * 40;
+      const sq = new THREE.PlaneGeometry(0.6, 0.6);
+      sq.rotateZ(srand() * Math.PI);
+      sq.rotateY(saz + Math.PI);
+      sq.translate(Math.sin(saz) * sr, sy, Math.cos(saz) * sr);
+      paint(sq, mc.set("#D9D6E8"));
+      parts.push(sq);
+    }
+    return mergeSafe(parts)!;
+  }, []);
+  useEffect(() => () => moonGeo.dispose(), [moonGeo]);
+  const moonMatRef = useRef<THREE.MeshBasicMaterial>(null);
 
   /* FINALE MOTES (spec §8): 140 clay fireflies riding the EXISTING arc
      bezier geometry home — tributaries converging on the hub; convergence,
@@ -2456,11 +2682,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
      matched buildings (precise like real detections; tiny so a near camera
      pass can never smear the frame) */
   const resultPinRefs = useRef<(THREE.Mesh | null)[]>([]);
+  // pins lowered to just-over-roof height (r2): at y 9.5–10.5 they sat
+  // above the A8 frame top — the "results found" payoff fired out of frame
   const RESULT_PINS = useMemo(
     () => [
-      new THREE.Vector3(-17, 10.5, -7),
-      new THREE.Vector3(-11.5, 9.5, -12.5),
-      new THREE.Vector3(-15.5, 10, -13.5),
+      new THREE.Vector3(-17, 8.2, -7),
+      new THREE.Vector3(-11.5, 7.4, -12.5),
+      new THREE.Vector3(-15.5, 7.8, -13.5),
     ],
     [],
   );
@@ -2619,16 +2847,23 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         { p: 0.34, pos: new THREE.Vector3(1.8, 5.8, 38), look: [0, 2.6, 18], xOff: -7 }, // A7 R-HOLD
         { p: 0.47, pos: new THREE.Vector3(1.6, 5.2, 31), look: [0, 2.6, 14], xOff: -7 }, //    (dolly north)
         { p: 0.5, pos: new THREE.Vector3(3, 15, 14), look: [5, 4, 3], xOff: -2 }, // T2 crane (tower wipe at 2.5u+)
-        { p: 0.53, pos: new THREE.Vector3(16, 24, 18), look: [2, 2, -2], xOff: -6 }, // A8 SC-HOLD
-        { p: 0.68, pos: new THREE.Vector3(20, 23, 8), look: [2, 2, -2], xOff: -6 }, //    (drift)
-        { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [35, 3, -7], xOff: -2 }, // T3 toward gates
+        // A8 look tilted down/west (r2): at [2,2,-2] the query highlight box
+        // poked under the fixed nav and the RESULT_PINS sat above the
+        // roofline — the payoff fired out of frame
+        { p: 0.53, pos: new THREE.Vector3(16, 24, 18), look: [0, 2.5, -5], xOff: -6 }, // A8 SC-HOLD
+        { p: 0.68, pos: new THREE.Vector3(20, 23, 8), look: [0, 2.5, -5], xOff: -6 }, //    (drift)
+        // T3 looks biased EAST + RAISED (r2) so the ferris disc clears the
+        // right AND top frame edges through the whole 0.72–0.86 band
+        { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [41.5, 7.5, -7], xOff: -3.5 }, // T3 toward gates
         // corridor pin: the T3 descent bowed +x/+z into a facade at 2.1u (CI)
-        { p: 0.735, pos: new THREE.Vector3(30, 8.5, 2.2), look: [40, 3, -10], xOff: -2 },
+        { p: 0.735, pos: new THREE.Vector3(30, 8.5, 2.2), look: [43.5, 5, -10], xOff: -2 },
         // E-HOLD reframed (founder): high enough to read the whole
         // festival BOWL — gates + bunting foreground, tents/stalls left,
         // stage + light canopy centre, ferris wheel back-right
-        { p: 0.75, pos: new THREE.Vector3(32.5, 8.4, 3), look: [41.5, 1.4, -14.5], xOff: -3 }, // A9 E-HOLD
-        { p: 0.88, pos: new THREE.Vector3(34, 8.7, 2), look: [41.5, 1.4, -14.5], xOff: -3 }, //    (push-in)
+        // raised +2 in y so the lit gate lintels sit BELOW the copy card and
+        // the bowl (tents, stage, canopy, wheel) carries the frame
+        { p: 0.75, pos: new THREE.Vector3(32.5, 10.4, 3), look: [44.5, 3.9, -13.5], xOff: -3 }, // A9 E-HOLD (look east + up: wheel fully in frame)
+        { p: 0.88, pos: new THREE.Vector3(34, 10.7, 2), look: [44.5, 3.9, -13.5], xOff: -3 }, //    (push-in)
         // crane departure: climb IN the corridor first, then arc out high —
         // the direct diagonal skimmed the SE tower field at 2.1u (CI)
         { p: 0.9, pos: new THREE.Vector3(33.5, 12, 1.2), look: [30, 2, -6], xOff: -3 },
@@ -2689,6 +2924,15 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       s0 = Math.min(N, Math.ceil(u * N));
     });
     return (p: number) => {
+      // T2 redistribution: ease the FLIP crane across the whole 0.47–0.53
+      // window (smoothstep, fixed point at 0.5 → the tower wipe stays put)
+      // instead of the front-loaded snap that compressed the entire
+      // retail→roundabout move into ~1.5% of scroll. Warping p here keeps
+      // the clearance CI sweeping the path actually flown.
+      if (p > 0.47 && p < 0.53) {
+        const tw = (p - 0.47) / 0.06;
+        p = 0.47 + 0.06 * (tw * tw * (3 - 2 * tw));
+      }
       let i = 0;
       while (i < CAM_KEYS.length - 2 && p > CAM_KEYS[i + 1].p) i++;
       const a = CAM_KEYS[i];
@@ -2880,6 +3124,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const lt = THREE.MathUtils.clamp((p - A.p) / (B.p - A.p), 0, 1);
       cityKeyRef.current.color.copy(A.key).lerp(B.key, lt);
       cityKeyRef.current.intensity = THREE.MathUtils.lerp(A.ki, B.ki, lt);
+      // moonlight casts SOFT light: fade the key's shadow with the flip so
+      // the terminator never saws across the night plaza (the darkness is
+      // already carried by the dropped key/hemi intensities)
+      cityKeyRef.current.shadow.intensity = 1 - 0.85 * night01;
       cityHemiRef.current.color.copy(A.hemiSky).lerp(B.hemiSky, lt);
       cityHemiRef.current.groundColor.copy(A.hemiGround).lerp(B.hemiGround, lt);
       cityHemiRef.current.intensity = THREE.MathUtils.lerp(A.hi, B.hi, lt);
@@ -2893,20 +3141,42 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     // sky script (artist §4): day bake → gilded golden hour → night bake
     if (skyMatRef.current)
       skyMatRef.current.opacity = 0.85 + 0.15 * window01(p, 0.2, 0.5);
+    // sky crosses dusk in LOCKSTEP with the ground lights (LIGHT_STOPS lerp
+    // 0.4→0.5) — the old 0.42–0.6 ramp left a noon sky over a night city
     if (skyShaderRef.current)
       skyShaderRef.current.uniforms.uDay.value =
-        1 - 0.3 * window01(p, 0.3, 0.42) - 0.7 * window01(p, 0.42, 0.6);
+        1 - 0.3 * window01(p, 0.3, 0.42) - 0.7 * window01(p, 0.42, 0.52);
     // clouds: white → gilded #FFE6C6 → lilac → moonlit dark paper
     if (cloudMatRef.current) {
       const cm = cloudMatRef.current;
       const gild = window01(p, 0.3, 0.42) * (1 - window01(p, 0.45, 0.55));
-      const nightC = window01(p, 0.45, 0.62);
+      const nightC = window01(p, 0.44, 0.54);
+      // r2 strengthened gild — p0.4 clouds hit ~#FFD199 against the aqua dome
       cm.color.setRGB(
-        1 - 0.0 * gild - 0.55 * nightC,
-        1 - 0.1 * gild - 0.54 * nightC,
-        1 - 0.22 * gild - 0.39 * nightC,
+        1 - 0.55 * nightC,
+        1 - 0.18 * gild - 0.54 * nightC,
+        1 - 0.4 * gild - 0.39 * nightC,
       );
       cm.opacity = 0.95 + 0.05 * gild - 0.6 * nightC;
+    }
+    // night cap disc: seals the dome top through the night chapters
+    if (skyCapMatRef.current)
+      skyCapMatRef.current.opacity = window01(p, 0.47, 0.56);
+    // paper moon + stars ride the same flip window
+    if (moonMatRef.current)
+      moonMatRef.current.opacity = window01(p, 0.47, 0.56);
+    // horizon color script (artist): white → gilded ~#FFE0B3 at golden hour
+    // → deep blue-violet ~#616694 after the flip (mirrors the cloud grade)
+    if (horizonMatRef.current) {
+      const gildH = window01(p, 0.3, 0.42) * (1 - window01(p, 0.45, 0.55));
+      const nightH = window01(p, 0.47, 0.58);
+      // r2 stronger gild — eastern pyramids hit ~#FFC78A at p0.4 instead of
+      // washing to flat beige under the far-245 fog
+      horizonMatRef.current.color.setRGB(
+        1 - 0.62 * nightH,
+        1 - 0.22 * gildH - 0.6 * nightH,
+        1 - 0.46 * gildH - 0.42 * nightH,
+      );
     }
 
     /* ---- SURVEILLANCE BEATS (spec §7): dot → arc to district lens →
@@ -2920,7 +3190,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     if (tillRef.current)
       (tillRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
         0.1 + payR * 2.4;
-    if (gateBarRef.current) gateBarRef.current.rotation.z = -1.15 * payE;
+    // +z rotation swings the +x arm UP like a real boom barrier (negative
+    // drove the tip through the pavement — the gate read as melting)
+    if (gateBarRef.current) gateBarRef.current.rotation.z = 1.15 * payE;
 
     let dotW = 0;
     let hopIdx = -1;
@@ -2950,14 +3222,19 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       hopIdx = rig.lensIdx;
       rig.geo.setDrawRange(0, Math.floor(arcW * rig.total));
       rig.mat.opacity = 0.85 * arcW;
-      if (bi === 1) dotScratch.set(-6.0, 2.3, 26.0);
-      if (bi === 3) dotScratch.set(38.5, 4.6, -10.5);
+      // R: snapped to the flagship-queue heads (r2 — the old (-5,2.3,26)
+      // pin read as a sticker on the blank side wall, no subject beneath)
+      if (bi === 1) dotScratch.set(-5.0, 1.35, 26.8);
+      // E is anchored AFTER the actor loop below — it tracks the
+      // middle-gate-lane capsule's head (eSubjectIdx), like the M beat
     }
 
     /* ---- actor pools: walkers/queue/crowd, riding the bloom wave ---- */
     const actorsMesh = actorMeshRef.current;
     let w2x = -38;
     let w2z = -7.3;
+    let e5x = 39.6;
+    let e5z = -9.6;
     if (actorsMesh) {
       const hats = hatMeshRef.current;
       let hatIdx = 0;
@@ -2976,7 +3253,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         // crowd density biased by the Events park window (the stream thickens)
         if (a.kind === 5) sc *= 0.55 + 0.45 * window01(p, 0.69, 0.76);
         const bob = a.speed > 0.3 ? Math.abs(Math.sin(t * 3.2 * a.speed + a.phase)) * 0.05 : 0;
-        dummy.position.set(px2, (0.31 + bob) * sc, pz2);
+        const by = (a.baseY ?? 0) * sc;
+        dummy.position.set(px2, by + (0.31 + bob) * sc, pz2);
         dummy.rotation.set(0, 0, 0);
         dummy.scale.setScalar(Math.max(0.001, sc));
         dummy.updateMatrix();
@@ -2985,8 +3263,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           w2x = px2;
           w2z = pz2;
         }
+        if (i === eSubjectIdx) {
+          e5x = px2;
+          e5z = pz2;
+        }
         if (a.kind === 1 && hats) {
-          dummy.position.set(px2, (0.72 + bob) * sc, pz2);
+          dummy.position.set(px2, by + (0.72 + bob) * sc, pz2);
           dummy.updateMatrix();
           hats.setMatrixAt(hatIdx++, dummy.matrix);
         }
@@ -2995,12 +3277,21 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       if (hats) hats.instanceMatrix.needsUpdate = true;
     }
     // the M dot hovers over the BARE head — the missing hat IS the payoff
-    if (activeBeat === 0) dotScratch.set(w2x, 1.8, w2z);
+    // (r2: head+~0.6 — at head+1.0 it optically landed ON the conveyor line
+    // and read as glowing belt cargo instead of a worker detection)
+    if (activeBeat === 0) dotScratch.set(w2x, 1.55, w2z);
+    // E (r2): the dot RIDES the gate-3 entrant's head — the old fixed
+    // (38.5,4.6,-10.5) pin was a balloon in open night air. y 2.0 keeps it
+    // clear of the lit lintel through the 0.85 push-in sight line.
+    if (activeBeat === 3) dotScratch.set(e5x, 1.7, e5z);
     if (beatDotRef.current) {
       beatDotRef.current.visible = dotW > 0.01;
       if (dotW > 0.01) {
+        // R/E dots scaled −30% (r2): full size they out-read the capsules
+        // beneath them — a marker, not a balloon
+        const dotS = activeBeat === 3 || activeBeat === 1 ? 0.7 : 1;
         beatDotRef.current.position.copy(dotScratch);
-        beatDotRef.current.scale.setScalar(dotW * (1 + 0.12 * Math.sin(t * 3)));
+        beatDotRef.current.scale.setScalar(dotW * dotS * (1 + 0.12 * Math.sin(t * 3)));
       }
     }
     // nearest 3-4 lenses yaw-track the dot during the hold
@@ -3065,6 +3356,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     if (eventsLitMatRef.current)
       eventsLitMatRef.current.emissiveIntensity =
         (0.1 + window01(p, 0.7, 0.76) * 1.05) * (1 + 1.2 * night01);
+    // gate lintel caps: same curve, capped ≤ ~0.9 so the near-camera beams
+    // glow warmly instead of blooming white across the E-HOLD copy
+    if (gateGlowMatRef.current)
+      gateGlowMatRef.current.emissiveIntensity =
+        (0.1 + window01(p, 0.7, 0.76) * 0.45) * (1 + 0.6 * night01);
     if (mfgGlowMatRef.current)
       mfgGlowMatRef.current.emissiveIntensity = 0.12 + window01(p, 0.1, 0.15) * 0.5;
     /* WP2: Smart-Cities ignition — downtown windows + the civic-teal layer
@@ -3079,9 +3375,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     /* ferris: rotation pure f(p); gondolas ignite through T3 with the
        string lights */
     if (ferrisRef.current) ferrisRef.current.rotation.z = p * Math.PI * 1.4;
+    // cabin glow capped ~½ (r2): at full intensity the near cabins bloomed
+    // into formless white blobs at the p0.85 hold, out-glowing the clay dot
     if (ferrisLitMatRef.current)
       ferrisLitMatRef.current.emissiveIntensity =
-        (0.05 + window01(p, 0.7, 0.76) * 0.9) * (1 + night01);
+        (0.05 + window01(p, 0.7, 0.76) * 0.55) * (1 + 0.7 * night01);
+    if (ferrisStructMatRef.current)
+      ferrisStructMatRef.current.emissiveIntensity =
+        0.35 * night01 + 0.25 * window01(p, 0.7, 0.76);
     /* lenses ignite on wake; constellation glows brighter through the exit.
        HEARTBEAT (spec §4.2): one synchronized pulse as the bloom completes —
        every lens fires through the bloom threshold at once. */
@@ -3105,14 +3406,22 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       0.1 * window01(p, 0.27, 0.29) +
       0.1 * window01(p, 0.47, 0.49) +
       0.1 * window01(p, 0.68, 0.7);
+    // street-level attenuation: at the T3/Events ground holds a single arc
+    // reads as a harsh wire slicing the sky — KILL the constellation there
+    // (r2: at 25% residual a long-haul arc still crossed the full 1920px
+    // frame at p0.70–0.75 and threaded the CCTV mast at p0.85) and bring it
+    // back for the finale draw-through
+    const arcLow =
+      1 - 0.98 * window01(p, 0.655, 0.7) * (1 - window01(p, 0.86, 0.9));
     city.arcs.forEach((arc, i) => {
       const local = window01(p, 0.22 + arc.delay * 0.5, 0.55 + arc.delay * 0.5);
       arc.geo.setDrawRange(0, Math.floor(local * arc.total));
       const hop = i === hopIdx ? hopW * 0.5 : 0;
-      arc.mat.opacity = Math.min(
-        0.95,
-        (0.45 + parksLit) * local + 0.3 * finale + 0.25 * exit + hop,
-      );
+      arc.mat.opacity =
+        Math.min(
+          0.95,
+          (0.45 + parksLit) * local + 0.3 * finale + 0.25 * exit + hop,
+        ) * arcLow;
     });
 
     /* hub breathes; ring spins */
@@ -3356,6 +3665,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           />
         </mesh>
       )}
+      {city.gateGlow && (
+        <mesh geometry={city.gateGlow}>
+          <meshStandardMaterial
+            ref={(m) => {
+              (gateGlowMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+              popMat(m);
+            }}
+            vertexColors
+            roughness={0.4}
+            emissive="#FFDEBC"
+            emissiveIntensity={0.1}
+          />
+        </mesh>
+      )}
       {city.mfgGlow && (
         <mesh geometry={city.mfgGlow}>
           <meshStandardMaterial
@@ -3486,10 +3809,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       <primitive object={motes.pts} />
 
       {/* WP11.1: the ferris wheel — the east skyline icon */}
-      <group position={[45.8, 4.9, -7.8]} rotation={[0, 0.6, 0]}>
+      <group position={[45.5, 4.6, -13.0]} rotation={[0, 0.6, 0]}>
         <group ref={ferrisRef}>
           <mesh geometry={ferris.structure}>
-            <meshStandardMaterial vertexColors roughness={0.7} />
+            <meshStandardMaterial
+              ref={ferrisStructMatRef}
+              vertexColors
+              roughness={0.7}
+              emissive="#C9B8D8"
+              emissiveIntensity={0}
+            />
           </mesh>
           <mesh geometry={ferris.gondolas}>
             <meshStandardMaterial
@@ -3503,10 +3832,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         </group>
       </group>
 
-      {/* the paper horizon — pastel hills, turbines, meadow apron */}
+      {/* the paper horizon — pastel hills, turbines, meadow apron; the
+          material rides its own color script (white → gilded → blue-violet)
+          so the far land never inverts the night value structure */}
       {city.horizon && (
         <mesh geometry={city.horizon}>
-          <meshStandardMaterial vertexColors roughness={1} />
+          <meshStandardMaterial ref={horizonMatRef} vertexColors roughness={1} />
         </mesh>
       )}
 
@@ -3537,6 +3868,33 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           }}
         />
       </mesh>
+      {/* night cap disc — seals the dome's open top so the cream page never
+          shows above the rim at low-pitch night holds; color matches the
+          night bake's top row, opacity rides the flip */}
+      <mesh position={[0, 132.5, 0]} rotation={[Math.PI / 2, 0, 0]} renderOrder={-2}>
+        <circleGeometry args={[210, 32]} />
+        <meshBasicMaterial
+          ref={skyCapMatRef}
+          color="#726F84"
+          transparent
+          opacity={0}
+          fog={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* paper moon + stars — fade in with the flip, scrub back cleanly */}
+      <mesh geometry={moonGeo} renderOrder={-1}>
+        <meshBasicMaterial
+          ref={moonMatRef}
+          vertexColors
+          transparent
+          opacity={0}
+          fog={false}
+          toneMapped={false}
+          depthWrite={false}
+        />
+      </mesh>
       {/* paper-cut clouds — gilded at golden hour, dark paper at night */}
       <mesh geometry={cloudGeo} renderOrder={-1}>
         <meshBasicMaterial
@@ -3562,6 +3920,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
             roughness={0.5}
             emissive="#E9E4D4"
             emissiveIntensity={0}
+            fog={false}
           />
         </mesh>
       )}
@@ -3620,8 +3979,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           fog={false}
         />
       </mesh>
-      {/* second till lamp at the flagship (ignites clay on the R payoff) */}
-      <mesh ref={tillRef} position={[-5.45, 2.3, 29.2]}>
+      {/* second till lamp at the flagship (ignites clay on the R payoff) —
+          forecourt-side and below the awning so it never pokes through it */}
+      <mesh ref={tillRef} position={[-4.9, 1.7, 29.2]}>
         <boxGeometry args={[0.3, 0.3, 0.3]} />
         <meshStandardMaterial
           color="#D97757"
@@ -3754,9 +4114,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         ))}
       </group>
 
-      {/* beat-3 query highlight: soft volume + pulsing ground ring */}
-      <mesh ref={highlightRef} position={[-14, 5, -10]}>
-        <boxGeometry args={[14, 10, 14]} />
+      {/* beat-3 query highlight: soft volume + pulsing ground ring —
+          lowered/shrunk (r2) so its top stays under the nav from A8 */}
+      <mesh ref={highlightRef} position={[-14, 3.5, -10]}>
+        <boxGeometry args={[13, 7, 13]} />
         <meshBasicMaterial color="#D97757" transparent opacity={0} depthWrite={false} />
       </mesh>
       {/* "results found" pins over the matched buildings */}
