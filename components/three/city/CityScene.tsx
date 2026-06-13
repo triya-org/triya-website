@@ -331,7 +331,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         for (let i = 0; i < 2; i++) {
           for (let j = 0; j < 2; j++) {
             let x = bx * BLOCK + (i - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
-            const z = bz * BLOCK + (j - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
+            let z = bz * BLOCK + (j - 0.5) * 4.4 + (rand() - 0.5) * 0.8;
 
             // keep the avenue corridors CLEAR — the camera flies down them
             // and the boulevards must read from above
@@ -380,17 +380,32 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
                 : z < 28
                   ? 2.2 + (hOrig % 1.9)
                   : 2.4 + (hOrig % 2.6);
-            let w = 2.7 + rand() * 1.3;
-            let d = 2.7 + rand() * 1.3;
+            // footprint capped to fit the 4.4 lot pitch with a street gap
+            // (was 2.7..4.0 + a 1.25x podium = up to 5.0 wide → buildings
+            // spilled across roads & each other — founder img 31)
+            let w = 2.3 + rand() * 0.9; // 2.3..3.2 → half ≤1.6
+            let d = 2.3 + rand() * 0.9;
             if (flagship) {
               h = 3.4;
-              w = 4.3;
-              d = 4.0;
+              w = 3.2;
+              d = 3.1;
             }
             // WP6 (polish R2): push retail lots OUTWARD so every storefront
             // face lands exactly at |x| = 5.85 — the recessed-shop problem
             // dies at the root, awnings anchor to a consistent street wall
             if (retailZone && Math.abs(x) < 10) x = Math.sign(x) * (5.85 + w / 2);
+            // PLOT CLAMP (founder img 31): every building's footprint stays
+            // inside its lot cell (pitch 4.4, half 2.2) with a street margin
+            // so nothing overhangs a road or a neighbour. Retail is exempt
+            // (it is deliberately pushed to the street wall above).
+            if (!retailZone) {
+              const lotCx = bx * BLOCK + (i - 0.5) * 4.4;
+              const lotCz = bz * BLOCK + (j - 0.5) * 4.4;
+              const mX = Math.max(0, 2.0 - w / 2); // footprint edge ≤ lotC ±2.0
+              const mZ = Math.max(0, 2.0 - d / 2);
+              x = THREE.MathUtils.clamp(x, lotCx - mX, lotCx + mX);
+              z = THREE.MathUtils.clamp(z, lotCz - mZ, lotCz + mZ);
+            }
 
             // pastel facade, blushing gently toward clay with height
             const t = THREE.MathUtils.clamp((h - 4) / 18, 0, 1);
@@ -418,10 +433,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
               continue;
             }
 
-            // podium base on some towers (street presence)
+            // podium base on some towers (street presence) — 1.1x so it
+            // stays inside the plot (1.25x overhung the lot, founder img 31)
             if (hOrig > 9 && rand() < 0.5 && !retailZone) {
               const ph = 1.4;
-              const podium = new RoundedBoxGeometry(w * 1.25, ph, d * 1.25, 2, 0.1);
+              const podium = new RoundedBoxGeometry(w * 1.1, ph, d * 1.1, 2, 0.1);
               podium.translate(x, ph / 2, z);
               paintGraded(podium, col.clone().lerp(baseCream, 0.3), { aoBand: 0.7 });
               buildingGeos.push(podium);
@@ -1404,10 +1420,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         poleGeos.push(bracket);
         return; // skip the generic mast/plate/arm — the campole IS the mast
       }
-      // mast set BEHIND the body (roof cams) / centered on the seat (poles)
-      // + L-bracket arm reaching forward to the bullet
-      const mx = pos.x - Math.sin(yaw) * (isSeat ? 0 : 0.5);
-      const mz = pos.z - Math.cos(yaw) * (isSeat ? 0 : 0.5);
+      // mast set BEHIND the body so the lens cantilevers OUT front (founder
+      // img 32: seated cams had mast at offset 0 → lens sat on the mount and
+      // the body stuck out backward = the 'orientation backwards' bug)
+      const mx = pos.x - Math.sin(yaw) * (isSeat ? 0.4 : 0.5);
+      const mz = pos.z - Math.cos(yaw) * (isSeat ? 0.4 : 0.5);
       const roofY = pos.y - 0.46;
       const mast = new THREE.CylinderGeometry(
         isSeat ? 0.09 : 0.04,
