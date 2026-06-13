@@ -2852,69 +2852,77 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const CAM_KEYS = useMemo(
     () =>
       [
-        { p: 0.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // A0 god
-        { p: 0.06, pos: new THREE.Vector3(2.5, 16, 40), look: [0, 4, 10], xOff: -4 }, // A1 dive-in
-        // A2 look down-street with less left bias — at xOff -5 a corridor-
-        // edge facade stacked dead-center over a passing car (panel finding)
-        { p: 0.09, pos: new THREE.Vector3(2.0, 5.0, 20), look: [0, 2.6, 6], xOff: -2 }, // A2 canyon floor
-        // corridor pin: hold the avenue until the annulus — the A2→A3
-        // diagonal cut the west blocks at y≈5 (CI catch after the palette
-        // re-roll moved a tower into the old gap)
-        { p: 0.1, pos: new THREE.Vector3(0.5, 5.2, 12), look: [-1, 2, 0], xOff: -2 },
-        { p: 0.11, pos: new THREE.Vector3(-7, 5.5, 4.4), look: [0, 1.5, -2], xOff: -2 }, // A3 annulus swing (hugs the corridor line)
-        // corridor pin: the annulus→sprint corner cut a facade at 0.79u (CI)
-        { p: 0.118, pos: new THREE.Vector3(-13, 5.4, 2.2), look: [-22, 3, -2], xOff: -5 },
-        { p: 0.125, pos: new THREE.Vector3(-20, 5.0, 1.6), look: [-28, 3, -3], xOff: -6 }, // A4 west sprint
-        // A5 at 4.5: CatmullRom rides ~0.25 above the key near the deck
-        // edges — 4.5 keeps the whole ±1.3 window ≥2.45 under the 7.2 deck
-        { p: 0.135, pos: new THREE.Vector3(-30, 4.35, 1.2), look: [-34, 3, -4], xOff: -6 }, // A5 gantry fly-under
-        // stay LOW until clear of the deck's x-window, then climb to the hold
-        { p: 0.1375, pos: new THREE.Vector3(-33, 4.8, 4), look: [-36, 3, -8], xOff: -5 },
-        // M-HOLD above the container-yard pocket (≤3.2 by generator law):
-        // high enough that the sawtooth pair + yard read as a diorama, the
-        // gantry at frame edge — halls right two-thirds, copy owns the left
-        { p: 0.14, pos: new THREE.Vector3(-33, 8.6, 12.5), look: [-37, 3.5, -12], xOff: -5 }, // A6 M-HOLD
-        { p: 0.27, pos: new THREE.Vector3(-36, 8.9, 12), look: [-37, 3.5, -12], xOff: -5 }, //    (push-in)
-        // T1 exit overfly: climb begins INSIDE the yard so the gantry deck
-        // clears by 4u+ (the direct yard→hub diagonal skimmed it — CI)
-        { p: 0.278, pos: new THREE.Vector3(-34.5, 9.5, 8), look: [-24, 4, 0], xOff: -3 },
-        { p: 0.29, pos: new THREE.Vector3(-30, 14, 5), look: [-18, 4, 0], xOff: -3 },
-        { p: 0.305, pos: new THREE.Vector3(-12, 16, 2), look: [0, 2, 0], xOff: -2 }, // T1 hub pass
-        // T1→A7 routing: ride the TRANSIT band to the +z avenue mouth, then
-        // descend INSIDE the corridor (a direct diagonal crosses tower blocks
-        // at y≈14 — caught by the clearance CI)
-        { p: 0.315, pos: new THREE.Vector3(1.5, 14, 12), look: [0, 3, 24], xOff: -5 },
-        { p: 0.328, pos: new THREE.Vector3(1.9, 8.5, 28), look: [0, 2.6, 34], xOff: -6 },
-        { p: 0.34, pos: new THREE.Vector3(1.8, 5.8, 38), look: [0, 2.6, 18], xOff: -7 }, // A7 R-HOLD
-        { p: 0.47, pos: new THREE.Vector3(1.6, 5.2, 31), look: [0, 2.6, 14], xOff: -7 }, //    (dolly north)
-        { p: 0.5, pos: new THREE.Vector3(3, 15, 14), look: [5, 4, 3], xOff: -2 }, // T2 crane (tower wipe at 2.5u+)
-        // A8 look tilted down/west (r2): at [2,2,-2] the query highlight box
-        // poked under the fixed nav and the RESULT_PINS sat above the
-        // roofline — the payoff fired out of frame
-        { p: 0.53, pos: new THREE.Vector3(16, 24, 18), look: [0, 2.5, -5], xOff: -6 }, // A8 SC-HOLD
-        { p: 0.68, pos: new THREE.Vector3(20, 23, 8), look: [0, 2.5, -5], xOff: -6 }, //    (drift)
-        // T3 looks biased EAST + RAISED (r2) so the ferris disc clears the
-        // right AND top frame edges through the whole 0.72–0.86 band
-        { p: 0.715, pos: new THREE.Vector3(26, 13, 2.5), look: [41.5, 7.5, -7], xOff: -3.5 }, // T3 toward gates
-        // corridor pin: the T3 descent bowed +x/+z into a facade at 2.1u (CI)
-        { p: 0.735, pos: new THREE.Vector3(30, 8.5, 2.2), look: [43.5, 5, -10], xOff: -2 },
-        // E-HOLD reframed (founder): high enough to read the whole
-        // festival BOWL — gates + bunting foreground, tents/stalls left,
-        // stage + light canopy centre, ferris wheel back-right
-        // raised +2 in y so the lit gate lintels sit BELOW the copy card and
-        // the bowl (tents, stage, canopy, wheel) carries the frame
-        { p: 0.75, pos: new THREE.Vector3(32.5, 10.4, 3), look: [44.5, 4.3, -13.5], xOff: -3 }, // A9 E-HOLD (look east + up: wheel fully in frame)
-        // r3: backed the push-in out (32→ further, +y) and raised look-y to
-        // 4.6 so the FULL ferris disc clears the fixed white header at top AND
-        // the right frame edge through 0.82–0.88 (top gondolas were sliced by
-        // the nav band and the right rim was cropped)
-        { p: 0.88, pos: new THREE.Vector3(32, 12.2, 4), look: [44.5, 4.6, -13.5], xOff: -3 }, //    (push-in, pulled back)
-        // crane departure: climb IN the corridor first, then arc out high —
-        // the direct diagonal skimmed the SE tower field at 2.1u (CI)
-        { p: 0.9, pos: new THREE.Vector3(33.5, 12, 1.2), look: [30, 2, -6], xOff: -3 },
-        { p: 0.925, pos: new THREE.Vector3(27, 26, 14), look: [10, 1, 5], xOff: -4 },
-        { p: 0.94, pos: new THREE.Vector3(20, 38, 40), look: [0, 1, 2], xOff: -4 }, // A10 crane out
-        { p: 1.0, pos: new THREE.Vector3(0, 52, 92), look: [0, 0, 4], xOff: -8 }, // closed loop
+        // ── PROLOGUE ─────────────────────────────────────────────
+        { p: 0.0, pos: new THREE.Vector3(0, 54, 94), look: [0, 1, 2], xOff: -8 }, // A0 god establish — high oblique, whole city reads, copy left
+        { p: 0.05, pos: new THREE.Vector3(2, 30, 60), look: [0, 4, 14], xOff: -6 }, // A1 descent begins — settle toward the +z avenue mouth
+        // ── DIVE: down the +z avenue canyon, copy-free ───────────
+        { p: 0.085, pos: new THREE.Vector3(2, 11, 34), look: [0, 3, 12], xOff: -4 }, // A2 enter the canyon — facades rise on both flanks
+        { p: 0.11, pos: new THREE.Vector3(1.4, 5.6, 18), look: [0, 2.4, 4], xOff: -3 }, // A3 canyon floor — pure corridor (|x|<4.8), street rushing
+        // bank LEFT into the roundabout's clear annulus (r<11.5), still low
+        { p: 0.125, pos: new THREE.Vector3(-3.5, 5.4, 6), look: [-9, 2, -1], xOff: -3 }, // A4 plaza turn — swing west around the hub
+        // west sprint down the x-avenue (|z|<4.8 corridor) toward the works
+        { p: 0.135, pos: new THREE.Vector3(-16, 5.2, 1.6), look: [-26, 2.6, -2], xOff: -5 }, // A5 west sprint — speed-line toward Manufacturing
+        // gantry fly-under: deck underside y7.2 → stay at y4.4 (≥2.45 gap),
+        // hold low across the full deck x-window before any climb
+        { p: 0.143, pos: new THREE.Vector3(-32, 4.4, 1.2), look: [-37, 2.8, -3], xOff: -5 }, // A6 gantry fly-UNDER — the dive's signature beat
+        // ── MANUFACTURING HOLD (0.14–0.27) ──────────────────────
+        // FOUNDER FIX: pull WAY back + up to a 3/4 aerial standoff that reads
+        // the WHOLE works. Camera sits OVER the container-yard pocket (cargo
+        // ≤3.0 → y15 clears by >2.5 vertical) at its SOUTH end, looking NW. The
+        // city-block column at x≈-22/-18 stays BEHIND the lens. Sightline runs
+        // NW across the whole complex: container yard FOREGROUND, sawtooth
+        // halls + gantry MIDGROUND, twin stacks + far hall + mountains
+        // BACKGROUND. Copy owns the left third.
+        { p: 0.16, pos: new THREE.Vector3(-34, 15.5, 22), look: [-38, 3.2, -9], xOff: -6 }, // A7 M-HOLD establish — full works, yard reads as foreground
+        { p: 0.27, pos: new THREE.Vector3(-35.5, 14, 18), look: [-38, 3.2, -10], xOff: -6 }, //    gentle aerial drift NW — settle over the works, never inside it
+        // ── T1: rise out of the works, sweep past the hub ───────
+        // lift straight up out of the yard, slide SOUTH into the x-avenue
+        // corridor (|z|<4.8, the only building-free channel east), then fly the
+        // TRANSIT band east over the hub — never crosses the x≈-22 block column.
+        { p: 0.30, pos: new THREE.Vector3(-31, 20, 3), look: [-12, 5, 1], xOff: -3 }, // T1a lift-off — corridor-aligned, the works fall away below
+        { p: 0.325, pos: new THREE.Vector3(-12, 18, 2.5), look: [0, 3, 3], xOff: -2 }, // T1b hub pass — roundabout + orbiting traffic read below
+        // descend INTO the +z avenue mouth, inside the corridor (|x|<4.8)
+        { p: 0.34, pos: new THREE.Vector3(1.6, 12, 20), look: [0, 2.6, 34], xOff: -5 }, // T1c turn down the high street
+        // ── RETAIL HOLD (0.34–0.47) ─────────────────────────────
+        // street-level dolly NORTH up the +z high street: storefronts flank
+        // the corridor (pushed to |x|≈5.85), glazing + tills warm. Copy left.
+        { p: 0.40, pos: new THREE.Vector3(1.8, 5.8, 36), look: [0, 2.6, 16], xOff: -7 }, // A8 R-HOLD — high-street oblique, shops both flanks
+        { p: 0.47, pos: new THREE.Vector3(1.6, 5.4, 28), look: [0, 2.6, 12], xOff: -7 }, //    slow dolly-in toward the flagship/market pocket
+        // ── T2: the FLIP crane — day→night, retail → downtown ───
+        // crane up out of the corridor (tower occlusion wipe at 0.50), bank east
+        { p: 0.50, pos: new THREE.Vector3(5, 17, 16), look: [4, 4, 4], xOff: -2 }, // T2 flip crane — vertical wipe, the night ignites
+        // ── SMART CITIES HOLD (0.53–0.68) ───────────────────────
+        // golden-hour high oblique over downtown core: roundabout hub +
+        // query ring + result pins (x[-17,-11] z[-13,-7]) + chat card near
+        // origin. Look down/west so the payoff fires in the right two-thirds.
+        { p: 0.53, pos: new THREE.Vector3(17, 24, 18), look: [0, 2.5, -5], xOff: -6 }, // A9 SC-HOLD — the CFO screenshot, whole core lit
+        { p: 0.68, pos: new THREE.Vector3(21, 22, 9), look: [-1, 2.5, -6], xOff: -6 }, //    slow orbit-drift — parallax across the result pins
+        // ── T3: descend to the festival, dusk → night ───────────
+        // drop into the EAST x-avenue corridor (|z|<4.8 — the only building-
+        // free channel; a row of towers lines z≈8/12) and run east at z≈3.
+        // The path stays at x≤34 / z≈3, threading the low gap at x32 (h4.6)
+        // between the tall x27.7 / x37.9 blocks — and NEVER nears the gate-cam
+        // pole at (41.8,-8.4), which sits 8u east and 11u north of the lens.
+        { p: 0.715, pos: new THREE.Vector3(23, 18, 3), look: [37, 5, -10], xOff: -3 }, // T3a turn east into the corridor — string lights ignite
+        { p: 0.745, pos: new THREE.Vector3(31, 17, 5), look: [40, 3, -13], xOff: -3 }, // T3b climb the corridor mouth, the bowl opens below-right
+        // ── EVENTS HOLD (0.75–0.88) ─────────────────────────────
+        // FOUNDER FIX (two-part): (1) the lens sits in the x-avenue corridor
+        // (z≈5), WEST of the gate-cam pole (x≈33 ≪ 41.8) — it clears the pole
+        // by >8u in x and ~13u in z, never flying near it. (2) a HIGH 3/4
+        // aerial (y≈18) looking DOWN into the bowl, so the ferris wheel is
+        // foreshortened into one element of the diorama rather than a wall —
+        // matching the M/SC hold language. Reads the WHOLE festival in depth:
+        // gate arches + bunting FOREGROUND, striped tents + proscenium stage
+        // MIDGROUND, ferris wheel (45.5,-13,h9) BACK-RIGHT, harbor beyond.
+        // Look biased to the bowl CENTRE so copy owns the left third.
+        { p: 0.78, pos: new THREE.Vector3(33, 18, 5.5), look: [41, 2, -14], xOff: -4 }, // A10 E-HOLD — festival bowl as a lit diorama, wheel back-right
+        { p: 0.88, pos: new THREE.Vector3(34.5, 17, 4), look: [42, 2, -14], xOff: -4 }, //    gentle aerial push — the wheel turns, crowd streams the gates
+        // ── FINALE: closed-loop crane back to the god framing ───
+        // lift straight up in the corridor (clears the flanking blocks by
+        // altitude), then arc back high over the city to the A0 framing.
+        { p: 0.91, pos: new THREE.Vector3(33, 24, 3), look: [22, 4, -4], xOff: -4 }, // A11 crane lift — the transformed night city falls away
+        { p: 0.95, pos: new THREE.Vector3(20, 42, 48), look: [0, 1, 4], xOff: -6 }, //    arc out and up — whole city re-enters frame
+        { p: 1.0, pos: new THREE.Vector3(0, 54, 94), look: [0, 1, 2], xOff: -8 }, // A12 closed loop — same shot as A0, city transformed
       ] as { p: number; pos: THREE.Vector3; look: [number, number, number]; xOff: number }[],
     [],
   );
@@ -3140,12 +3148,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     lookCur.lerp(tmp, 0.08);
     camera.lookAt(lookCur);
 
-    /* FOV script (spec §0.19): ~27 through the dive, 32 cruising, ease
-       toward 34.5 in each hold's push-in — the film gets lenses */
+    /* FOV script (spec §0.19, DP note): ~27 through the dive, 32 cruising.
+       Retail & Smart Cities keep the gentle warm-in to 34.5 (push-in holds);
+       Manufacturing[0] & Events[3] are now pull-back/drift standoffs, so a
+       tightening lens fights the move — cap their ease at 33 (+1). */
     const diveW = window01(p, 0.05, 0.08) * (1 - window01(p, 0.125, 0.155));
     let fovT = 32 - 5 * diveW;
-    for (const [a, b] of FRACTIONS.parks)
-      fovT += 2.5 * window01(p, (a + b) / 2, b) * (1 - window01(p, b, b + 0.035));
+    FRACTIONS.parks.forEach(([a, b], i) => {
+      const ease = i === 0 || i === 3 ? 1 : 2.5; // M/E standoff vs R/SC push-in
+      fovT += ease * window01(p, (a + b) / 2, b) * (1 - window01(p, b, b + 0.035));
+    });
     const pcam = camera as THREE.PerspectiveCamera;
     const nf = pcam.fov + (fovT - pcam.fov) * (1 - Math.exp(-4 * delta));
     if (Math.abs(nf - pcam.fov) > 0.002) {
