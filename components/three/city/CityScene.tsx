@@ -16,6 +16,8 @@ import {
   setPopKey,
   addPopGrow,
   makePopDepthMaterial,
+  POP_VERTEX_DECL,
+  POP_VERTEX_CHUNK,
   type PopShaderStore,
 } from "@/components/three/lib/popGrow";
 import { assertClearance, type Collider } from "@/components/three/city/clearance";
@@ -49,6 +51,12 @@ interface CitySceneProps {
   /** RTL composition mirror: flips look-target x-offsets only — the world
       geometry is never mirrored (spec §0.21) */
   dir?: 1 | -1;
+  /** handle to the SINGLE animated Bloom pass (spec §3). Null on mobile
+      (no EffectComposer) → every write is null-guarded. */
+  bloomRef?: React.MutableRefObject<{
+    intensity: number;
+    luminanceMaterial: { threshold: number };
+  } | null>;
 }
 
 const PAPER = "#FAF9F5"; // brand cream-50 — seam-free with the page background
@@ -57,6 +65,30 @@ const CLAY_DEEP = new THREE.Color("#C2613F");
 const CLAY_SOFT = new THREE.Color("#E8A381");
 const DORMANT = new THREE.Color("#BDB6A2");
 const INK = new THREE.Color("#3D3A33");
+
+/* Bloom INTENSITY keyframes (spec §3 table) — [p, intensity]. Day restrained,
+   festival blooms hard from intensity, finale eases back so arcs still kiss. */
+const BLOOM_I: [number, number][] = [
+  [0.0, 0.45],
+  [0.2, 0.48],
+  [0.4, 0.55],
+  [0.47, 0.55],
+  [0.56, 0.9],
+  [0.8, 1.15],
+  [0.93, 0.85],
+];
+/* piecewise-linear lerp over an [x, y] keyframe table (same pattern as the
+   LIGHT_STOPS lerp) — clamps outside the table range */
+function piecewise(x: number, stops: [number, number][]): number {
+  if (x <= stops[0][0]) return stops[0][1];
+  const last = stops[stops.length - 1];
+  if (x >= last[0]) return last[1];
+  let i = 0;
+  while (i < stops.length - 2 && x > stops[i + 1][0]) i++;
+  const [ax, ay] = stops[i];
+  const [bx, by] = stops[i + 1];
+  return ay + ((by - ay) * (x - ax)) / (bx - ax);
+}
 
 
 
@@ -70,7 +102,7 @@ const INK = new THREE.Color("#3D3A33");
 
 
 
-export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: CitySceneProps) {
+export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bloomRef }: CitySceneProps) {
   const { scene, gl } = useThree();
   const high = quality === "high";
 
@@ -141,6 +173,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const poleGeos: THREE.BufferGeometry[] = [];
     const lampPositions: THREE.Vector3[] = [];
     const lampKeys: number[] = [];
+    /* per-lamp arm yaw — the streetlight POOL ellipse (§2) is stretched 1.4×
+       along this axis so cast light reads as "thrown" down the road */
+    const lampYaws: number[] = [];
     const nodeCandidates: { pos: THREE.Vector3; h: number; roofIdx: number }[] = [];
     // rooftop furniture (AC/antennas) is deferred until cameras are placed —
     // a camera and an AC unit must never share a roof (they interpenetrate)
@@ -656,6 +691,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         lampPositions.push(
           new THREE.Vector3(lx + towardRoad[0] * 1.8, 2.64, lz + towardRoad[1] * 1.8),
         );
+        // yaw such that the pool ellipse long axis (local +Z after rotateX
+        // -90°) points along the arm's towardRoad direction
+        lampYaws.push(Math.atan2(towardRoad[0], towardRoad[1]));
       }
     }
 
@@ -683,36 +721,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           scWindowGeos.push(stud);
         }
       }
-      // wet-street streaks: radial gradient quads under plaza-rim lamps —
-      // additive, vertex-faded to black, butter/teal alternating
-      const wetButter = new THREE.Color("#E8B070");
+      // (the old per-lamp wet-street STREAK quads are gone — replaced by the
+      //  instanced radial streetlight POOLS, spec §2: one shared CanvasTexture
+      //  + one instancedMesh over ALL lampPositions, centered under each pole,
+      //  ellipse along the arm, gated on night01, NON-blooming. Built in JSX
+      //  via the `streetPoolTex` memo + `setupStreetPools` below.)
       const wetTeal = new THREE.Color("#4FBDB6");
-      const black = new THREE.Color("#000000");
-      let wi = 0;
-      lampPositions.forEach((lp) => {
-        if (Math.hypot(lp.x, lp.z) > 17) return;
-        const g = new THREE.PlaneGeometry(0.85, 3.6, 1, 4);
-        g.rotateX(-Math.PI / 2);
-        // orient the streak away from the plaza center
-        const ang = Math.atan2(lp.x, lp.z);
-        g.rotateY(ang);
-        g.translate(lp.x + Math.sin(ang) * 1.9, 0.022, lp.z + Math.cos(ang) * 1.9);
-        // fade along the streak length via vertex color (additive ⇒ black = invisible)
-        const pos = g.attributes.position;
-        const colArr = new Float32Array(pos.count * 3);
-        const base = wi++ % 2 === 0 ? wetButter : wetTeal;
-        const vc = new THREE.Color();
-        for (let vi = 0; vi < pos.count; vi++) {
-          const ly = (vi / pos.count) * 1.0;
-          vc.copy(base).lerp(black, Math.min(1, ly * 1.35));
-          colArr[vi * 3] = vc.r;
-          colArr[vi * 3 + 1] = vc.g;
-          colArr[vi * 3 + 2] = vc.b;
-        }
-        g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
-        g.deleteAttribute("uv");
-        wetGeos.push(g);
-      });
       // two teal pools at the hub
       for (const [px2, pz2] of [
         [2.6, 1.2],
@@ -1085,8 +1099,48 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           buildingGeos.push(perf);
           dbox(buildingGeos, 0.04, 0.9, 0.04, 43.4, 1.55, -17.1, TRUNK);
         }
+        /* additive ground decal helper (spec §1/§4): a flat fan, hot core
+           → black at the rim with a ^1.6 falloff. Lives in the wet bucket
+           (additive, fog:false, night01-gated). Vertex-colored, uv-free. */
+        const wblack = new THREE.Color("#000000");
+        const groundDecal = (
+          cx: number,
+          cz: number,
+          radius: number,
+          coreHex: string,
+          peak = 1,
+          segs = 28,
+        ) => {
+          const g = new THREE.CircleGeometry(radius, segs);
+          g.rotateX(-Math.PI / 2);
+          g.translate(cx, 0.02, cz);
+          const pos = g.attributes.position;
+          const colArr = new Float32Array(pos.count * 3);
+          const core = new THREE.Color(coreHex);
+          const vc = new THREE.Color();
+          for (let vi = 0; vi < pos.count; vi++) {
+            // CircleGeometry: vertex 0 is the center, the rest ring the rim
+            const r =
+              Math.hypot(pos.getX(vi) - cx, pos.getZ(vi) - cz) / radius;
+            const a = Math.pow(1 - Math.min(1, r), 1.6) * peak;
+            vc.copy(core).lerp(wblack, 1 - a);
+            colArr[vi * 3] = vc.r;
+            colArr[vi * 3 + 1] = vc.g;
+            colArr[vi * 3 + 2] = vc.b;
+          }
+          g.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
+          g.deleteAttribute("uv");
+          wetGeos.push(g);
+        };
+
         // crossed stage beams (additive, ride the night gate via wet bucket)
-        for (const [byaw, bhex] of [[0.5, "#E8A8A0"], [-0.55, "#C8B8F0"]] as const) {
+        // — hot saturated cores (§0.9): rose #FFC8B0 / violet #C0A8FF. Each
+        // beam DROPS a matching ground-wash decal at its landing footprint so
+        // the beam visibly LANDS (the #1 festival aliveness win, §4.2).
+        for (const [byaw, bhex] of [
+          [0.5, "#FFC8B0"],
+          [-0.55, "#C0A8FF"],
+        ] as const) {
           const beam = new THREE.BufferGeometry();
           const apex = new THREE.Vector3(43, 4.6, -18.4);
           const dirL = new THREE.Vector3(Math.sin(byaw) * 7, 6.5, Math.cos(byaw) * 5);
@@ -1098,14 +1152,23 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           const bcol = new THREE.Color(bhex);
           const barr = new Float32Array(9);
           for (let vi = 0; vi < 3; vi++) {
-            const fade = vi === 0 ? 0.55 : 0.0;
+            const fade = vi === 0 ? 0.6 : 0.0;
             barr[vi * 3] = bcol.r * fade;
             barr[vi * 3 + 1] = bcol.g * fade;
             barr[vi * 3 + 2] = bcol.b * fade;
           }
           beam.setAttribute("color", new THREE.BufferAttribute(barr, 3));
           wetGeos.push(beam); // (uv-free, like every wet geo)
+          // landing footprint = apex + dirL projected to the deck/ground
+          groundDecal(apex.x + dirL.x, apex.z + dirL.z, 4, bhex, 0.9);
         }
+        // crowd-glow / string-pool: warm uplift over the verified kind:5
+        // crowd centroid (~39.2,-18.0; spec §0.13/§4.6) — "warm uplight from
+        // stage + strings," sized to the visible crowd footprint
+        groundDecal(39.5, -17.5, 6.5, "#F0A868", 0.45, 36);
+        // ferris-base decal (§0.12): the wheel reads as CASTING, not just
+        // glowing — warm coin under the wheel footing
+        groundDecal(45.5, -13.0, 7, "#FFDEBC", 0.5, 36);
         colliders.push({ x: 43, z: -19, hw: 3.9, hd: 1.8, h: 6.6, label: "stage" });
         // WP11.1 ferris wheel footing (the wheel itself is a rotating JSX
         // group) — A-frame legs + hub pylon are static masses
@@ -1490,6 +1553,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     bakeRadial(gateGlowGeos);
     bakeRadial(mfgGlowGeos);
     bakeRadial(scWindowGeos);
+
+    /* aPhase bake (spec §0.3/§4.5): one random phase PER source geometry,
+       written to every vertex of that geo. A shared uTime uniform +
+       onBeforeCompile then twinkles each string dot / chases each gondola
+       INDEPENDENTLY — never a shared-scalar unison pulse. All eventsLit geos
+       must carry the attribute (uniform across the geo) so mergeSafe keeps a
+       consistent attribute set. */
+    const phaseRand = mulberry32(9173);
+    const bakePhase = (geos: THREE.BufferGeometry[]) => {
+      geos.forEach((g) => {
+        const n = g.attributes.position.count;
+        const ph = phaseRand() * Math.PI * 2;
+        const arr = new Float32Array(n);
+        for (let i = 0; i < n; i++) arr[i] = ph;
+        g.setAttribute("aPhase", new THREE.BufferAttribute(arr, 1));
+      });
+    };
+    bakePhase(eventsLitGeos);
 
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
@@ -2185,6 +2266,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       poles,
       lampPositions,
       lampKeys,
+      lampYaws,
       nodes,
       nodeYaws,
       nodeKeys,
@@ -2243,6 +2325,51 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     }
   };
 
+  /* ---- per-element TWINKLE / CHASE (spec §0.3, §4.4-4.5) ----
+     A baked aPhase attribute + a shared uTime uniform modulate each lit
+     element's emissive INDEPENDENTLY (string dots flicker incoherently,
+     ferris gondolas chase around the wheel) — never a shared-scalar unison
+     pulse. The vertex shader writes a varying multiplier from sin(uTime·
+     speed + aPhase); the fragment shader scales totalEmissiveRadiance.
+     `withPop` also threads the pop-grow vertex chunk so lit elements still
+     grow out of the entry. uTime is driven in useFrame via twinkleShaders. */
+  const twinkleShaders = useRef<
+    { uniforms: { uTime: { value: number } } }[]
+  >([]);
+  const addTwinkle = (
+    m: THREE.MeshStandardMaterial | null,
+    speed: number,
+    amp: number,
+    withPop: boolean,
+    center = 1.0,
+  ) => {
+    if (!m || m.userData.twinkled) return;
+    m.userData.twinkled = true;
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = { value: 0 };
+      // vertex DECL: twinkle attrs, + pop attrs when withPop (combined into a
+      // single <common> replacement so neither injection clobbers the other)
+      const vDecl = withPop
+        ? `${POP_VERTEX_DECL}\nattribute float aPhase;\nuniform float uTime;\nvarying float vEmiMul;`
+        : `#include <common>\nattribute float aPhase;\nuniform float uTime;\nvarying float vEmiMul;`;
+      const vBegin = `${withPop ? POP_VERTEX_CHUNK : "#include <begin_vertex>"}\nvEmiMul = ${center.toFixed(3)} + ${amp.toFixed(3)} * sin(uTime * ${speed.toFixed(3)} + aPhase);`;
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", vDecl)
+        .replace("#include <begin_vertex>", vBegin);
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", `#include <common>\nvarying float vEmiMul;`)
+        .replace(
+          "#include <emissivemap_fragment>",
+          `#include <emissivemap_fragment>\ntotalEmissiveRadiance *= vEmiMul;`,
+        );
+      if (withPop) {
+        shader.uniforms.uPop = { value: 1 };
+        popShaders.current.push(shader as never);
+      }
+      twinkleShaders.current.push(shader as never);
+    };
+  };
+
   /* ================= dynamic actor refs ================= */
   const nodeMeshRef = useRef<THREE.InstancedMesh>(null);
   const nodeMatRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -2287,7 +2414,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [0.5, "#C9CFEC", 0.62, "#8B93BC", "#4A4858", 0.34, "#C8BCD0", 58, 185], // lilac flip
           [0.6, "#B8C4E8", 0.55, "#6E7BA8", "#3E4358", 0.3, "#A99FC0", 55, 210],
           [0.72, "#A9B4DE", 0.45, "#6E7BA8", "#3E4358", 0.27, "#9C92B4", 50, 205],
-          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#3E3C4E", 0.31, "#968CB0", 48, 205],
+          [0.8, "#A8B0DC", 0.52, "#5E66A0", "#4E4450", 0.31, "#968CB0", 48, 205], // festival hemi-ground LIFTED+WARMED #3E3C4E→#4E4450 (spec §0.10/§4.1): clay catches warm spill so accents pop instead of floating on black
           [0.93, "#AEB6E0", 0.45, "#5E66A0", "#3E3C4E", 0.28, "#A89DBE", 46, 195],
         ] as [number, string, number, string, string, number, string, number, number][]
       ).map(([pp, k, ki, hs, hg, hi, f, fn, ff]) => ({
@@ -2471,6 +2598,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const horizonMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const scWindowMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const wetMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  /* streetlight cast-light POOLS (spec §2): shared radial texture, opacity
+     rides night01 (same gate as the wet bucket) */
+  const streetPoolMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const camBodyMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const ferrisRef = useRef<THREE.Group>(null);
   const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -2542,6 +2672,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // 3.8 rings the rim outside the cabins and buys ~0.8 ground clearance
       g.translate(Math.cos(a) * 3.8, Math.sin(a) * 3.8, 0);
       paint(g, gc.set(chorus[gi]));
+      // per-gondola phase = orbit angle → the glow CHASES around the wheel
+      // (spec §4.4) via a shared uTime uniform, not a unison scalar
+      const n = g.attributes.position.count;
+      const parr = new Float32Array(n);
+      for (let i = 0; i < n; i++) parr[i] = a;
+      g.setAttribute("aPhase", new THREE.BufferAttribute(parr, 1));
       gParts.push(g);
     }
     const gondolas = mergeSafe(gParts)!;
@@ -2819,6 +2955,85 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const ledRef = useRef<THREE.Mesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colTmp = useMemo(() => new THREE.Color(), []);
+
+  /* ---- STREETLIGHT POOLS (spec §2): one shared radial CanvasTexture (warm
+     core → transparent edge) + one unit PlaneGeometry, rotated flat.
+     Instanced over ALL lampPositions (+1 draw call). Material is toneMapped
+     (ACES) so the CAST pool never crosses the bloom threshold — only the
+     luminaire HEAD blooms.
+     QA r1: the old (1-t)^1.6 curve crammed all the alpha into a tiny hot
+     center with a near-invisible skirt → the pool read as a disconnected
+     glint, not cast light spreading on asphalt. New curve: a small bright
+     plateau (the lit road directly under the head) that rolls off SLOWLY
+     with a long, clearly-visible skirt (smoothstep tail), so the light
+     fades into the road instead of cutting off — believable spill. ---- */
+  const streetPool = useMemo(() => {
+    const size = 128;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    const ctx = cv.getContext("2d")!;
+    const cx = size / 2;
+    const grad = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
+    // bright plateau out to ~22% radius, then a long smoothstep skirt that
+    // stays visible nearly to the edge — a wide soft pool, not a point glint
+    for (let s = 0; s <= 24; s++) {
+      const t = s / 24;
+      const plateau = 0.22;
+      let a: number;
+      if (t < plateau) {
+        a = 1;
+      } else {
+        const u = (t - plateau) / (1 - plateau); // 0..1 across the skirt
+        const sm = u * u * (3 - 2 * u); // smoothstep
+        a = (1 - sm) * 0.92; // long falloff, slightly soft peak on the skirt
+      }
+      grad.addColorStop(t, `rgba(255,255,255,${a.toFixed(4)})`);
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const geo = new THREE.PlaneGeometry(1, 1);
+    geo.rotateX(-Math.PI / 2);
+    return { tex, geo };
+  }, []);
+  useEffect(
+    () => () => {
+      streetPool.tex.dispose();
+      streetPool.geo.dispose();
+    },
+    [streetPool],
+  );
+
+  /* lay out the pool instances: one per lamp. QA r1 — the old pool was a
+     small (R=1.6) ellipse centered DIRECTLY under the luminaire (out over the
+     road), leaving a visible GAP back to the pole base → read as a floating
+     blob. Fix: bigger pool (Rw=2.6 across the road × Rl=4.2 along the arm)
+     ANCHORED so its rear edge reaches the pole BASE and it spills forward
+     under + past the luminaire. The luminaire (pp) sits ~1.8 units out along
+     +yaw from the base; we pull the pool centre BACK toward the base so the
+     skirt visibly connects pole → cast light, then spreads on the asphalt. */
+  const setupStreetPools = (mesh: THREE.InstancedMesh | null) => {
+    if (!mesh) return;
+    const Rw = 2.6; // half-width across the road (was 1.6)
+    const Rl = 4.2; // half-length along the arm — long elongated pool
+    const tmp = new THREE.Vector2();
+    city.lampPositions.forEach((pp, i) => {
+      const yaw = city.lampYaws[i] ?? 0;
+      // forward unit vector along the arm (towardRoad). lampYaw = atan2(dx,dz)
+      tmp.set(Math.sin(yaw), Math.cos(yaw));
+      // pole base is ~1.8 back along -forward from the luminaire; centre the
+      // pool ~0.6 forward of the base so its rear skirt overlaps the base
+      const cxp = pp.x - tmp.x * 1.8 + tmp.x * 0.6;
+      const czp = pp.z - tmp.y * 1.8 + tmp.y * 0.6;
+      dummy.position.set(cxp, 0.022, czp);
+      dummy.rotation.set(0, yaw, 0);
+      dummy.scale.set(Rw, 1, Rl);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  };
 
   const setupNodes = (mesh: THREE.InstancedMesh | null) => {
     if (!mesh) return;
@@ -3163,6 +3378,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
     const popE = 1 - Math.pow(1 - pop, 3);
     popShaders.current.forEach((sh) => {
       sh.uniforms.uPop.value = pop;
+    });
+    // drive the per-element twinkle/chase clock (string dots + gondolas)
+    twinkleShaders.current.forEach((sh) => {
+      sh.uniforms.uTime.value = t;
     });
 
     /* GAZE (spec §4.2): as the bloom completes, the nearest 6 lenses turn
@@ -3517,6 +3736,30 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       // mid-flip (p=.50) never parks dark
       scWindowMatRef.current.emissiveIntensity = 1.7 * window01(p, 0.475, 0.545);
     if (wetMatRef.current) wetMatRef.current.opacity = night01;
+    // streetlight cast pools ignite at the flip with the wet bucket; a touch
+    // brighter at festival so the lit grid reads as casting (spec §2)
+    if (streetPoolMatRef.current)
+      // pool is now much larger (QA r1) so dial the base alpha back to keep
+      // the additive spill tasteful — a soft cast on asphalt, not a wash
+      streetPoolMatRef.current.opacity = night01 * (0.6 + 0.22 * window01(p, 0.7, 0.82));
+
+    /* ---- SINGLE animated Bloom pass (spec §3) — drive intensity + threshold
+       from p. Day restrained; festival blooms HARD from intensity (1.15), not
+       from collapsing threshold below the on-screen cream UI card. Threshold
+       held at 1.0 while paper/UI is on screen (p ≤ 0.56), then ramped to the
+       0.82 floor (never below). NO exposure ramp (§0.5). Null on mobile. ---- */
+    if (bloomRef?.current) {
+      // intensity: piecewise-lerp the §3 table
+      const bIntens = piecewise(p, BLOOM_I);
+      // threshold: 1.0 through the flip leg (cream safe), then 1.0→0.86 across
+      // p 0.56→0.6 tracking the flip's tail, then ease to the 0.82 festival
+      // floor by p0.8 and hold (finale stays 0.82 so the arcs still kiss bloom)
+      const postFlip = window01(p, 0.56, 0.6); // 0 until paper is gone
+      const toFloor = window01(p, 0.6, 0.8);
+      const bThresh = 1.0 - 0.14 * postFlip - 0.04 * toFloor; // 1.0 → 0.86 → 0.82
+      bloomRef.current.intensity = bIntens;
+      bloomRef.current.luminanceMaterial.threshold = Math.max(0.82, bThresh);
+    }
     // the hero prop must READ at night, not silhouette
     if (camBodyMatRef.current) camBodyMatRef.current.emissiveIntensity = 0.18 * night01;
     /* ferris: rotation pure f(p); gondolas ignite through T3 with the
@@ -3803,7 +4046,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           <meshStandardMaterial
             ref={(m) => {
               (eventsLitMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
-              popMat(m);
+              // string-lantern TWINKLE (§4.5): per-dot aPhase + shared uTime,
+              // ±12% incoherent flicker; withPop=true keeps the pop-grow in
+              addTwinkle(m, 2.0, 0.12, true);
             }}
             vertexColors
             roughness={0.4}
@@ -3976,7 +4221,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           </mesh>
           <mesh geometry={ferris.gondolas}>
             <meshStandardMaterial
-              ref={ferrisLitMatRef}
+              ref={(m) => {
+                (ferrisLitMatRef as React.MutableRefObject<THREE.MeshStandardMaterial | null>).current = m;
+                // gondola CHASE (§4.4): aPhase = orbit angle, 0.6+0.4·sin so
+                // the glow runs around the wheel (no pop-grow on the wheel)
+                addTwinkle(m, 1.5, 0.4, false, 0.6);
+              }}
               vertexColors
               roughness={0.5}
               emissive="#FFDEBC"
@@ -4078,7 +4328,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           />
         </mesh>
       )}
-      {/* WP2: wet-street reflections — additive, night-gated */}
+      {/* WP2: wet-street reflections (teal hub pools) — additive, night-gated */}
       {city.wet && (
         <mesh geometry={city.wet} renderOrder={2}>
           <meshBasicMaterial
@@ -4092,6 +4342,30 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           />
         </mesh>
       )}
+
+      {/* STREETLIGHT CAST-LIGHT POOLS (spec §2): instanced radial decals, one
+          per lamp, warm #FFCF8A (matches the lampMat head). Additive read via
+          the radial texture, but toneMapped (ACES) so the cast pool does NOT
+          cross the bloom threshold — the luminaire HEAD blooms, its thrown
+          light does not. Opacity rides night01 → ignites free at the flip,
+          zero in daylight (no golden-hour smudge). +1 draw call. */}
+      <instancedMesh
+        ref={setupStreetPools}
+        args={[streetPool.geo, undefined, city.lampPositions.length]}
+        frustumCulled={false}
+        renderOrder={2}
+      >
+        <meshBasicMaterial
+          ref={streetPoolMatRef}
+          map={streetPool.tex}
+          color="#FFCF8A"
+          transparent
+          opacity={0}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          fog={false}
+        />
+      </instancedMesh>
 
       {/* actor pools — ONE capsule mesh for all four districts + hat discs
           (five butter hats, one conspicuously bare head: the M beat) */}

@@ -184,8 +184,9 @@ export type PopShaderStore = {
   current: { uniforms: { uPop: { value: number }; uInv?: { value: number } } }[];
 };
 
-const POP_VERTEX_DECL = "#include <common>\nattribute float aPop;\nuniform float uPop;";
-const POP_VERTEX_CHUNK = `#include <begin_vertex>
+export const POP_VERTEX_DECL =
+  "#include <common>\nattribute float aPop;\nuniform float uPop;";
+export const POP_VERTEX_CHUNK = `#include <begin_vertex>
         {
           float pgap = 0.85;
           float pk = clamp((uPop * (1.0 + pgap) - aPop * pgap), 0.0, 1.0);
