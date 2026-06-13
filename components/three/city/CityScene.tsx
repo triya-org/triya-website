@@ -1098,9 +1098,9 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
         // biased east — at 44/-7.4 the disc bisected the right frame edge
         // at every Events beat; at 45.5/-13 the full 9u disc lands inside
         // the 0.72–0.86 frusta)
-        for (const ls of [-0.9, 0.9]) {
-          dbox(buildingGeos, 0.22, 4.6, 0.22, 45.5 + ls, 2.3, -13.0 + ls * 0.35, "#A8A293", 0.18 * ls);
-        }
+        // (the visible A-frame support is built in the wheel's LOCAL frame
+        // as JSX — see ferrisSupport — so it always meets the yawed axle;
+        // the old world-space posts never connected to the hub)
         colliders.push({ x: 45.5, z: -13.0, hw: 4.5, hd: 1.0, h: 9.0, label: "ferris" });
         // the gate camera's GROUND POLE (founder: "still slightly levitating")
         dbox(buildingGeos, 0.18, 4.1, 0.18, 41.8, 2.05, -8.4, CREAM300);
@@ -1323,11 +1323,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           [-46, 5.98, -10.5],
           [-28, 5.98, -10.5],
           [-37, 7.18, -15.8],
-          // WP8 seat law + founder fix: the gate cam rides its OWN
-          // ground-anchored pole beside gate-3 (a real event camera tower —
-          // physically cannot levitate); truss cam on the beam; hall cams
-          // on the flat side-wall tops 5.6
-          [41.8, 4.45, -8.4],
+          // gate cam: lens cantilevered SW (forward, toward the festival)
+          // OFF the pole at (41.8,-8.4) so the body sits over the pole and
+          // the lens sticks OUT front (founder: blinking part was in the pole)
+          [41.4, 4.35, -8.28],
           [43, 5.08, -18.55],
         ] as const
       ).forEach(([nx, ny, nz], k) => {
@@ -1373,6 +1372,38 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
       const yawScatter = (rand() - 0.5) * 0.5;
       const yaw = Math.atan2(-pos.x, -pos.z) + (isSeat ? 0 : yawScatter);
       nodeYaws.push(yaw);
+      // the free-standing gate pole cam: the static campole (41.8,-8.4) is
+      // its mast — the bullet cantilevers FORWARD off it on a bracket arm.
+      const isGatePole =
+        isSeat && Math.abs(pos.x - 41.4) < 1.8 && Math.abs(pos.z + 8.3) < 1.8;
+      if (isGatePole) {
+        // bracket arm from the pole top up/forward to the bullet back
+        const fwdX = Math.sin(yaw);
+        const fwdZ = Math.cos(yaw);
+        const poleTop = new THREE.Vector3(41.8, 4.1, -8.4);
+        const bulletBack = new THREE.Vector3(
+          pos.x - fwdX * 0.28,
+          pos.y - 0.02,
+          pos.z - fwdZ * 0.28,
+        );
+        const bl = poleTop.distanceTo(bulletBack);
+        const bracket = new THREE.CylinderGeometry(0.05, 0.05, bl, 6);
+        bracket.applyQuaternion(
+          new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            bulletBack.clone().sub(poleTop).normalize(),
+          ),
+        );
+        bracket.translate(
+          (poleTop.x + bulletBack.x) / 2,
+          (poleTop.y + bulletBack.y) / 2,
+          (poleTop.z + bulletBack.z) / 2,
+        );
+        paint(bracket, colCap.set("#D9D4C4"));
+        setPopKey(bracket, popKey);
+        poleGeos.push(bracket);
+        return; // skip the generic mast/plate/arm — the campole IS the mast
+      }
       // mast set BEHIND the body (roof cams) / centered on the seat (poles)
       // + L-bracket arm reaching forward to the bullet
       const mx = pos.x - Math.sin(yaw) * (isSeat ? 0 : 0.5);
@@ -2426,6 +2457,39 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
   const camBodyMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const ferrisRef = useRef<THREE.Group>(null);
   const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  /* WP11.1 fix: the wheel's A-frame support, built in LOCAL space (hub at
+     origin, axle along local Z) so it always meets the yawed axle. Static —
+     sits as a sibling of the rotating ferrisRef inside the same group. */
+  const ferrisSupport = useMemo(() => {
+    const parts: THREE.BufferGeometry[] = [];
+    const col = new THREE.Color("#9A9486");
+    const yA = new THREE.Vector3(0, 1, 0);
+    const q = new THREE.Quaternion();
+    const connect = (a: THREE.Vector3, b: THREE.Vector3, th: number) => {
+      const len = a.distanceTo(b);
+      const cyl = new THREE.CylinderGeometry(th, th, len, 6);
+      q.setFromUnitVectors(yA, b.clone().sub(a).normalize());
+      cyl.applyQuaternion(q);
+      cyl.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+      paint(cyl, col);
+      parts.push(cyl);
+    };
+    const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+    for (const sz of [-0.62, 0.62]) {
+      connect(V(0, 0, sz), V(-2.5, -4.6, sz), 0.15); // splayed A-frame legs
+      connect(V(0, 0, sz), V(2.5, -4.6, sz), 0.15);
+      connect(V(-2.5, -4.6, sz), V(2.5, -4.6, sz), 0.11); // foot beam
+    }
+    connect(V(0, 0, -0.62), V(0, 0, 0.62), 0.2); // axle through the hub
+    // motor housing at the hub base
+    const hh = new RoundedBoxGeometry(0.9, 0.7, 1.5, 2, 0.08);
+    hh.translate(0, -0.1, 0);
+    paint(hh, col);
+    parts.push(hh);
+    return mergeSafe(parts)!;
+  }, []);
+  useEffect(() => () => ferrisSupport.dispose(), [ferrisSupport]);
   // the wheel SKELETON glows lavender at night so the gondola lights read
   // as a wheel even when partially framed (unlit it rendered near-black and
   // the gondolas read as disembodied blobs)
@@ -3879,6 +3943,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1 }: 
           at +0.6 the sight-line ran along the wheel plane and it read as a
           tall edge-on column of gondolas at p0.71–0.74, not a wheel) */}
       <group position={[45.5, 4.6, -13.0]} rotation={[0, -0.78, 0]}>
+        {/* static A-frame support — meets the axle, reaches the ground */}
+        <mesh geometry={ferrisSupport}>
+          <meshStandardMaterial vertexColors roughness={0.8} />
+        </mesh>
         <group ref={ferrisRef}>
           <mesh geometry={ferris.structure}>
             <meshStandardMaterial
