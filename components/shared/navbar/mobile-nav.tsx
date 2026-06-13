@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -12,71 +12,31 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const getNavItems = (language: "en" | "ar") => ({
-  en: [
-    {
-      title: "Industries",
-      items: [
-        { title: "Manufacturing", href: "/use-cases/manufacturing/" },
-        { title: "Retail", href: "/use-cases/retail/" },
-        { title: "Smart Cities", href: "/use-cases/smart-cities/" },
-        { title: "Event Management", href: "/use-cases/events/" },
-      ],
-    },
-    { title: "Blog", href: "/blog/" },
-    { title: "FAQ", href: "/faq/" },
-    { title: "Contact", href: "/contact/" },
-  ],
-  ar: [
-    {
-      title: "الصناعات",
-      items: [
-        { title: "التصنيع", href: "/use-cases/manufacturing/" },
-        { title: "التجزئة", href: "/use-cases/retail/" },
-        { title: "المدن الذكية", href: "/use-cases/smart-cities/" },
-        { title: "إدارة الفعاليات", href: "/use-cases/events/" },
-      ],
-    },
-    { title: "المدونة", href: "/blog/" },
-    { title: "الأسئلة الشائعة", href: "/faq/" },
-    { title: "اتصل بنا", href: "/contact/" },
-  ]
-}[language]);
-
-const getContent = (language: "en" | "ar") => ({
-  en: {
-    menu: "Menu",
-    requestDemo: "Request Demo"
+const navItemsData = [
+  {
+    title: "Industries",
+    items: [
+      { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+      { title: "Retail", href: "/use-cases/retail/" },
+      { title: "Smart Cities", href: "/use-cases/smart-cities/" },
+      { title: "Event Management", href: "/use-cases/events/" },
+    ],
   },
-  ar: {
-    menu: "القائمة",
-    requestDemo: "طلب عرض توضيحي"
-  }
-}[language]);
+  { title: "Blog", href: "/blog/" },
+  { title: "FAQ", href: "/faq/" },
+  { title: "Contact", href: "/contact/" },
+];
+
+const content = {
+  menu: "Menu",
+  requestDemo: "Request Demo"
+};
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [language, setLanguage] = useState<"en" | "ar">("en");
 
-  useEffect(() => {
-    // Check for saved language preference
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "ar" : "en";
-    setLanguage(newLang);
-    localStorage.setItem("language", newLang);
-    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
-    // Reload page to apply language changes
-    window.location.reload();
-  };
-
-  const navItems = getNavItems(language);
-  const t = getContent(language);
+  const navItems = navItemsData;
+  const t = content;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -123,9 +83,6 @@ export function MobileNav() {
             </div>
           ))}
           <div className="pt-4 space-y-2">
-            <Button variant="outline" className="w-full" onClick={toggleLanguage}>
-              {language === "en" ? "العربية" : "English"}
-            </Button>
             <Button className="w-full" asChild>
               <Link href="/contact/">{t.requestDemo}</Link>
             </Button>

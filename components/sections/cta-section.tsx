@@ -4,13 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
 
-interface CTASectionProps {
-  language: "en" | "ar";
-}
-
-export function CTASection({ language }: CTASectionProps) {
+export function CTASection() {
   const content = {
-    en: {
       title: "Ready to transform your security?",
       subtitle: "Join leading organizations using Triya.ai for intelligent surveillance",
       cta1: "Schedule Demo",
@@ -23,24 +18,9 @@ export function CTASection({ language }: CTASectionProps) {
       stat3Label: "Smart Alerts",
       stat4: "360°",
       stat4Label: "Business Insights"
-    },
-    ar: {
-      title: "مستعد لتحويل أمانك؟",
-      subtitle: "انضم إلى المؤسسات الرائدة التي تستخدم Triya.ai للمراقبة الذكية",
-      cta1: "جدولة عرض توضيحي",
-      cta2: "اتصل بالمبيعات",
-      stat1: "85%",
-      stat1Label: "تخفيض التكلفة",
-      stat2: "24/7",
-      stat2Label: "مراقبة وكلاء الذكاء الاصطناعي",
-      stat3: "فوري",
-      stat3Label: "تنبيهات ذكية",
-      stat4: "360°",
-      stat4Label: "رؤى الأعمال"
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="relative py-24 overflow-hidden">

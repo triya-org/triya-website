@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -8,65 +7,33 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Mail, Phone, Linkedin } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
-const getContent = (language: "en" | "ar") => ({
-  en: {
-    description: "Transform any camera into a privacy-first, AI-powered security & analytics solution",
-    industries: "Industries",
-    industryItems: [
-      { title: "Manufacturing", href: "/use-cases/manufacturing/" },
-      { title: "Retail", href: "/use-cases/retail/" },
-      { title: "Event Management", href: "/use-cases/events/" },
-      { title: "Smart Cities", href: "/use-cases/smart-cities/" },
-    ],
-    resources: "Resources",
-    resourceItems: [
-      { title: "Blog", href: "/blog/" },
-      { title: "FAQ", href: "/faq/" },
-      { title: "Contact", href: "/contact/" },
-    ],
-    contactUs: "Contact Us",
-    headquarters: "Headquarters",
-    headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
-    copyright: "© 2025 Triya.ai. All rights reserved.",
-    privacyPolicy: "Privacy Policy",
-    termsOfService: "Terms of Service"
-  },
-  ar: {
-    description: "حوّل أي كاميرا إلى حل أمني وتحليلي مدعوم بالذكاء الاصطناعي ويحمي الخصوصية",
-    industries: "الصناعات",
-    industryItems: [
-      { title: "التصنيع", href: "/use-cases/manufacturing/" },
-      { title: "التجزئة", href: "/use-cases/retail/" },
-      { title: "إدارة الفعاليات", href: "/use-cases/events/" },
-      { title: "المدن الذكية", href: "/use-cases/smart-cities/" },
-    ],
-    resources: "الموارد",
-    resourceItems: [
-      { title: "المدونة", href: "/blog/" },
-      { title: "الأسئلة الشائعة", href: "/faq/" },
-      { title: "اتصل بنا", href: "/contact/" },
-    ],
-    contactUs: "اتصل بنا",
-    headquarters: "المقر الرئيسي",
-    headquartersLocation: "سكاي تاور، جزيرة الريم، أبوظبي، الإمارات",
-    copyright: "© 2025 Triya.ai. جميع الحقوق محفوظة.",
-    privacyPolicy: "سياسة الخصوصية",
-    termsOfService: "شروط الخدمة"
-  }
-}[language]);
+const content = {
+  description: "Transform any camera into a privacy-first, AI-powered security & analytics solution",
+  industries: "Industries",
+  industryItems: [
+    { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+    { title: "Retail", href: "/use-cases/retail/" },
+    { title: "Event Management", href: "/use-cases/events/" },
+    { title: "Smart Cities", href: "/use-cases/smart-cities/" },
+  ],
+  resources: "Resources",
+  resourceItems: [
+    { title: "Blog", href: "/blog/" },
+    { title: "FAQ", href: "/faq/" },
+    { title: "Contact", href: "/contact/" },
+  ],
+  contactUs: "Contact Us",
+  headquarters: "Headquarters",
+  headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
+  copyright: "© 2025 Triya.ai. All rights reserved.",
+  privacyPolicy: "Privacy Policy",
+  termsOfService: "Terms of Service"
+};
 
 export function Footer() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
   const { trackLinkedInClick } = useAnalytics();
-  
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-    }
-  }, []);
-  
-  const t = getContent(language);
+
+  const t = content;
   
   return (
     <footer className="border-t bg-muted/50">

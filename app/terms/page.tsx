@@ -1,22 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Calendar, Mail, Scale } from "lucide-react";
 
 export default function TermsPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const lastUpdated = "4 October 2025";
 
   return (

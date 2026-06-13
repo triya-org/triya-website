@@ -4,13 +4,8 @@ import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Camera, Cpu, Brain, Monitor } from "lucide-react";
 
-interface HowItWorksProps {
-  language: "en" | "ar";
-}
-
-export function HowItWorks({ language }: HowItWorksProps) {
+export function HowItWorks() {
   const content = {
-    en: {
       title: "How It Works",
       subtitle: "Triya AI turns any CCTV camera into an on-prem, natural language conversation system, security & insight engine",
       steps: [
@@ -39,40 +34,9 @@ export function HowItWorks({ language }: HowItWorksProps) {
           number: "04"
         }
       ]
-    },
-    ar: {
-      title: "كيف يعمل",
-      subtitle: "Triya AI تحول أي كاميرا CCTV إلى نظام محادثة باللغة الطبيعية محلي، ومحرك أمان ورؤى",
-      steps: [
-        {
-          icon: Camera,
-          title: "تغذية الكاميرا",
-          description: "ربط الكاميرات الموجودة من أي مورد. لا حاجة لاستبدال البنية التحتية الحالية للكاميرات.",
-          number: "01"
-        },
-        {
-          icon: Cpu,
-          title: "صندوق Triya AI الطرفي",
-          description: "نشر صندوق الحوسبة الطرفية في موقعك للمعالجة المحلية مع السيادة الكاملة على البيانات.",
-          number: "02"
-        },
-        {
-          icon: Brain,
-          title: "وكلاء Triya AI",
-          description: "وكلاء ذكاء اصطناعي متقدمون يعالجون موجزات الفيديو مع دعم كامل للغة العربية وقدرات متعددة اللغات.",
-          number: "03"
-        },
-        {
-          icon: Monitor,
-          title: "استخدام TriyaAI",
-          description: "التكامل السلس مع مركز القيادة الموجود لديك للمراقبة والرؤى في الوقت الفعلي.",
-          number: "04"
-        }
-      ]
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="py-24 bg-muted/30">

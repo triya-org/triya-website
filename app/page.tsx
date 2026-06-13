@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Globe, X } from "lucide-react";
+import { ArrowRight, Play, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -21,7 +21,6 @@ import { motion } from "framer-motion";
 import { fadeInUp, fadeIn, staggerChildren } from "@/lib/motion-variants";
 
 export default function Home() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
   const [mounted, setMounted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -29,54 +28,30 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    // Check for saved language preference
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-    }
-    
+
     // Lazy load video when user is likely to see it
     const loadVideo = () => {
       setVideoLoaded(true);
     };
-    
+
     // Load video after initial render
     const timer = setTimeout(loadVideo, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "ar" : "en";
-    setLanguage(newLang);
-    localStorage.setItem("language", newLang);
-    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
-  };
-
   const content = {
-    en: {
-      hero: {
-        title: "UAE's Leading",
-        titleHighlight: "Edge AI Surveillance Platform",
-        subtitle: "Transform any camera into an intelligent security system. 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
-        cta1: "Request Demo",
-        cta2: "Watch Video"
-      },
-      trust: "Trusted by leading organizations across the GCC"
+    hero: {
+      title: "UAE's Leading",
+      titleHighlight: "Edge AI Surveillance Platform",
+      subtitle: "Transform any camera into an intelligent security system. 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
+      cta1: "Request Demo",
+      cta2: "Watch Video"
     },
-    ar: {
-      hero: {
-        title: "منصة الإمارات الرائدة",
-        titleHighlight: "للمراقبة بالذكاء الاصطناعي",
-        subtitle: "حوّل أي كاميرا إلى نظام أمني ذكي. توفير 85% من التكاليف. نخدم دبي وأبوظبي ومنطقة الخليج.",
-        cta1: "طلب عرض توضيحي",
-        cta2: "شاهد الفيديو"
-      },
-      trust: "موثوق من قبل المؤسسات الرائدة في دول مجلس التعاون الخليجي"
-    }
+    trust: "Trusted by leading organizations across the GCC"
   };
 
-  const t = content[language];
+  const t = content;
 
   if (!mounted) {
     return null;
@@ -85,19 +60,6 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       <ProductSchema />
-      {/* Language Toggle */}
-      <div className="fixed top-20 right-4 z-50">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLanguage}
-          className="gap-2"
-        >
-          <Globe className="h-4 w-4" />
-          {language === "en" ? "العربية" : "English"}
-        </Button>
-      </div>
-
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] md:h-[75vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
@@ -186,16 +148,16 @@ export default function Home() {
       </section> */}
 
       {/* Product Showcase */}
-      <ProductShowcase language={language} />
+      <ProductShowcase />
 
       {/* How It Works */}
-      <HowItWorks language={language} />
+      <HowItWorks />
 
       {/* Use Cases */}
-      <UseCases language={language} />
+      <UseCases />
 
       {/* CTA Section */}
-      <CTASection language={language} />
+      <CTASection />
 
       {/* Video Modal */}
       <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
