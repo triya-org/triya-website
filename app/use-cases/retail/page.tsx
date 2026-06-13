@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,25 +11,12 @@ import {
   Users, 
   TrendingUp, 
   ShieldAlert,
-  Eye,
-  BarChart3,
   ArrowRight,
   CheckCircle2,
   Clock
 } from "lucide-react";
 export default function RetailPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
       hero: {
         badge: "Retail",
         title: "Intelligent Security and Analytics for",
@@ -104,85 +90,9 @@ export default function RetailPage() {
         description: "Discover how AI can protect your assets and enhance customer experience",
         primaryButton: "Schedule Demo",
       }
-    },
-    ar: {
-      hero: {
-        badge: "التجزئة",
-        title: "الأمن والتحليلات الذكية",
-        titleHighlight: "لبيئات التجزئة",
-        subtitle: "منع الخسائر وتعزيز تجربة العملاء وتحسين العمليات باستخدام المراقبة المدعومة بالذكاء الاصطناعي المصممة للتجزئة الحديثة."
-      },
-      challenges: {
-        title: "تحديات أمن وعمليات التجزئة",
-        items: [
-          {
-            icon: ShieldAlert,
-            title: "السرقة من المتاجر",
-            description: "تكلف الخسائر السنوية تجار التجزئة المليارات مع عدم قدرة الأمن التقليدي على منع الخسائر"
-          },
-          {
-            icon: Users,
-            title: "تجربة العملاء",
-            description: "الطوابير الطويلة والخدمة السيئة تؤدي إلى عدم رضا العملاء وخسارة المبيعات"
-          },
-          {
-            icon: TrendingUp,
-            title: "تحليلات المتجر",
-            description: "رؤى محدودة حول سلوك العملاء وأداء المتجر"
-          },
-          {
-            icon: Clock,
-            title: "الاستجابة للحوادث",
-            description: "التأخر في اكتشاف الحوادث الأمنية والاستجابة لها"
-          }
-        ]
-      },
-      solution: {
-        title: "حل Triya.ai للتجزئة",
-        description: "حوّل كاميرات متجرك إلى أدوات أعمال ذكية تحمي الأصول وتزيد الإيرادات.",
-        features: [
-          {
-            title: "كشف السرقة في الوقت الفعلي",
-            description: "تحديد السلوك المشبوه وتنبيه الموظفين على الفور لمنع الخسائر",
-            stats: "تقليل الخسائر 70%"
-          },
-          {
-            title: "إدارة الطوابير",
-            description: "مراقبة خطوط الدفع وتنبيه الموظفين عند الحاجة إلى سجلات إضافية",
-            stats: "دفع أسرع 40%"
-          },
-          {
-            title: "تحليلات العملاء",
-            description: "تتبع حركة المرور ووقت البقاء وأنماط التسوق لتحسين التصميم",
-            stats: "زيادة المبيعات 25%"
-          },
-          {
-            title: "خرائط الحرارة",
-            description: "تصور أنماط حركة العملاء لتحسين وضع المنتج",
-            stats: "رؤى في الوقت الفعلي"
-          }
-        ]
-      },
-      benefits: {
-        title: "الفوائد الرئيسية",
-        items: [
-          "تقليل الانكماش بنسبة تصل إلى 70%",
-          "تحسين درجات رضا العملاء بنسبة 35%",
-          "زيادة تحويل المبيعات بنسبة 25%",
-          "تحسين تخصيص الموظفين في الوقت الفعلي",
-          "الامتثال الكامل لـ GDPR/PDPL",
-          "رؤى العملاء باللغتين العربية والإنجليزية"
-        ]
-},
-      cta: {
-        title: "ثورة في أمن التجزئة الخاص بك",
-        description: "اكتشف كيف يمكن للذكاء الاصطناعي حماية أصولك وتعزيز تجربة العملاء",
-        primaryButton: "جدولة عرض توضيحي",
-      }
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <>

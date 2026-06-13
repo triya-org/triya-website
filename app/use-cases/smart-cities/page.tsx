@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,18 +20,7 @@ import {
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function SmartCitiesPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
       hero: {
         badge: "Smart Cities",
         title: "Intelligent Urban Surveillance for",
@@ -106,85 +94,9 @@ export default function SmartCitiesPage() {
         description: "Discover how AI can make your city safer and more efficient",
         primaryButton: "Request Demo",
       }
-    },
-    ar: {
-      hero: {
-        badge: "المدن الذكية",
-        title: "المراقبة الحضرية الذكية",
-        titleHighlight: "لمدن أكثر أماناً",
-        subtitle: "حوّل البنية التحتية الحضرية بمراقبة مدعومة بالذكاء الاصطناعي لإدارة حركة المرور والسلامة العامة وتحليلات المدينة."
-      },
-      challenges: {
-        title: "تحديات الأمن والإدارة الحضرية",
-        items: [
-          {
-            icon: Car,
-            title: "ازدحام المرور",
-            description: "إدارة تدفق حركة المرور واكتشاف الحوادث في الوقت الفعلي عبر شوارع المدينة"
-          },
-          {
-            icon: Users,
-            title: "السيطرة على الحشود",
-            description: "مراقبة التجمعات الكبيرة ومنع كثافة الحشود الخطرة"
-          },
-          {
-            icon: AlertTriangle,
-            title: "الاستجابة للحوادث",
-            description: "التأخر في اكتشاف الحوادث أو الجرائم أو حالات الطوارئ والاستجابة لها"
-          },
-          {
-            icon: Map,
-            title: "التخطيط الحضري",
-            description: "بيانات محدودة عن أنماط المشاة والمركبات للتخطيط الحضري"
-          }
-        ]
-      },
-      solution: {
-        title: "حل Triya.ai للمدن الذكية",
-        description: "أنشئ مدناً أكثر أماناً وكفاءة مع مراقبة وتحليلات الذكاء الاصطناعي الطرفي.",
-        features: [
-          {
-            title: "تحسين تدفق حركة المرور",
-            description: "مراقبة أنماط حركة المرور واكتشاف الازدحام أو الحوادث أو المخالفات في الوقت الفعلي",
-            stats: "ازدحام أقل 30%"
-          },
-          {
-            title: "مراقبة السلامة العامة",
-            description: "اكتشاف السلوك المشبوه والأشياء المتروكة والتهديدات الأمنية تلقائياً",
-            stats: "استجابة أسرع 50%"
-          },
-          {
-            title: "تحليلات الحشود",
-            description: "مراقبة كثافة الحشود وأنماط الحركة لمنع التدافع وتحسين التدفق",
-            stats: "تنبيهات فورية"
-          },
-          {
-            title: "لوحة تحليلات حضرية",
-            description: "رؤى شاملة على مستوى المدينة لتحسين التخطيط وتخصيص الموارد",
-            stats: "قرارات مبنية على البيانات"
-          }
-        ]
-      },
-      benefits: {
-        title: "الفوائد الرئيسية",
-        items: [
-          "تقليل ازدحام المرور بنسبة 30%",
-          "تحسين وقت الاستجابة للطوارئ بنسبة 50%",
-          "منع الحوادث المتعلقة بالحشود",
-          "تحسين تخصيص موارد المدينة",
-          "السيادة الكاملة على بيانات المواطنين",
-          "واجهة مركز القيادة باللغتين العربية والإنجليزية"
-        ]
-      },
-      cta: {
-        title: "ابنِ البنية التحتية لمدينتك الذكية",
-        description: "اكتشف كيف يمكن للذكاء الاصطناعي جعل مدينتك أكثر أماناً وكفاءة",
-        primaryButton: "طلب عرض توضيحي",
-      }
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,18 +22,7 @@ import {
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function EventsPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
       hero: {
         badge: "Event Management",
         title: "AI-Powered Security for",
@@ -127,104 +115,9 @@ export default function EventsPage() {
         description: "See how Triya.ai can transform your event security and analytics",
         primaryButton: "Request Demo",
       }
-    },
-    ar: {
-      hero: {
-        badge: "إدارة الفعاليات",
-        title: "الأمن المدعوم بالذكاء الاصطناعي",
-        titleHighlight: "للأحداث الكبرى",
-        subtitle: "ضمان سلامة الحضور وتحسين تدفق الحشود وتعزيز تجارب الأحداث بالمراقبة الذكية."
-      },
-      caseStudy: {
-        badge: "دراسة حالة",
-        title: "اصنع في الإمارات 2025",
-        subtitle: "معرض أبوظبي الرائد للتصنيع والتكنولوجيا",
-        stats: [
-          { value: "20%", label: "تقليل وقت الانتظار" },
-          { value: "صفر", label: "تأخير كبار الشخصيات" },
-          { value: "30%", label: "زيادة رؤية الرعاة" },
-          { value: "300+", label: "حماية كبار الشخصيات" }
-        ],
-        challenges: {
-          title: "تحديات الحدث",
-          items: [
-            "إدارة أكثر من 10,000 حاضر عبر قاعات عرض متعددة",
-            "ضمان حركة سلسة لكبار الشخصيات عبر ممرات مخصصة",
-            "تحسين تدفق الزوار لزيادة مشاركة الرعاة",
-            "مراقبة كثافة الحشود في الوقت الفعلي للسلامة"
-          ]
-        },
-        solution: {
-          title: "حل Triya.ai",
-          items: [
-            {
-              title: "تحليلات الطوابير في الوقت الفعلي",
-              description: "مراقبة نقاط الدخول ومكاتب التسجيل، مما قلل أوقات الانتظار بنسبة 20% من خلال التخصيص الديناميكي للموظفين"
-            },
-            {
-              title: "حماية ممر كبار الشخصيات",
-              description: "ضمان عدم التأخير لأكثر من 300 ضيف من كبار الشخصيات مع مراقبة المسار المخصص والتنبيهات الفورية"
-            },
-            {
-              title: "تحسين التدفق الاستراتيجي",
-              description: "زيادة رؤية أكشاك الرعاة بنسبة 30% من خلال توجيه الزوار الذكي"
-            },
-            {
-              title: "تحليلات قابلة للتنفيذ",
-              description: "توفير رؤى في الوقت الفعلي تمكن من إعادة توازن حركة المرور بنسبة 5-10% طوال الحدث"
-            }
-          ]
-        }
-      },
-      features: {
-        title: "ميزات أمن الأحداث",
-        items: [
-          {
-            icon: Users,
-            title: "مراقبة كثافة الحشود",
-            description: "تحليل في الوقت الفعلي لكثافة الحشود لمنع المواقف الخطرة",
-            stats: "تنبيهات بالذكاء الاصطناعي"
-          },
-          {
-            icon: Shield,
-            title: "حماية كبار الشخصيات",
-            description: "مراقبة مخصصة لمناطق كبار الشخصيات وممرات الحركة",
-            stats: "صفر حوادث"
-          },
-          {
-            icon: Clock,
-            title: "إدارة الطوابير",
-            description: "مراقبة وتحسين نقاط الدخول والتسجيل والمناطق الرئيسية",
-            stats: "دخول أسرع 50%"
-          },
-          {
-            icon: BarChart3,
-            title: "تحليلات الأحداث",
-            description: "رؤى شاملة حول تدفق الحضور والمشاركة",
-            stats: "لوحة معلومات فورية"
-          }
-        ]
-      },
-      benefits: {
-        title: "لماذا تختار Triya.ai للأحداث",
-        items: [
-          "ضمان سلامة الحضور مع مراقبة الحشود في الوقت الفعلي",
-          "تحسين تدفق الزوار وتقليل الازدحام",
-          "حماية كبار الشخصيات بمراقبة مخصصة",
-          "زيادة عائد استثمار الرعاة من خلال رؤى التوضع الاستراتيجي",
-          "دعم كامل باللغتين العربية والإنجليزية",
-          "المعالجة المحلية تضمن خصوصية البيانات"
-        ]
-      },
-      cta: {
-        title: "أمّن حدثك القادم",
-        description: "اكتشف كيف يمكن لـ Triya.ai تحويل أمن وتحليلات حدثك",
-        primaryButton: "طلب عرض توضيحي",
-      }
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <>

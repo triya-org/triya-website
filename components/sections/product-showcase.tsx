@@ -12,13 +12,8 @@ import {
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 
-interface ProductShowcaseProps {
-  language: "en" | "ar";
-}
-
-export function ProductShowcase({ language }: ProductShowcaseProps) {
+export function ProductShowcase() {
   const content = {
-    en: {
       title: "Our Features",
       subtitle: "Cutting-edge technology designed for modern surveillance needs",
       features: [
@@ -59,52 +54,9 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           badge: "Versatile"
         }
       ]
-    },
-    ar: {
-      title: "ميزاتنا",
-      subtitle: "تقنية متطورة مصممة لاحتياجات المراقبة الحديثة",
-      features: [
-        {
-          icon: DollarSign,
-          title: "توفير 85% من التكاليف",
-          description: "تحديث الكاميرات الموجودة؛ أرخص بكثير من الاستبدال",
-          badge: "فعال من حيث التكلفة"
-        },
-        {
-          icon: Shield,
-          title: "الذكاء الاصطناعي السيادي",
-          description: "الاستدلال الطرفي، عدم الاعتماد على السحابة، التحكم في البيانات المحلية",
-          badge: "آمن"
-        },
-        {
-          icon: Search,
-          title: "تحقيقات أسرع بنسبة 90%",
-          description: "تحدث مع الذكاء الاصطناعي بلغتك (أكثر من 30 لغة مدعومة) لتحقيقات أسرع",
-          badge: "فعال"
-        },
-        {
-          icon: Unlock,
-          title: "لا قيود من الموردين",
-          description: "متوافق مع جميع الكاميرات، يعمل مع أي كاميرات IP موجودة",
-          badge: "مرن"
-        },
-        {
-          icon: LineChart,
-          title: "تحليلات متقدمة",
-          description: "لوحات معلومات شاملة مع رؤى في الوقت الفعلي وتحليل تاريخي",
-          badge: "قائم على البيانات"
-        },
-        {
-          icon: Shield,
-          title: "دعم متعدد الصناعات",
-          description: "حلول مخصصة للتصنيع والتجزئة والرعاية الصحية والمدن الذكية",
-          badge: "متعدد الاستخدامات"
-        }
-      ]
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="py-24 bg-background">
