@@ -314,9 +314,16 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         // DISTRICT MASK (spec §1): these blocks are replaced by authored
         // sets built after the loop — same skip pattern as the PARK block.
         // The −z arm and the south-east quarter stay generic civilian tissue.
-        if (high && bx >= -5 && bx <= -3 && (bz === -2 || bz === -1)) continue; // MFG halls
-        if (high && bx >= -5 && bx <= -3 && (bz === 1 || bz === 2)) continue; // container yard
-        if (high && bx >= 3 && bx <= 5 && (bz === -2 || bz === -1)) continue; // Events ground
+        // NOTE: the camera path threads these district corridors at LOW altitude
+        // (A5/A6 gantry pass, T1a lift-off, T3 festival run) in BOTH quality
+        // modes — the keys are absolute world coords, not SPAN-scaled. In low
+        // quality the authored sets aren't built, but the blocks must STILL be
+        // masked or the generic grid backfills the corridor and the camera
+        // clips it (the pre-existing low-quality clearance bug). So the mask is
+        // unconditional; on mobile these become open ground the camera flies over.
+        if (bx >= -5 && bx <= -3 && (bz === -2 || bz === -1)) continue; // MFG halls
+        if (bx >= -5 && bx <= -3 && (bz === 1 || bz === 2)) continue; // container yard
+        if (bx >= 3 && bx <= 5 && (bz === -2 || bz === -1)) continue; // Events ground
         if (high && bx === PARK.bx && bz === PARK.bz) {
           // park: lawn + crossing paths + a small grove
           const px = bx * BLOCK;
@@ -658,12 +665,24 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     const lampSpacing = 7;
     for (let s = -range; s <= range; s += lampSpacing) {
       if (Math.abs(s) < 7) continue;
+      // The camera threads a TIGHT low corridor through the manufacturing
+      // approach (A5→A6 west sprint at y≈4.4, |z|≈1.2) in BOTH quality modes.
+      // Avenue lamps standing at z=±2.9 in that x-window sit ~1.1u from the
+      // lens — under the 1.2u canyon radius. In high quality the lamp PHASE
+      // (anchored at -range) happened to miss it; in low quality (different
+      // range → different phase) one lands right on the path = the pre-existing
+      // low-quality clearance bug. The MFG district is lit by its own dedicated
+      // floodmasts, so the avenue lamps west of the hub are redundant there —
+      // skip x-avenue lamps in the manufacturing approach window (both modes).
+      const inMfgApproach = (lx: number, lz: number) =>
+        Math.abs(lz) < 4 && lx <= -18; // x-avenue (z≈±2.9) west of the hub
       for (const [lx, lz, side] of [
         [s, 2.9, 1],
         [s, -2.9, -1],
         [2.9, s, 1],
         [-2.9, s, -1],
       ] as const) {
+        if (inMfgApproach(lx, lz)) continue;
         const lampKey = radialCellKey(lx, lz);
         lampKeys.push(lampKey);
         const pole = new THREE.CylinderGeometry(0.06, 0.08, 2.8, 6);
@@ -1099,6 +1118,44 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           buildingGeos.push(perf);
           dbox(buildingGeos, 0.04, 0.9, 0.04, 43.4, 1.55, -17.1, TRUNK);
         }
+        // stage backdrop top-rim: a warm lit edge that separates the rose
+        // backdrop from the night sky (plan §7). Tiny strip → eventsLit (free)
+        {
+          const rim = new THREE.BoxGeometry(6.8, 0.06, 0.08);
+          rim.translate(43, 4.3, -20.3);
+          paint(rim, dcol.set("#FFB5A0"));
+          eventsLitGeos.push(rim);
+        }
+        // backdrop-mass accent (QA r2 soft): the stage backdrop + canopy mass
+        // (#3D3A33/INKISH, top-center) is the only large dark patch in the hero
+        // night frame. Lace its front edges with warm festival bulbs so the
+        // big block reads as a LIT proscenium rather than a black wall. All
+        // tiny dots → free eventsLit instances (no new draw call).
+        {
+          // a bulb row along the canopy FRONT lip (the top edge of the mass)
+          for (let cb = 0; cb < 11; cb++) {
+            const cbulb = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+            cbulb.translate(39.6 + cb * 0.68, 5.2, -17.3);
+            paint(cbulb, dcol.set(cb % 3 === 1 ? "#FFB5A0" : "#FFE2B8"));
+            eventsLitGeos.push(cbulb);
+          }
+          // two vertical bulb festoons framing the rose backdrop (left/right
+          // edges of the dark ink panel) — they outline the mass against night
+          for (const fx of [39.7, 46.3]) {
+            for (let vb = 0; vb < 5; vb++) {
+              const vbulb = new THREE.BoxGeometry(0.075, 0.075, 0.075);
+              vbulb.translate(fx, 1.4 + vb * 0.78, -20.15);
+              paint(vbulb, dcol.set("#FFD9A0"));
+              eventsLitGeos.push(vbulb);
+            }
+          }
+          // a soft warm sheen bar low across the rose inner panel so the
+          // backdrop face itself catches light (not just its outline)
+          const sheen = new THREE.BoxGeometry(6.6, 0.5, 0.04);
+          sheen.translate(43, 1.45, -20.32);
+          paint(sheen, dcol.set("#7A4A42"));
+          eventsLitGeos.push(sheen);
+        }
         /* additive ground decal helper (spec §1/§4): a flat fan, hot core
            → black at the rim with a ^1.6 falloff. Lives in the wet bucket
            (additive, fog:false, night01-gated). Vertex-colored, uv-free. */
@@ -1169,6 +1226,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         // ferris-base decal (§0.12): the wheel reads as CASTING, not just
         // glowing — warm coin under the wheel footing
         groundDecal(45.5, -13.0, 7, "#FFDEBC", 0.5, 36);
+        // PA-stack floor wash (plan §7): the two PA stacks throw light down,
+        // anchoring the stage corners so the deck lip doesn't float dark.
+        // Nudge the wash 0.7u SOUTH of the stack (stacks sit at z=-17.2) so the
+        // decal's hot CORE lands on open ground in front of the post instead of
+        // being eclipsed by the opaque plinth base — the cast now reads.
+        groundDecal(39.2, -16.1, 2.0, "#FFE2B8", 0.4, 20);
+        groundDecal(46.8, -16.1, 2.0, "#FFE2B8", 0.4, 20);
+        // ---- GROUND LANE WASH (plan §1): the #1 dark fix. The crowd lanes
+        // run gates(z -8.2) → stage(z -18) between the 4 barrier ribbons.
+        // Warm coins down the 3 lane mid-lines literally make the floor glow.
+        // Low peak + small radius keeps them CAST (sub-bloom, never a sheet).
+        for (const lnx of [32.9, 36.3, 39.7])
+          for (const lnz of [-9.6, -11.6, -13.6, -15.4])
+            groundDecal(lnx, lnz, 1.1, "#FFD9A0", 0.35, 16);
         colliders.push({ x: 43, z: -19, hw: 3.9, hd: 1.8, h: 6.6, label: "stage" });
         // WP11.1 ferris wheel footing (the wheel itself is a rotating JSX
         // group) — A-frame legs + hub pylon are static masses
@@ -1226,6 +1297,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           fin.translate(tx2, 2.86, tz2);
           paint(fin, dcol.set("#E5B864"));
           buildingGeos.push(fin);
+          // lit finial topper (plan §6): tents are dead at night — a tiny amber
+          // sparkle at each apex gives them a festive crown. Free eventsLit dot.
+          const fintop = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+          fintop.translate(tx2, 2.95, tz2);
+          paint(fintop, dcol.set("#FFD9A0"));
+          eventsLitGeos.push(fintop);
           colliders.push({ x: tx2, z: tz2, hw: tr + 0.2, hd: tr + 0.2, h: 3.0, label: "tent" });
         }
         // balloon clusters on the gate posts + stalls (festival color!)
@@ -1251,6 +1328,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             paint(bl, dcol.set(BALLOONS[Math.floor(drand() * 5)]));
             buildingGeos.push(bl);
           }
+        // accent glints among the balloon clusters (plan §6): a single mint and
+        // a single lilac sparkle for color variety — kept to 2 total to respect
+        // the ≤1-in-5 accent ratio so the warm festival family still dominates
+        for (const [ax3, ay3, az3, ahex] of [
+          [41.0, 4.5, -8.2, "#BFEAD8"],
+          [43.0, 3.85, -9.7, "#D8C8FF"],
+        ] as const) {
+          const glint = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+          glint.translate(ax3, ay3, az3);
+          paint(glint, dcol.set(ahex));
+          eventsLitGeos.push(glint);
+        }
         // bunting between the gate lintels — triangle flags
         for (let bf = 0; bf < 16; bf++) {
           const bt = bf / 15;
@@ -1267,6 +1356,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           paint(flag2, dcol.set(BALLOONS[bf % 5]));
           buildingGeos.push(flag2);
         }
+        // ---- ENTRY FESTOON (plan §3): a bulb festoon riding the SAME catenary
+        // as the bunting so the entry avenue reads as the grand lit marquee —
+        // the single most "festival" gesture for the hero gate shot. Free dots.
+        for (let fb = 0; fb < 14; fb++) {
+          const ft = fb / 13;
+          const fbx = 31.4 + ft * 9.6;
+          const fby = 3.7 - Math.sin(Math.PI * ft) * 0.45;
+          const fbulb = new THREE.BoxGeometry(0.085, 0.085, 0.085);
+          fbulb.translate(fbx, fby - 0.12, -8.15);
+          paint(fbulb, dcol.set(["#FFE2B8", "#FFD9A0", "#FFE2B8", "#FFB5A0"][fb % 4]));
+          eventsLitGeos.push(fbulb);
+        }
         // the lit ENTRY sign over the centre gate (bulb-bordered)
         dbox(buildingGeos, 3.4, 0.55, 0.16, 36.2, 4.1, -8.2, "#D97757");
         for (let sb = 0; sb < 9; sb++) {
@@ -1279,8 +1380,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         // downtown INTO the ground); the clay payoff hinge is wired in P4
         for (let g = 0; g < 3; g++) {
           const gx = 32.8 + g * 3.4;
-          for (const s of [-1.35, 1.35])
+          for (const s of [-1.35, 1.35]) {
             dbox(buildingGeos, 0.36, 3.1, 0.36, gx + s, 1.55, -8.2, [ROSE, LILAC][g % 2]);
+            // marquee bulb border up each post (plan §4): rides the CAPPED
+            // gateGlow material (NOT eventsLit) so the gates read as lit
+            // portals without blooming hot this close to the gate camera
+            for (const gby of [1.0, 1.7, 2.4, 3.0]) {
+              const gb = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+              gb.translate(gx + s, gby, -8.05);
+              paint(gb, dcol.set("#FFE2B8"));
+              gateGlowGeos.push(gb);
+            }
+          }
           dbox(buildingGeos, 3.1, 0.4, 0.42, gx, 3.3, -8.2, SAND);
           {
             const cap2 = new THREE.BoxGeometry(2.9, 0.07, 0.1);
@@ -1303,11 +1414,29 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             -16.5,
             [SAND, OCHRE, SAND][s2],
           );
+          // step-nosing safety light per tier front edge (plan §9): a thin lit
+          // lip on the stage-facing front of each riser — free eventsLit strip
+          const nose = new THREE.BoxGeometry(1.3, 0.05, 0.1);
+          nose.translate(30.2 + s2 * 1.05, th2, -12.75);
+          paint(nose, dcol.set("#FFD9A0"));
+          eventsLitGeos.push(nose);
         }
         colliders.push({ x: 31.3, z: -16.5, hw: 1.9, hd: 3.9, h: 1.9, label: "stand" });
         // barrier ribbons: three lanes, gates → stage
         for (let lane2 = 0; lane2 < 4; lane2++)
           dbox(buildingGeos, 0.16, 0.5, 6.5, 31.2 + lane2 * 3.4, 0.27, -12.2, CREAM300);
+        // ---- BOLLARD LANE LIGHTS (plan §2): short unlit posts with a small
+        // lit cap, one runway of amber lamps per lane mid-line guiding the eye
+        // gates→stage. Posts → buildingGeos (unlit), caps → eventsLitGeos (free,
+        // twinkles + night-gated). Sits over the lane wash coins above.
+        for (const blx of [32.9, 36.3, 39.7])
+          for (const blz of [-9.6, -11.6, -13.6, -15.4]) {
+            dbox(buildingGeos, 0.08, 0.5, 0.08, blx, 0.25, blz, TRUNK);
+            const cap = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            cap.translate(blx, 0.55, blz);
+            paint(cap, dcol.set("#FFD9A0"));
+            eventsLitGeos.push(cap);
+          }
         // string lights: posts + sagging butter dot chains (own emissive
         // mesh — they ignite one-by-one through T3, independent of windows)
         const lp3 = (x3: number, y3: number, z3: number) => new THREE.Vector3(x3, y3, z3);
@@ -1341,6 +1470,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           paint(cone, dcol.set(si % 2 ? "#D97757" : "#E5B864"));
           buildingGeos.push(cone);
           stallTops.push(lp3(sx3, 2.1, sz3));
+          // under-canopy service light + counter spill (plan §5): the west edge
+          // is the darkest strip — a peach service bulb under each canopy plus a
+          // ground pool in front makes the whole food row come alive at night
+          const svc = new THREE.BoxGeometry(0.14, 0.14, 0.14);
+          svc.translate(sx3, 1.55, sz3);
+          paint(svc, dcol.set("#FFB5A0"));
+          eventsLitGeos.push(svc);
+          groundDecal(sx3, sz3, 1.4, "#FFB5A0", 0.4, 16);
         });
         /* WP9.1 (R4): catenary WIRE as chained thin boxes — lights hang from
            something real now; stage spans retarget to the truss posts */
@@ -1360,6 +1497,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           [lp3(36.2, 3.9, -8.3), lp3(44, 3.4, -13.5)],
           [lp3(29.8, 2.9, -8.8), lp3(33.5, 3.4, -12.5)],
           [lp3(43.0, 2.9, -9.7), lp3(44, 3.4, -13.5)],
+          // WEST-VOID FILL (plan §8): the stalls/tents half read as voids — add
+          // cross-ground spans so every pair of poles/tents/stalls is connected.
+          // Each span auto-generates wire + 13 twinkle dots into eventsLit (free).
+          [lp3(30.6, 2.9, -13.8), lp3(39, 3.4, -11.5)], // tent2 → post, crosses centre void
+          [lp3(29.8, 2.9, -8.8), lp3(41.0, 3.6, -8.3)], // tent1 → gate post, high entry span
+          [lp3(44, 3.4, -13.5), lp3(30.6, 2.9, -13.8)], // full-width mid span (biggest gap)
+          [stallTops[3], lp3(36.5, 3.4, -16.5)], // food row → stage-left post
+          [lp3(33.5, 3.4, -12.5), lp3(44, 3.4, -13.5)], // long diagonal for density
         ];
         const quartet = ["#FFE2B8", "#FFB5A0", "#BFEAD8", "#D8C8FF"]; // lantern tints
         const zAxis = new THREE.Vector3(0, 0, 1);
@@ -2094,6 +2239,33 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       mottle.setAttribute("color", new THREE.BufferAttribute(ncol, 3));
       padGeos.push(mottle);
     }
+    /* dissolve the road grid into the terrain at its far edges so it doesn't
+       end on a hard rectangular cut. Re-grade roadGeos vertex colors toward the
+       ground color (#F1EFE8) over the last D units before the grid perimeter.
+       Scoped to roadGeos ONLY (NOT pad/park geos, which reach ±49 and must stay
+       fully colored). Roundabout (|m|≤8.8), crosswalks (|m|≈18.5) and inner
+       dashes are all well inside the fade window → untouched. No geometry moves;
+       only diffuse colors change → no new z-fight, no floaters, no draw calls. */
+    {
+      const EDGE = range + 7; // 53 — avenue road outer edge
+      const D = 12; // fade window
+      const groundC = new THREE.Color("#F1EFE8");
+      const tmpC = new THREE.Color();
+      for (const g of roadGeos) {
+        const pos = g.attributes.position;
+        const col = g.attributes.color as THREE.BufferAttribute;
+        if (!col) continue; // paint() guarantees a color attr on every road geo
+        for (let v = 0; v < pos.count; v++) {
+          const m = Math.max(Math.abs(pos.getX(v)), Math.abs(pos.getZ(v)));
+          const f = THREE.MathUtils.clamp((m - (EDGE - D)) / D, 0, 1);
+          if (f <= 0) continue;
+          const sm = f * f * (3 - 2 * f); // smoothstep — soft dissolve, no banding
+          tmpC.setRGB(col.getX(v), col.getY(v), col.getZ(v)).lerp(groundC, sm);
+          col.setXYZ(v, tmpC.r, tmpC.g, tmpC.b);
+        }
+        col.needsUpdate = true;
+      }
+    }
     const roads = mergeSafe([...padGeos, ...roadGeos, ...parkGeos]);
 
     /* car fleet state. Roundabout traversal done PROPERLY: each route is
@@ -2502,37 +2674,44 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         kind: 0,
       });
     }
-    // E: three gate lanes streaming + a loose stage crowd
-    for (let k = 0; k < 14; k++)
-      list.push({
-        bx: 32.8 + (k % 3) * 3.4 + (arand() - 0.5) * 0.8,
-        bz: -11.5,
-        amp: 2.8,
-        axis: 1,
-        phase: arand() * 20,
-        speed: 0.5 + arand() * 0.3,
-        kind: 5,
-      });
-    // the gate-3 ENTRANT (r2) — the Events detection SUBJECT: shuffles at
-    // the barrier lane; the beat dot rides this head and the payoff
-    // barrier swings open FOR them (the old fixed dot floated in night air)
-    list.push({ bx: 39.6, bz: -9.6, amp: 0, axis: 1, phase: 2, speed: 0, kind: 5 });
-    // WP9.5 + founder round: a real festival crowd
-    for (let k = 0; k < 58; k++) {
-      const a = Math.PI * (0.7 + arand() * 0.7);
-      const rr2 = 2.5 + arand() * 4;
-      list.push({
-        bx: 43 + Math.cos(a) * rr2,
-        bz: -18 + Math.sin(a) * (rr2 * 0.8),
-        amp: 0.15,
-        axis: 0,
-        phase: arand() * 6,
-        speed: 0.22,
-        kind: 5,
-      });
+    // E: the festival crowd (kind:5) lives entirely inside the `high`-gated
+    // DISTRICTS block (ground, lights, tents, stage, ferris). On mobile that
+    // ground is absent, so emitting the crowd there strands ~72 dark capsules
+    // floating in a navy void (QA r2 BLOCKER / q-mob-72.png). Gate the whole
+    // crowd behind `high` so it never renders without its stage.
+    if (high) {
+      // E: three gate lanes streaming + a loose stage crowd
+      for (let k = 0; k < 14; k++)
+        list.push({
+          bx: 32.8 + (k % 3) * 3.4 + (arand() - 0.5) * 0.8,
+          bz: -11.5,
+          amp: 2.8,
+          axis: 1,
+          phase: arand() * 20,
+          speed: 0.5 + arand() * 0.3,
+          kind: 5,
+        });
+      // the gate-3 ENTRANT (r2) — the Events detection SUBJECT: shuffles at
+      // the barrier lane; the beat dot rides this head and the payoff
+      // barrier swings open FOR them (the old fixed dot floated in night air)
+      list.push({ bx: 39.6, bz: -9.6, amp: 0, axis: 1, phase: 2, speed: 0, kind: 5 });
+      // WP9.5 + founder round: a real festival crowd
+      for (let k = 0; k < 58; k++) {
+        const a = Math.PI * (0.7 + arand() * 0.7);
+        const rr2 = 2.5 + arand() * 4;
+        list.push({
+          bx: 43 + Math.cos(a) * rr2,
+          bz: -18 + Math.sin(a) * (rr2 * 0.8),
+          amp: 0.15,
+          axis: 0,
+          phase: arand() * 6,
+          speed: 0.22,
+          kind: 5,
+        });
+      }
     }
     return list;
-  }, []);
+  }, [high]);
   const actorKeys = useMemo(
     () => ACTORS.map((a) => city.radialKey(a.bx, a.bz)),
     [ACTORS, city],
@@ -3849,6 +4028,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       const span = city.range * 2 + 10;
       city.cars.forEach((c, i) => {
         let px: number, pz: number, ry: number;
+        // graceful end-of-road scale envelope: parked cars are always full-size;
+        // moving cars fade 0→1 over the first F units after spawn and 1→0 over
+        // the last F units before the loop wrap, so they emerge from / dissolve
+        // into the haze at the road edges instead of teleporting. POSITIONS and
+        // TIMING are byte-identical — only dummy.scale changes at the far slivers.
+        let s = 1;
         if (c.parked) {
           px = c.parked.x;
           pz = c.parked.z;
@@ -3860,6 +4045,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           const L1 = half - J;
           const T = 2 * L1 + c.route.bypass.len;
           const d = (c.offset + t * c.speed) % T;
+          // scale envelope over the 3-unit slivers at d=0 (spawn far edge) and
+          // d→T (wrap far edge). F ≪ L1 (39.5) and F ≪ T, so the bypass arc and
+          // roundabout cars (d in the middle) are always full-scale (s=1).
+          const F = 3.0;
+          const fadeIn = THREE.MathUtils.clamp(d / F, 0, 1);
+          const fadeOut = THREE.MathUtils.clamp((T - d) / F, 0, 1);
+          const env = Math.min(fadeIn, fadeOut);
+          s = env * env * (3 - 2 * env); // smoothstep — no linear stretch from ground
           const baseRy =
             c.route.axis === "x"
               ? c.route.dir > 0
@@ -3891,17 +4084,21 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
 
         dummy.position.set(px, 0.46, pz);
         dummy.rotation.set(0, ry, 0);
-        dummy.scale.setScalar(1);
+        dummy.scale.setScalar(s);
         dummy.updateMatrix();
         bodies.setMatrixAt(i, dummy.matrix);
 
-        // cabin sits up and slightly back in car-local space
-        const back = 0.12;
+        // cabin sits up and slightly back in car-local space. Collapse its
+        // height toward the body centre (0.46) as s→0 — same treatment as the
+        // wheels — so the whole car contracts to a single point at the fade
+        // ends instead of leaving the cabin floating above the shrinking body.
+        const back = 0.12 * s;
         dummy.position.set(
           px - Math.cos(ry) * back,
-          0.78,
+          0.78 * s + 0.46 * (1 - s),
           pz + Math.sin(ry) * back,
         );
+        dummy.scale.setScalar(s);
         dummy.updateMatrix();
         cabins.setMatrixAt(i, dummy.matrix);
 
@@ -3915,8 +4112,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           [-0.48, -0.34],
         ];
         corners.forEach(([lx, lz], k) => {
-          dummy.position.set(px + lx * cosr + lz * sinr, 0.2, pz - lx * sinr + lz * cosr);
+          // scale the corner spread by s too, so the wheels collapse toward the
+          // body centre as the car fades to a point (no orphaned wheels)
+          const wlx = lx * s;
+          const wlz = lz * s;
+          dummy.position.set(px + wlx * cosr + wlz * sinr, 0.2 * s + 0.46 * (1 - s), pz - wlx * sinr + wlz * cosr);
           dummy.rotation.set(0, ry, 0);
+          dummy.scale.setScalar(s);
           dummy.updateMatrix();
           wheels.setMatrixAt(i * 4 + k, dummy.matrix);
         });
