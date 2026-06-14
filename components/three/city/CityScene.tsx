@@ -1793,11 +1793,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       }
     }
 
-    // main avenues
+    // main avenues — SUBDIVIDED along their length so the edge-dissolve fade
+    // (below) only affects the outer ~12u; a flat 4-corner plane has both
+    // ends at the perimeter, so the whole road washed to cream (founder img37)
+    const avLen = range * 2 + 14;
+    const avSeg = Math.ceil(avLen / 4);
     for (const horizontal of [true, false]) {
       const road = new THREE.PlaneGeometry(
-        horizontal ? range * 2 + 14 : 5.2,
-        horizontal ? 5.2 : range * 2 + 14,
+        horizontal ? avLen : 5.2,
+        horizontal ? 5.2 : avLen,
+        horizontal ? avSeg : 1,
+        horizontal ? 1 : avSeg,
       );
       road.rotateX(-Math.PI / 2);
       road.translate(0, 0.012, 0);
@@ -1807,11 +1813,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       // at the roundabout (they must never cross the circle)
       const walkLen = range + 7 - 9.5;
       const walkMid = 9.5 + walkLen / 2;
+      const walkSeg = Math.ceil(walkLen / 4);
       for (const s of [1, -1]) {
         for (const seg of [1, -1]) {
           const walk = new THREE.PlaneGeometry(
             horizontal ? walkLen : 1.1,
             horizontal ? 1.1 : walkLen,
+            horizontal ? walkSeg : 1,
+            horizontal ? 1 : walkSeg,
           );
           walk.rotateX(-Math.PI / 2);
           walk.translate(
@@ -1825,13 +1834,17 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       }
     }
 
-    // secondary street grid between blocks
+    // secondary street grid between blocks (also subdivided for the fade)
+    const stLen = range * 2 + 10;
+    const stSeg = Math.ceil(stLen / 4);
     for (let k = -SPAN; k < SPAN; k++) {
       const c = (k + 0.5) * BLOCK;
       for (const horizontal of [true, false]) {
         const g = new THREE.PlaneGeometry(
-          horizontal ? range * 2 + 10 : 2.0,
-          horizontal ? 2.0 : range * 2 + 10,
+          horizontal ? stLen : 2.0,
+          horizontal ? 2.0 : stLen,
+          horizontal ? stSeg : 1,
+          horizontal ? 1 : stSeg,
         );
         g.rotateX(-Math.PI / 2);
         g.translate(horizontal ? 0 : c, 0.008, horizontal ? c : 0);
