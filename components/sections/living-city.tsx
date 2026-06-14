@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
@@ -190,6 +190,22 @@ export function LivingCity({ language }: LivingCityProps) {
   const crumbs = CRUMBS[language];
   const caption = EDGE_CAPTION[language];
 
+  // pause the 3D render loop ONLY when the section's whole scroll range is
+  // off-screen — keeps the canvas rendering through the entry/exit develop
+  // (fixes the "plain cream section when scrolling up to hero" freeze)
+  useEffect(() => {
+    if (!canRender3D || reduced || !rootRef.current) return;
+    const el = rootRef.current;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        coveredRef.current = !entry.isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [canRender3D, reduced]);
+
   useIsomorphicLayoutEffect(() => {
     if (!canRender3D || reduced || !rootRef.current) return;
     registerGsap();
@@ -229,9 +245,11 @@ export function LivingCity({ language }: LivingCityProps) {
           onUpdate: (self) => {
             progressRef.current = self.progress;
           },
-          onToggle: (self) => {
-            coveredRef.current = !self.isActive;
-          },
+          // NOTE: render-loop gating is NOT driven by pin.isActive — the pin
+          // is inactive during the visible pre-pin ENTRY zone too, so gating
+          // on it froze the canvas mid reverse-develop and showed a flat-cream
+          // section when scrolling up to the hero. Visibility is now driven by
+          // an IntersectionObserver on rootRef (below).
         },
       });
 
