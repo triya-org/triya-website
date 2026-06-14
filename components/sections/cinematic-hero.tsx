@@ -18,7 +18,6 @@ interface HeroContent {
 }
 
 interface CinematicHeroProps {
-  language: "en" | "ar";
   content: HeroContent;
   videoLoaded: boolean;
   onCta?: () => void;
@@ -36,7 +35,6 @@ interface CinematicHeroProps {
  * prefers-reduced-motion renders everything static.
  */
 export function CinematicHero({
-  language,
   content,
   videoLoaded,
   onCta,
@@ -60,13 +58,12 @@ export function CinematicHero({
     registerGsap();
 
     const ctx = gsap.context(() => {
-      const isArabic = language === "ar";
-      // Only the plain title is char-split (gradient/clay highlight animates
-      // as a block; Arabic always word-level).
+      // English-only: the plain title is char-split (the gradient/clay
+      // highlight animates as a block).
       const split = new SplitText(titleRef.current, {
-        type: isArabic ? "words" : "words,chars",
+        type: "words,chars",
       });
-      const titleTargets = isArabic ? split.words : split.chars;
+      const titleTargets = split.chars;
 
       // If the first-visit preloader is running, hold the entrance and play
       // it the moment the curtain starts lifting (triya:intro-done) — the
@@ -91,10 +88,10 @@ export function CinematicHero({
           {
             yPercent: 130,
             opacity: 0,
-            rotation: isArabic ? 0 : () => gsap.utils.random(-10, 10),
+            rotation: () => gsap.utils.random(-10, 10),
             duration: 0.7,
             ease: "back.out(1.5)",
-            stagger: isArabic ? 0.07 : { each: 0.04, from: "random" as const },
+            stagger: { each: 0.04, from: "random" as const },
           },
           "-=0.25",
         )
@@ -167,7 +164,7 @@ export function CinematicHero({
     }, rootRef);
 
     return () => ctx.revert();
-  }, [language, reduced]);
+  }, [reduced]);
 
   return (
     <section

@@ -17,100 +17,53 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { MobileNav } from "./mobile-nav";
 
-const getContent = (language: "en" | "ar") => ({
-  en: {
-    industries: "Industries",
-    blog: "Blog",
-    faq: "FAQ",
-    contact: "Contact",
-    requestDemo: "Request Demo",
-    industryItems: [
-      {
-        title: "Manufacturing",
-        href: "/use-cases/manufacturing/",
-        description: "PPE compliance and safety monitoring for industrial facilities",
-      },
-      {
-        title: "Retail",
-        href: "/use-cases/retail/",
-        description: "Theft prevention and customer analytics for stores",
-      },
-      {
-        title: "Smart Cities",
-        href: "/use-cases/smart-cities/",
-        description: "Traffic management and public safety solutions",
-      },
-      {
-        title: "Event Management",
-        href: "/use-cases/events/",
-        description: "Crowd analytics and security for major events",
-      },
-    ]
-  },
-  ar: {
-    industries: "الصناعات",
-    blog: "المدونة",
-    faq: "الأسئلة الشائعة",
-    contact: "اتصل بنا",
-    requestDemo: "طلب عرض توضيحي",
-    industryItems: [
-      {
-        title: "التصنيع",
-        href: "/use-cases/manufacturing/",
-        description: "الامتثال لمعدات الحماية الشخصية ومراقبة السلامة للمرافق الصناعية",
-      },
-      {
-        title: "التجزئة",
-        href: "/use-cases/retail/",
-        description: "منع السرقة وتحليلات العملاء للمتاجر",
-      },
-      {
-        title: "المدن الذكية",
-        href: "/use-cases/smart-cities/",
-        description: "إدارة حركة المرور وحلول السلامة العامة",
-      },
-      {
-        title: "إدارة الفعاليات",
-        href: "/use-cases/events/",
-        description: "تحليلات الحشود والأمن للأحداث الكبرى",
-      },
-    ]
-  }
-}[language]);
+const content = {
+  industries: "Industries",
+  blog: "Blog",
+  faq: "FAQ",
+  contact: "Contact",
+  requestDemo: "Request Demo",
+  industryItems: [
+    {
+      title: "Manufacturing",
+      href: "/use-cases/manufacturing/",
+      description: "PPE compliance and safety monitoring for industrial facilities",
+    },
+    {
+      title: "Retail",
+      href: "/use-cases/retail/",
+      description: "Theft prevention and customer analytics for stores",
+    },
+    {
+      title: "Smart Cities",
+      href: "/use-cases/smart-cities/",
+      description: "Traffic management and public safety solutions",
+    },
+    {
+      title: "Event Management",
+      href: "/use-cases/events/",
+      description: "Crowd analytics and security for major events",
+    },
+  ]
+};
 
 export function Navbar() {
-  const [language, setLanguage] = React.useState<"en" | "ar">("en");
   const { trackRequestDemo } = useAnalytics();
 
-  React.useEffect(() => {
-    // Check for saved language preference
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-    }
-  }, []);
-
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "ar" : "en";
-    setLanguage(newLang);
-    localStorage.setItem("language", newLang);
-    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
-    // Reload page to apply language changes
-    window.location.reload();
-  };
-
-  const t = getContent(language);
+  const t = content;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* wordmark — the brand's one logo (matches the preloader): TRIYA
-            in the display face + the clay recording dot */}
-        <Link href="/" className="mr-6 flex items-baseline" aria-label="Triya — home">
-          <span className="font-display text-2xl font-semibold tracking-tight text-ink-900 md:text-[1.7rem]">
-            TRIYA
-          </span>
-          <span className="ms-1.5 inline-block h-2 w-2 rounded-full bg-clay-400 md:h-2.5 md:w-2.5" />
+        <Link href="/" className="mr-6 flex items-center space-x-2">
+          <Image
+            src="/triya_ai_new_logo.png"
+            alt="Triya AI - Edge AI Surveillance Platform with 85% Cost Savings"
+            width={885}
+            height={210}
+            className="h-10 md:h-12 w-auto"
+            priority
+          />
         </Link>
         
         <NavigationMenu className="mx-6 hidden md:flex">
@@ -168,7 +121,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/blog/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.blog}
                 </NavigationMenuLink>
               </Link>
@@ -176,7 +129,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/faq/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.faq}
                 </NavigationMenuLink>
               </Link>
@@ -184,7 +137,7 @@ export function Navbar() {
             
             <NavigationMenuItem>
               <Link href="/contact/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle() + " nav-underline"}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {t.contact}
                 </NavigationMenuLink>
               </Link>
@@ -194,9 +147,6 @@ export function Navbar() {
         
         <div className="ml-auto flex items-center space-x-4">
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" onClick={toggleLanguage}>
-              {language === "en" ? "العربية" : "English"}
-            </Button>
             <Button asChild onClick={() => trackRequestDemo('Navbar')}>
               <Link href="/contact/">{t.requestDemo}</Link>
             </Button>

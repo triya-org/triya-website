@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,18 +20,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function ManufacturingPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
       hero: {
         badge: "Manufacturing",
         title: "AI-Powered Safety and Security for",
@@ -106,85 +94,9 @@ export default function ManufacturingPage() {
         description: "See how Triya.ai can enhance safety and productivity in your facility",
         primaryButton: "Request Demo",
       }
-    },
-    ar: {
-      hero: {
-        badge: "التصنيع",
-        title: "الأمن والسلامة المدعومة بالذكاء الاصطناعي",
-        titleHighlight: "لمرافق التصنيع",
-        subtitle: "ضمان سلامة العمال، ومنع سرقة المعدات، وتحسين الإنتاج باستخدام مراقبة الذكاء الاصطناعي الطرفي المصممة للبيئات الصناعية."
-      },
-      challenges: {
-        title: "تحديات أمن التصنيع",
-        items: [
-          {
-            icon: HardHat,
-            title: "الامتثال لمعدات الحماية الشخصية",
-            description: "المراقبة اليدوية للامتثال لمعدات السلامة غير فعالة وعرضة للخطأ"
-          },
-          {
-            icon: AlertTriangle,
-            title: "حوادث مكان العمل",
-            description: "التأخر في الاستجابة لحوادث السلامة يمكن أن يؤدي إلى إصابات خطيرة"
-          },
-          {
-            icon: Shield,
-            title: "سرقة المعدات",
-            description: "الآلات والمواد عالية القيمة معرضة للسرقة"
-          },
-          {
-            icon: BarChart3,
-            title: "تتبع الإنتاجية",
-            description: "رؤية محدودة لكفاءة خط الإنتاج والاختناقات"
-          }
-        ]
-      },
-      solution: {
-        title: "حل Triya.ai للتصنيع",
-        description: "تحول منصة الذكاء الاصطناعي الطرفي الخاصة بنا كاميرات الأمان الموجودة لديك إلى أجهزة مراقبة ذكية للسلامة والإنتاجية.",
-        features: [
-          {
-            title: "كشف معدات الحماية الشخصية في الوقت الفعلي",
-            description: "اكتشف على الفور الخوذات المفقودة وسترات الأمان والقفازات وغيرها من معدات الحماية",
-            stats: "دقة 99%"
-          },
-          {
-            title: "مراقبة منطقة الخطر",
-            description: "التنبيه عندما يدخل العمال مناطق محظورة أو خطرة دون إذن مناسب",
-            stats: "استجابة <500ms"
-          },
-          {
-            title: "أمن المعدات",
-            description: "تتبع استخدام الآلات واكتشاف الوصول أو الحركة غير المصرح بها",
-            stats: "مراقبة 24/7"
-          },
-          {
-            title: "تحليلات الإنتاج",
-            description: "مراقبة كفاءة سير العمل وتحديد الاختناقات في الوقت الفعلي",
-            stats: "زيادة الكفاءة 30%"
-          }
-        ]
-      },
-      benefits: {
-        title: "الفوائد الرئيسية",
-        items: [
-          "تقليل حوادث مكان العمل بنسبة تصل إلى 60%",
-          "ضمان الامتثال لمعدات الحماية الشخصية بنسبة 100% تلقائيًا",
-          "منع سرقة المعدات وسوء الاستخدام",
-          "زيادة كفاءة الإنتاج بنسبة 30%",
-          "السيادة الكاملة على البيانات مع المعالجة المحلية",
-          "دعم اللغتين العربية والإنجليزية"
-        ]
-      },
-      cta: {
-        title: "حوّل أمن التصنيع الخاص بك",
-        description: "اكتشف كيف يمكن لـ Triya.ai تعزيز السلامة والإنتاجية في منشأتك",
-        primaryButton: "طلب عرض توضيحي",
-      }
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <>
@@ -215,15 +127,18 @@ export default function ManufacturingPage() {
             variants={staggerChildren}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.p variants={fadeInUp} className="t-eyebrow mb-4 !text-clay-300">
-              {t.hero.badge}
-            </motion.p>
+            <motion.div variants={fadeInUp}>
+              <Badge variant="secondary" className="mb-4">
+                <Factory className="h-3 w-3 mr-1" />
+                {t.hero.badge}
+              </Badge>
+            </motion.div>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white"
               variants={fadeInUp}
             >
               {t.hero.title}{" "}
-              <span className="text-clay-400">{t.hero.titleHighlight}</span>
+              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
             </motion.h1>
             <motion.p 
               className="text-xl text-gray-200 mb-8"
@@ -265,7 +180,7 @@ export default function ManufacturingPage() {
                 const Icon = challenge.icon;
                 return (
                   <motion.div key={index} variants={fadeInUp}>
-                    <Card className="card-lift h-full border-ink-900/10 shadow-none">
+                    <Card className="h-full">
                       <CardHeader>
                         <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center mb-4">
                           <Icon className="h-6 w-6 text-destructive" />
@@ -306,7 +221,7 @@ export default function ManufacturingPage() {
             <div className="grid gap-8 md:grid-cols-2">
               {t.solution.features.map((feature, index) => (
                 <motion.div key={index} variants={fadeInUp}>
-                  <Card className="card-lift h-full border-ink-900/10 shadow-none">
+                  <Card className="h-full">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
                         <div>

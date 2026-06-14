@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, ArrowRight, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { faqData, getCategories } from "./faq-data";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
@@ -9,47 +9,27 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function FAQPage() {
   const [openItems, setOpenItems] = useState<number[]>([]);
-  const [language, setLanguage] = useState<"en" | "ar">("en");
 
-  useEffect(() => {
-    // Check for saved language preference
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
-  const categories = getCategories(language);
+  const categories = getCategories();
 
   const toggleItem = (index: number) => {
-    setOpenItems(prev => 
-      prev.includes(index) 
+    setOpenItems(prev =>
+      prev.includes(index)
         ? prev.filter(i => i !== index)
         : [...prev, index]
     );
   };
 
   const content = {
-    en: {
-      title: "Frequently Asked Questions",
-      subtitle: "Everything you need to know about Triya's AI surveillance platform",
-      ctaTitle: "Still have questions?",
-      ctaSubtitle: "Our team is here to help you understand how Triya can transform your security operations.",
-      ctaButton: "Contact Us"
-    },
-    ar: {
-      title: "الأسئلة الشائعة",
-      subtitle: "كل ما تحتاج لمعرفته حول منصة المراقبة بالذكاء الاصطناعي من تريا",
-      ctaTitle: "هل لديك أسئلة أخرى؟",
-      ctaSubtitle: "فريقنا هنا لمساعدتك على فهم كيف يمكن لتريا تحويل عمليات الأمن لديك.",
-      ctaButton: "اتصل بنا"
-    }
+    title: "Frequently Asked Questions",
+    subtitle: "Everything you need to know about Triya's AI surveillance platform",
+    ctaTitle: "Still have questions?",
+    ctaSubtitle: "Our team is here to help you understand how Triya can transform your security operations.",
+    ctaButton: "Contact Us"
   };
 
-  const t = content[language];
-  const ChevronIcon = language === "ar" ? ChevronUp : ChevronDown;
-  const ArrowIcon = language === "ar" ? ArrowLeft : ArrowRight;
+  const t = content;
+  const ChevronIcon = ChevronDown;
 
   return (
     <>
@@ -64,9 +44,6 @@ export default function FAQPage() {
         >
           {/* Header */}
           <motion.div variants={fadeInUp} className="text-center mb-12">
-            <p className="t-eyebrow mb-4">
-              {language === "ar" ? "الدعم" : "Support"}
-            </p>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               {t.title}
             </h1>
@@ -79,16 +56,16 @@ export default function FAQPage() {
           <motion.div variants={fadeInUp} className="space-y-8">
             {categories.map((category) => (
               <div key={category}>
-                <h2 className="text-2xl font-semibold mb-4">
+                <h2 className="text-2xl font-semibold mb-4 text-primary">
                   {category}
                 </h2>
                 <div className="space-y-4">
                   {faqData
-                    .filter(faq => faq.category[language] === category)
+                    .filter(faq => faq.category === category)
                     .map((faq, index) => {
                       const globalIndex = faqData.indexOf(faq);
                       const isOpen = openItems.includes(globalIndex);
-                      
+
                       return (
                         <div
                           key={globalIndex}
@@ -96,12 +73,12 @@ export default function FAQPage() {
                         >
                           <button
                             onClick={() => toggleItem(globalIndex)}
-                            className={`w-full px-6 py-4 text-${language === 'ar' ? 'right' : 'left'} flex items-center justify-between hover:bg-muted/50 transition-colors`}
+                            className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
                           >
-                            <span className="font-medium pr-4">{faq.question[language]}</span>
+                            <span className="font-medium pr-4">{faq.question}</span>
                             <ChevronIcon
                               className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 ${
-                                isOpen ? (language === "ar" ? "" : "rotate-180") : (language === "ar" ? "rotate-180" : "")
+                                isOpen ? "rotate-180" : ""
                               }`}
                             />
                           </button>
@@ -114,8 +91,8 @@ export default function FAQPage() {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                               >
-                                <div className={`px-6 pb-4 text-muted-foreground text-${language === 'ar' ? 'right' : 'left'}`}>
-                                  {faq.answer[language]}
+                                <div className="px-6 pb-4 text-muted-foreground text-left">
+                                  {faq.answer}
                                 </div>
                               </motion.div>
                             )}
@@ -129,7 +106,7 @@ export default function FAQPage() {
           </motion.div>
 
           {/* CTA Section */}
-          <motion.div 
+          <motion.div
             variants={fadeInUp}
             className="mt-16 text-center p-8 bg-muted/30 rounded-lg"
           >
@@ -144,11 +121,7 @@ export default function FAQPage() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               {t.ctaButton}
-              {language === "ar" ? (
-                <ArrowLeft className="h-4 w-4" />
-              ) : (
-                <ArrowRight className="h-4 w-4" />
-              )}
+              <ArrowRight className="h-4 w-4" />
             </a>
           </motion.div>
         </motion.div>

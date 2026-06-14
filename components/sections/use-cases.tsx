@@ -5,15 +5,9 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Factory, ShoppingCart, Building2, Calendar } from "lucide-react";
-import { Reveal } from "@/components/scroll/Reveal";
 
-interface UseCasesProps {
-  language: "en" | "ar";
-}
-
-export function UseCases({ language }: UseCasesProps) {
+export function UseCases() {
   const content = {
-    en: {
       title: "Industry Solutions",
       subtitle: "Tailored AI surveillance for every sector",
       cta: "Learn More",
@@ -51,70 +45,27 @@ export function UseCases({ language }: UseCasesProps) {
           image: "/images/industries/events_1.png"
         }
       ]
-    },
-    ar: {
-      title: "حلول الصناعة",
-      subtitle: "مراقبة بالذكاء الاصطناعي مخصصة لكل قطاع",
-      cta: "اعرف المزيد",
-      industries: [
-        {
-          icon: Factory,
-          slug: "manufacturing",
-          title: "التصنيع",
-          description: "راقب خطوط الإنتاج، وتأكد من سلامة العمال، وامنع سرقة المعدات بمراقبة على مدار الساعة.",
-          features: ["مراقبة الامتثال للسلامة", "منع السرقة", "مراقبة الجودة", "إنتاجية العمال"],
-          image: "/images/industries/manufacturing_1.png"
-        },
-        {
-          icon: ShoppingCart,
-          slug: "retail",
-          title: "التجزئة",
-          description: "حسّن تجربة العملاء، وامنع السرقة، وحسّن عمليات المتجر بالمراقبة الذكية.",
-          features: ["منع الخسائر", "تحليلات العملاء", "إدارة الطوابير", "خرائط الحرارة"],
-          image: "/images/industries/retail_1.png"
-        },
-        {
-          icon: Building2,
-          slug: "smart-cities",
-          title: "المدن الذكية",
-          description: "أنشئ بيئات حضرية أكثر أماناً مع مراقبة حركة المرور وإدارة الحشود وكشف الحوادث.",
-          features: ["تحليل المرور", "السيطرة على الحشود", "الاستجابة للحوادث", "السلامة العامة"],
-          image: "/images/industries/smart-cities_1.png"
-        },
-        {
-          icon: Calendar,
-          slug: "events",
-          title: "إدارة الفعاليات",
-          description: "ضمان سلامة الحضور وتحسين تدفق الحشود وتعزيز تجارب الأحداث بالمراقبة الذكية.",
-          features: ["تحليلات الطوابير الفورية", "حماية ممر كبار الشخصيات", "تحسين التدفق الاستراتيجي", "تحليلات قابلة للتنفيذ"],
-          image: "/images/industries/events_1.png"
-        }
-      ]
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="py-24 bg-muted/50">
       <div className="container">
-        <Reveal className="text-center mb-16">
-          <p className="t-eyebrow mb-3">
-            {language === "ar" ? "القطاعات" : "Industries"}
-          </p>
+        <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
             {t.title}
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t.subtitle}
           </p>
-        </Reveal>
+        </div>
 
-        <Reveal stagger className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2">
           {t.industries.map((industry, index) => {
             const Icon = industry.icon;
             return (
-              <Card key={index} className="card-lift overflow-hidden group">
+              <Card key={index} className="overflow-hidden group hover:shadow-xl transition-all duration-300">
                 <div className="grid md:grid-cols-2 h-full">
                   <div className="relative h-64 md:h-auto">
                     <Image
@@ -158,7 +109,7 @@ export function UseCases({ language }: UseCasesProps) {
               </Card>
             );
           })}
-        </Reveal>
+        </div>
       </div>
     </section>
   );

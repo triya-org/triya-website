@@ -3,15 +3,9 @@
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Camera, Cpu, Brain, Monitor } from "lucide-react";
-import { Reveal } from "@/components/scroll/Reveal";
 
-interface HowItWorksProps {
-  language: "en" | "ar";
-}
-
-export function HowItWorks({ language }: HowItWorksProps) {
+export function HowItWorks() {
   const content = {
-    en: {
       title: "How It Works",
       subtitle: "Triya AI turns any CCTV camera into an on-prem, natural language conversation system, security & insight engine",
       steps: [
@@ -40,56 +34,22 @@ export function HowItWorks({ language }: HowItWorksProps) {
           number: "04"
         }
       ]
-    },
-    ar: {
-      title: "كيف يعمل",
-      subtitle: "Triya AI تحول أي كاميرا CCTV إلى نظام محادثة باللغة الطبيعية محلي، ومحرك أمان ورؤى",
-      steps: [
-        {
-          icon: Camera,
-          title: "تغذية الكاميرا",
-          description: "ربط الكاميرات الموجودة من أي مورد. لا حاجة لاستبدال البنية التحتية الحالية للكاميرات.",
-          number: "01"
-        },
-        {
-          icon: Cpu,
-          title: "صندوق Triya AI الطرفي",
-          description: "نشر صندوق الحوسبة الطرفية في موقعك للمعالجة المحلية مع السيادة الكاملة على البيانات.",
-          number: "02"
-        },
-        {
-          icon: Brain,
-          title: "وكلاء Triya AI",
-          description: "وكلاء ذكاء اصطناعي متقدمون يعالجون موجزات الفيديو مع دعم كامل للغة العربية وقدرات متعددة اللغات.",
-          number: "03"
-        },
-        {
-          icon: Monitor,
-          title: "استخدام TriyaAI",
-          description: "التكامل السلس مع مركز القيادة الموجود لديك للمراقبة والرؤى في الوقت الفعلي.",
-          number: "04"
-        }
-      ]
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="py-24 bg-muted/30">
       <div className="container">
-        <Reveal className="text-center mb-16">
-          <p className="t-eyebrow mb-3">
-            {language === "ar" ? "البنية" : "The System"}
-          </p>
+        <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-4">{t.title}</h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             {t.subtitle}
           </p>
-        </Reveal>
+        </div>
 
         {/* Diagram */}
-        <Reveal className="mb-16 flex justify-center">
+        <div className="mb-16 flex justify-center">
           <Image
             src="/how_it_works.png"
             alt="How Triya AI Works"
@@ -97,9 +57,9 @@ export function HowItWorks({ language }: HowItWorksProps) {
             height={400}
             className="w-full max-w-5xl h-auto"
           />
-        </Reveal>
+        </div>
 
-        <Reveal stagger className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {t.steps.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -122,7 +82,7 @@ export function HowItWorks({ language }: HowItWorksProps) {
               </div>
             );
           })}
-        </Reveal>
+        </div>
       </div>
     </section>
   );

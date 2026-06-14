@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Calendar, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Tag } from 'lucide-react';
 import { ShareButton } from '../components/share-button';
 import { ContentRenderer } from '../components/content-renderer';
 import { BlogErrorBoundary } from '../components/error-boundary';
@@ -12,37 +11,17 @@ interface BlogArticleClientProps {
 }
 
 export function BlogArticleClient({ article }: BlogArticleClientProps) {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
-      backToBlog: "Back to Blog",
-      by: "By",
-      readyToTransform: "Ready to Transform Your Surveillance?",
-      readyDescription: "Experience the power of edge AI surveillance with 85% cost savings. Get a personalized demo for your business today.",
-      requestDemo: "Request Demo",
-      viewFaq: "View FAQ"
-    },
-    ar: {
-      backToBlog: "العودة إلى المدونة",
-      by: "بواسطة",
-      readyToTransform: "هل أنت مستعد لتحويل نظام المراقبة الخاص بك؟",
-      readyDescription: "اختبر قوة المراقبة بالذكاء الاصطناعي الطرفي مع توفير 85% من التكاليف. احصل على عرض توضيحي مخصص لعملك اليوم.",
-      requestDemo: "طلب عرض توضيحي",
-      viewFaq: "عرض الأسئلة الشائعة"
-    }
+    backToBlog: "Back to Blog",
+    by: "By",
+    readyToTransform: "Ready to Transform Your Surveillance?",
+    readyDescription: "Experience the power of edge AI surveillance with 85% cost savings. Get a personalized demo for your business today.",
+    requestDemo: "Request Demo",
+    viewFaq: "View FAQ"
   };
 
-  const t = content[language];
-  const BackArrow = language === "ar" ? ArrowRight : ArrowLeft;
+  const t = content;
+  const BackArrow = ArrowLeft;
 
   return (
     <article className="min-h-screen py-12">
@@ -60,23 +39,23 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
         <header className="max-w-4xl mx-auto mb-12">
           <div className="flex items-center gap-2 flex-wrap mb-4">
             <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded">
-              {article.category[language]}
+              {article.category.en}
             </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-            {article.title[language]}
+            {article.title.en}
           </h1>
 
           <p className="text-xl text-muted-foreground mb-6">
-            {article.excerpt[language]}
+            {article.excerpt.en}
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                {new Date(article.date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { 
+                {new Date(article.date).toLocaleDateString('en-US', {
                   month: 'long', 
                   day: 'numeric', 
                   year: 'numeric' 
@@ -84,7 +63,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {article.readTime[language]}
+                {article.readTime.en}
               </span>
               <span>{t.by} {article.author}</span>
             </div>
@@ -97,7 +76,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
         <div className="max-w-4xl mx-auto">
           <div className="prose prose-lg dark:prose-invert max-w-none">
             <BlogErrorBoundary>
-              <ContentRenderer content={article.content[language]} />
+              <ContentRenderer content={article.content.en} />
             </BlogErrorBoundary>
           </div>
 
@@ -105,7 +84,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
           <div className="mt-12 pt-6 border-t">
             <div className="flex items-center gap-2 flex-wrap">
               <Tag className="h-4 w-4 text-muted-foreground" />
-              {article.tags[language].map((tag: string) => (
+              {article.tags.en.map((tag: string) => (
                 <Link
                   key={tag}
                   href={`/blog/?tag=${encodeURIComponent(tag)}`}

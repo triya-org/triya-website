@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,18 +22,7 @@ import {
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function EventsPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
       hero: {
         badge: "Event Management",
         title: "AI-Powered Security for",
@@ -127,104 +115,9 @@ export default function EventsPage() {
         description: "See how Triya.ai can transform your event security and analytics",
         primaryButton: "Request Demo",
       }
-    },
-    ar: {
-      hero: {
-        badge: "إدارة الفعاليات",
-        title: "الأمن المدعوم بالذكاء الاصطناعي",
-        titleHighlight: "للأحداث الكبرى",
-        subtitle: "ضمان سلامة الحضور وتحسين تدفق الحشود وتعزيز تجارب الأحداث بالمراقبة الذكية."
-      },
-      caseStudy: {
-        badge: "دراسة حالة",
-        title: "اصنع في الإمارات 2025",
-        subtitle: "معرض أبوظبي الرائد للتصنيع والتكنولوجيا",
-        stats: [
-          { value: "20%", label: "تقليل وقت الانتظار" },
-          { value: "صفر", label: "تأخير كبار الشخصيات" },
-          { value: "30%", label: "زيادة رؤية الرعاة" },
-          { value: "300+", label: "حماية كبار الشخصيات" }
-        ],
-        challenges: {
-          title: "تحديات الحدث",
-          items: [
-            "إدارة أكثر من 10,000 حاضر عبر قاعات عرض متعددة",
-            "ضمان حركة سلسة لكبار الشخصيات عبر ممرات مخصصة",
-            "تحسين تدفق الزوار لزيادة مشاركة الرعاة",
-            "مراقبة كثافة الحشود في الوقت الفعلي للسلامة"
-          ]
-        },
-        solution: {
-          title: "حل Triya.ai",
-          items: [
-            {
-              title: "تحليلات الطوابير في الوقت الفعلي",
-              description: "مراقبة نقاط الدخول ومكاتب التسجيل، مما قلل أوقات الانتظار بنسبة 20% من خلال التخصيص الديناميكي للموظفين"
-            },
-            {
-              title: "حماية ممر كبار الشخصيات",
-              description: "ضمان عدم التأخير لأكثر من 300 ضيف من كبار الشخصيات مع مراقبة المسار المخصص والتنبيهات الفورية"
-            },
-            {
-              title: "تحسين التدفق الاستراتيجي",
-              description: "زيادة رؤية أكشاك الرعاة بنسبة 30% من خلال توجيه الزوار الذكي"
-            },
-            {
-              title: "تحليلات قابلة للتنفيذ",
-              description: "توفير رؤى في الوقت الفعلي تمكن من إعادة توازن حركة المرور بنسبة 5-10% طوال الحدث"
-            }
-          ]
-        }
-      },
-      features: {
-        title: "ميزات أمن الأحداث",
-        items: [
-          {
-            icon: Users,
-            title: "مراقبة كثافة الحشود",
-            description: "تحليل في الوقت الفعلي لكثافة الحشود لمنع المواقف الخطرة",
-            stats: "تنبيهات بالذكاء الاصطناعي"
-          },
-          {
-            icon: Shield,
-            title: "حماية كبار الشخصيات",
-            description: "مراقبة مخصصة لمناطق كبار الشخصيات وممرات الحركة",
-            stats: "صفر حوادث"
-          },
-          {
-            icon: Clock,
-            title: "إدارة الطوابير",
-            description: "مراقبة وتحسين نقاط الدخول والتسجيل والمناطق الرئيسية",
-            stats: "دخول أسرع 50%"
-          },
-          {
-            icon: BarChart3,
-            title: "تحليلات الأحداث",
-            description: "رؤى شاملة حول تدفق الحضور والمشاركة",
-            stats: "لوحة معلومات فورية"
-          }
-        ]
-      },
-      benefits: {
-        title: "لماذا تختار Triya.ai للأحداث",
-        items: [
-          "ضمان سلامة الحضور مع مراقبة الحشود في الوقت الفعلي",
-          "تحسين تدفق الزوار وتقليل الازدحام",
-          "حماية كبار الشخصيات بمراقبة مخصصة",
-          "زيادة عائد استثمار الرعاة من خلال رؤى التوضع الاستراتيجي",
-          "دعم كامل باللغتين العربية والإنجليزية",
-          "المعالجة المحلية تضمن خصوصية البيانات"
-        ]
-      },
-      cta: {
-        title: "أمّن حدثك القادم",
-        description: "اكتشف كيف يمكن لـ Triya.ai تحويل أمن وتحليلات حدثك",
-        primaryButton: "طلب عرض توضيحي",
-      }
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <>
@@ -253,15 +146,18 @@ export default function EventsPage() {
             variants={staggerChildren}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.p variants={fadeInUp} className="t-eyebrow mb-4 !text-clay-300">
-              {t.hero.badge}
-            </motion.p>
+            <motion.div variants={fadeInUp}>
+              <Badge variant="secondary" className="mb-4">
+                <Calendar className="h-3 w-3 mr-1" />
+                {t.hero.badge}
+              </Badge>
+            </motion.div>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white"
               variants={fadeInUp}
             >
               {t.hero.title}{" "}
-              <span className="text-clay-400">{t.hero.titleHighlight}</span>
+              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
             </motion.h1>
             <motion.p 
               className="text-xl text-gray-200 mb-8"
@@ -324,7 +220,7 @@ export default function EventsPage() {
             {/* Challenges & Solutions */}
             <div className="grid gap-8 lg:grid-cols-2">
               <motion.div variants={fadeInUp}>
-                <Card className="card-lift h-full border-ink-900/10 shadow-none">
+                <Card className="h-full">
                   <CardHeader>
                     <CardTitle className="text-2xl flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-destructive" />
@@ -345,7 +241,7 @@ export default function EventsPage() {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className="card-lift h-full border-ink-900/10 shadow-none">
+                <Card className="h-full">
                   <CardHeader>
                     <CardTitle className="text-2xl flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary" />
@@ -387,7 +283,7 @@ export default function EventsPage() {
                 const Icon = feature.icon;
                 return (
                   <motion.div key={index} variants={fadeInUp}>
-                    <Card className="card-lift h-full border-ink-900/10 shadow-none">
+                    <Card className="h-full">
                       <CardHeader>
                         <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                           <Icon className="h-6 w-6 text-primary" />

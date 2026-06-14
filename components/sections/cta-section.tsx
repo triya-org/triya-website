@@ -3,16 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
-import { Reveal } from "@/components/scroll/Reveal";
-import { CountUp } from "@/components/scroll/CountUp";
 
-interface CTASectionProps {
-  language: "en" | "ar";
-}
-
-export function CTASection({ language }: CTASectionProps) {
+export function CTASection() {
   const content = {
-    en: {
       title: "Ready to transform your security?",
       subtitle: "Join leading organizations using Triya.ai for intelligent surveillance",
       cta1: "Schedule Demo",
@@ -25,24 +18,9 @@ export function CTASection({ language }: CTASectionProps) {
       stat3Label: "Smart Alerts",
       stat4: "360°",
       stat4Label: "Business Insights"
-    },
-    ar: {
-      title: "مستعد لتحويل أمانك؟",
-      subtitle: "انضم إلى المؤسسات الرائدة التي تستخدم Triya.ai للمراقبة الذكية",
-      cta1: "جدولة عرض توضيحي",
-      cta2: "اتصل بالمبيعات",
-      stat1: "85%",
-      stat1Label: "تخفيض التكلفة",
-      stat2: "24/7",
-      stat2Label: "مراقبة وكلاء الذكاء الاصطناعي",
-      stat3: "فوري",
-      stat3Label: "تنبيهات ذكية",
-      stat4: "360°",
-      stat4Label: "رؤى الأعمال"
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -51,7 +29,7 @@ export function CTASection({ language }: CTASectionProps) {
       <div className="absolute inset-0 bg-grid-slate-200/[0.03] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
       
       <div className="container relative z-10">
-        <Reveal className="mx-auto max-w-4xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             {t.title}
           </h2>
@@ -62,19 +40,19 @@ export function CTASection({ language }: CTASectionProps) {
           {/* Stats */}
           <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat1} /></div>
+              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat1}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat1Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat2} /></div>
+              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat2}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat2Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat3} /></div>
+              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat3}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat3Label}</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary md:text-4xl"><CountUp value={t.stat4} /></div>
+              <div className="text-3xl font-bold text-primary md:text-4xl">{t.stat4}</div>
               <div className="mt-1 text-sm text-muted-foreground">{t.stat4Label}</div>
             </div>
           </div>
@@ -94,7 +72,7 @@ export function CTASection({ language }: CTASectionProps) {
               </Link>
             </Button>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

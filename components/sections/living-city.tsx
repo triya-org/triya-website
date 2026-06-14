@@ -15,9 +15,7 @@ const CityCanvas = dynamic(
   { ssr: false },
 );
 
-interface LivingCityProps {
-  language: "en" | "ar";
-}
+// English-only (site went English-only on main — bilingual UI removed)
 
 interface Beat {
   eyebrow: string;
@@ -171,7 +169,7 @@ const CRUMBS: Record<"en" | "ar", string[]> = {
  * Fallback (mobile / reduced-motion / no-WebGL): BOTH content decks —
  * the four product beats AND the classic UseCases cards (spec §5.4).
  */
-export function LivingCity({ language }: LivingCityProps) {
+export function LivingCity() {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const productCardRef = useRef<HTMLDivElement>(null);
@@ -185,10 +183,10 @@ export function LivingCity({ language }: LivingCityProps) {
   const coveredRef = useRef(false);
   const canRender3D = useCanRender3D();
   const reduced = usePrefersReducedMotion();
-  const beats = BEATS[language];
-  const parks = PARKS[language];
-  const crumbs = CRUMBS[language];
-  const caption = EDGE_CAPTION[language];
+  const beats = BEATS.en;
+  const parks = PARKS.en;
+  const crumbs = CRUMBS.en;
+  const caption = EDGE_CAPTION.en;
 
   // pause the 3D render loop ONLY when the section's whole scroll range is
   // off-screen — keeps the canvas rendering through the entry/exit develop
@@ -315,7 +313,7 @@ export function LivingCity({ language }: LivingCityProps) {
     }, rootRef);
 
     return () => ctx.revert();
-  }, [canRender3D, reduced, language]);
+  }, [canRender3D, reduced]);
 
   /* ---------- fallback: BOTH content decks, no 3D (spec §5.4) ---------- */
   if (!canRender3D || reduced) {
@@ -333,11 +331,7 @@ export function LivingCity({ language }: LivingCityProps) {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/images/product/triya-ai-chat.png"
-                      alt={
-                        language === "ar"
-                          ? "مساعد تريا يجيب عن سؤال حول الكاميرات"
-                          : "The Triya assistant answering a question about cameras"
-                      }
+                      alt="The Triya assistant answering a question about cameras"
                       className="block w-full"
                     />
                   </div>
@@ -346,7 +340,7 @@ export function LivingCity({ language }: LivingCityProps) {
             ))}
           </div>
         </section>
-        <UseCases language={language} />
+        <UseCases />
       </>
     );
   }
@@ -366,7 +360,7 @@ export function LivingCity({ language }: LivingCityProps) {
             progressRef={progressRef}
             entryRef={entryRef}
             coveredRef={coveredRef}
-            dir={language === "ar" ? -1 : 1}
+            dir={1}
           />
         </div>
 
@@ -399,7 +393,7 @@ export function LivingCity({ language }: LivingCityProps) {
               it sat as light text over the dark night city (low-contrast seam) */}
           <p className="mt-3 text-center">
             <span className="t-caption inline-block rounded-full bg-cream-50/90 px-4 py-1.5 text-ink-700 shadow-sm">
-              {language === "ar" ? "تريا — المساعد الفعلي" : "Triya — the actual assistant"}
+              Triya — the actual assistant
             </span>
           </p>
         </div>
@@ -445,7 +439,7 @@ export function LivingCity({ language }: LivingCityProps) {
                       href={`/use-cases/${park.slug}/`}
                       className="pointer-events-auto inline-flex items-center gap-2 text-sm font-medium text-clay-600 hover:text-clay-500"
                     >
-                      {language === "ar" ? "اعرف المزيد" : "Learn more"}
+                      Learn more
                       <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                     </Link>
                   </div>

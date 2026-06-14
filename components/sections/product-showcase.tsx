@@ -7,19 +7,13 @@ import {
   DollarSign,
   Search,
   Unlock,
-  LineChart,
-  Building2
+  LineChart
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 
-interface ProductShowcaseProps {
-  language: "en" | "ar";
-}
-
-export function ProductShowcase({ language }: ProductShowcaseProps) {
+export function ProductShowcase() {
   const content = {
-    en: {
       title: "Our Features",
       subtitle: "Cutting-edge technology designed for modern surveillance needs",
       features: [
@@ -54,58 +48,15 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           badge: "Data-Driven"
         },
         {
-          icon: Building2,
+          icon: Shield,
           title: "Multi-Industry Support",
           description: "Tailored solutions for manufacturing, retail, healthcare, and smart cities",
           badge: "Versatile"
         }
       ]
-    },
-    ar: {
-      title: "ميزاتنا",
-      subtitle: "تقنية متطورة مصممة لاحتياجات المراقبة الحديثة",
-      features: [
-        {
-          icon: DollarSign,
-          title: "توفير 85% من التكاليف",
-          description: "تحديث الكاميرات الموجودة؛ أرخص بكثير من الاستبدال",
-          badge: "فعال من حيث التكلفة"
-        },
-        {
-          icon: Shield,
-          title: "الذكاء الاصطناعي السيادي",
-          description: "الاستدلال الطرفي، عدم الاعتماد على السحابة، التحكم في البيانات المحلية",
-          badge: "آمن"
-        },
-        {
-          icon: Search,
-          title: "تحقيقات أسرع بنسبة 90%",
-          description: "تحدث مع الذكاء الاصطناعي بلغتك (أكثر من 30 لغة مدعومة) لتحقيقات أسرع",
-          badge: "فعال"
-        },
-        {
-          icon: Unlock,
-          title: "لا قيود من الموردين",
-          description: "متوافق مع جميع الكاميرات، يعمل مع أي كاميرات IP موجودة",
-          badge: "مرن"
-        },
-        {
-          icon: LineChart,
-          title: "تحليلات متقدمة",
-          description: "لوحات معلومات شاملة مع رؤى في الوقت الفعلي وتحليل تاريخي",
-          badge: "قائم على البيانات"
-        },
-        {
-          icon: Building2,
-          title: "دعم متعدد الصناعات",
-          description: "حلول مخصصة للتصنيع والتجزئة والرعاية الصحية والمدن الذكية",
-          badge: "متعدد الاستخدامات"
-        }
-      ]
-    }
   };
 
-  const t = content[language];
+  const t = content;
 
   return (
     <section className="py-24 bg-background">
@@ -117,9 +68,6 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeInUp}
         >
-          <p className="t-eyebrow mb-3">
-            {language === "ar" ? "لماذا تريا" : "Why Triya"}
-          </p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
             {t.title}
           </h2>
@@ -139,16 +87,24 @@ export function ProductShowcase({ language }: ProductShowcaseProps) {
             const Icon = feature.icon;
             return (
               <motion.div key={index} variants={fadeInUp}>
-                {/* editorial panel: 1px border on paper, no shadow, bare clay
-                    stroke icon, no redundant badge (design-system: borders
-                    over elevation, clay used sparingly) */}
-                <div className="card-lift group h-full rounded-lg border border-ink-900/10 bg-cream-100/60 p-6 hover:border-clay-400/60">
-                  <Icon className="mb-5 h-5 w-5 text-clay-500" strokeWidth={1.75} />
-                  <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
+                <Card className="group hover:shadow-lg transition-shadow duration-300 h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {feature.badge}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
               </motion.div>
             );
           })}

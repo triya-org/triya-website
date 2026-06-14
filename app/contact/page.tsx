@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -20,118 +20,59 @@ import {
 } from "lucide-react";
 
 export default function ContactPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { trackContactForm } = useAnalytics();
 
-  useEffect(() => {
-    const savedLang = localStorage.getItem("language") as "en" | "ar";
-    if (savedLang) {
-      setLanguage(savedLang);
-      document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
-    }
-  }, []);
-
   const content = {
-    en: {
-      hero: {
-        title: "Let's Start a",
-        titleHighlight: "Conversation",
-        subtitle: "Ready to transform your security infrastructure? Our team is here to help you explore how Triya.ai can meet your specific needs."
-      },
-      form: {
-        title: "Send us a message",
-        description: "",
-        fields: {
-          name: "Full Name",
-          email: "Email Address",
-          company: "Company Name",
-          phone: "Phone Number",
-          message: "Message",
-          messagePlaceholder: "Tell us about your security needs..."
-        },
-        submit: "Send Message"
-      },
-      contact: {
-        title: "Get in touch",
-        methods: [
-          {
-            icon: Mail,
-            title: "Email",
-            description: "For general inquiries",
-            detail: "founders@triya.ai"
-          },
-          {
-            icon: Phone,
-            title: "Phone",
-            description: "",
-            detail: "+971-58-680-1200"
-          },
-          {
-            icon: Building,
-            title: "Registered",
-            description: "Abu Dhabi Global Market",
-            detail: "Al Maryah Island, UAE"
-          }
-        ]
-      },
-      cta: {
-        title: "Ready for a Demo?",
-        description: "See Triya.ai in action with a personalized demonstration",
-        button: "Schedule Demo"
-      }
+    hero: {
+      title: "Let's Start a",
+      titleHighlight: "Conversation",
+      subtitle: "Ready to transform your security infrastructure? Our team is here to help you explore how Triya.ai can meet your specific needs."
     },
-    ar: {
-      hero: {
-        title: "لنبدأ",
-        titleHighlight: "محادثة",
-        subtitle: "هل أنت مستعد لتحويل البنية التحتية الأمنية الخاصة بك؟ فريقنا هنا لمساعدتك في استكشاف كيف يمكن لـ Triya.ai تلبية احتياجاتك المحددة."
+    form: {
+      title: "Send us a message",
+      description: "",
+      fields: {
+        name: "Full Name",
+        email: "Email Address",
+        company: "Company Name",
+        phone: "Phone Number",
+        message: "Message",
+        messagePlaceholder: "Tell us about your security needs..."
       },
-      form: {
-        title: "أرسل لنا رسالة",
-        description: "",
-        fields: {
-          name: "الاسم الكامل",
-          email: "عنوان البريد الإلكتروني",
-          company: "اسم الشركة",
-          phone: "رقم الهاتف",
-          message: "الرسالة",
-          messagePlaceholder: "أخبرنا عن احتياجاتك الأمنية..."
+      submit: "Send Message"
+    },
+    contact: {
+      title: "Get in touch",
+      methods: [
+        {
+          icon: Mail,
+          title: "Email",
+          description: "For general inquiries",
+          detail: "founders@triya.ai"
         },
-        submit: "إرسال الرسالة"
-      },
-      contact: {
-        title: "تواصل معنا",
-        methods: [
-          {
-            icon: Mail,
-            title: "البريد الإلكتروني",
-            description: "للاستفسارات العامة",
-            detail: "founders@triya.ai"
-          },
-          {
-            icon: Phone,
-            title: "الهاتف",
-            description: "",
-            detail: "+971-58-680-1200"
-          },
-          {
-            icon: Building,
-            title: "مسجل",
-            description: "سوق أبوظبي العالمي",
-            detail: "جزيرة المارية، الإمارات"
-          }
-        ]
-      },
-      cta: {
-        title: "جاهز لعرض توضيحي؟",
-        description: "شاهد Triya.ai في العمل مع عرض توضيحي شخصي",
-        button: "جدولة عرض توضيحي"
-      }
+        {
+          icon: Phone,
+          title: "Phone",
+          description: "",
+          detail: "+971-58-680-1200"
+        },
+        {
+          icon: Building,
+          title: "Registered",
+          description: "Abu Dhabi Global Market",
+          detail: "Al Maryah Island, UAE"
+        }
+      ]
+    },
+    cta: {
+      title: "Ready for a Demo?",
+      description: "See Triya.ai in action with a personalized demonstration",
+      button: "Schedule Demo"
     }
   };
 
-  const t = content[language];
+  const t = content;
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -200,9 +141,6 @@ export default function ContactPage() {
             variants={staggerChildren}
             className="text-center max-w-4xl mx-auto"
           >
-            <motion.p variants={fadeInUp} className="t-eyebrow mb-4">
-              {language === "ar" ? "تواصل معنا" : "Contact"}
-            </motion.p>
             <motion.h1 
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
               variants={fadeInUp}
