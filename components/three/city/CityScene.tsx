@@ -2575,6 +2575,19 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
   const cityKeyRef = useRef<THREE.DirectionalLight>(null);
   const actorMeshRef = useRef<THREE.InstancedMesh>(null);
   const hatMeshRef = useRef<THREE.InstancedMesh>(null);
+
+  /* "bean person" — a body capsule + a distinct ball head, merged into one
+     instanced geometry (still ONE draw call). Same -0.31 foot / ~+0.33 crown
+     envelope as the old plain capsule, so placement + hat alignment are
+     unchanged; the head just makes every actor read as a little human. */
+  const personGeo = useMemo(() => {
+    const body = new THREE.CapsuleGeometry(0.11, 0.26, 4, 10);
+    body.translate(0, -0.07, 0); // feet at -0.31
+    const head = new THREE.SphereGeometry(0.1, 10, 8);
+    head.translate(0, 0.235, 0); // ball on the shoulders, slight neck overlap
+    return mergeSafe([body, head])!;
+  }, []);
+  useEffect(() => () => personGeo.dispose(), [personGeo]);
   const beatDotRef = useRef<THREE.Mesh>(null);
   const tillRef = useRef<THREE.Mesh>(null);
   const gateBarRef = useRef<THREE.Group>(null);
@@ -2639,8 +2652,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     for (let k = 0; k < 6; k++)
       list.push({
         bx: -43 + k * 2.5,
-        bz: -7.3,
-        amp: 1.6,
+        // 3 parallel lanes (±0.75 in z) so workers never share a track, and
+        // amp 1.0 < the 2.5 x-spacing so same-lane pacers (k and k+3, 7.5
+        // apart) never overlap → no two beans ever collide (founder fix)
+        bz: -7.3 + ((k % 3) - 1) * 0.75,
+        amp: 1.0,
         axis: 0,
         phase: arand() * 10,
         speed: 0.45 + arand() * 0.25,
@@ -4600,7 +4616,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         args={[undefined, undefined, ACTORS.length]}
         frustumCulled={false}
       >
-        <capsuleGeometry args={[0.14, 0.34, 4, 8]} />
+        <primitive object={personGeo} attach="geometry" />
         <meshStandardMaterial roughness={0.85} />
       </instancedMesh>
       <instancedMesh
