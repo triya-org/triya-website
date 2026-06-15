@@ -4,11 +4,11 @@ export function OrganizationSchema() {
     "@type": "Organization",
     "@id": "https://www.triya.ai/#organization",
     "name": "Triya",
-    "legalName": "Triya Technologies",
+    "legalName": "TRIYA AI LIMITED",
     "url": "https://www.triya.ai",
     "logo": "https://www.triya.ai/logo.png",
     "description": "Edge AI surveillance platform delivering 85% cost savings with on-premise video analytics and Arabic-first capabilities",
-    "foundingDate": "2023",
+    "foundingDate": "2025-12-08",
     "founder": {
       "@type": "Person",
       "name": "Triya Founding Team"
@@ -68,7 +68,7 @@ export function ProductSchema() {
     },
     "manufacturer": {
       "@type": "Organization",
-      "name": "Triya Technologies"
+      "name": "TRIYA AI LIMITED"
     },
     "offers": {
       "@type": "AggregateOffer",
@@ -98,12 +98,6 @@ export function ProductSchema() {
         }
       ]
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "reviewCount": "50"
-    },
-    "award": "ADGM Innovation Award 2024",
     "category": "Enterprise Security Software",
     "isRelatedTo": [
       {
@@ -190,7 +184,7 @@ export function LocalBusinessSchema() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": "https://www.triya.ai/#localbusiness",
-    "name": "Triya Technologies",
+    "name": "TRIYA AI LIMITED",
     "image": "https://www.triya.ai/og-image.png",
     "url": "https://www.triya.ai",
     "telephone": "+971-58-680-1200",

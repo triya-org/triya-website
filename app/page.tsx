@@ -21,14 +21,11 @@ import { motion } from "framer-motion";
 import { fadeInUp, fadeIn, staggerChildren } from "@/lib/motion-variants";
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const { trackRequestDemo, trackWatchVideo } = useAnalytics();
 
   useEffect(() => {
-    setMounted(true);
-
     // Lazy load video when user is likely to see it
     const loadVideo = () => {
       setVideoLoaded(true);
@@ -42,9 +39,9 @@ export default function Home() {
 
   const content = {
     hero: {
-      title: "UAE's Leading",
-      titleHighlight: "Edge AI Surveillance Platform",
-      subtitle: "Transform any camera into an intelligent security system. 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
+      title: "Turn Any CCTV Into an",
+      titleHighlight: "AI Video Analytics Platform",
+      subtitle: "Triya turns your existing CCTV cameras into a real-time AI video analytics system — detecting incidents on-premise with 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
       cta1: "Request Demo",
       cta2: "Watch Video"
     },
@@ -52,10 +49,6 @@ export default function Home() {
   };
 
   const t = content;
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col">

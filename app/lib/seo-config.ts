@@ -38,8 +38,8 @@ export const siteConfig = {
 
 export const pageMetadata: Record<string, Metadata> = {
   home: {
-    title: 'Triya | UAE\'s Leading AI Surveillance Platform - Dubai, Abu Dhabi',
-    description: 'UAE\'s leading edge AI surveillance with 85% cost savings. Serving Dubai, Abu Dhabi, Riyadh. On-premise processing, Arabic support, local installation within 24 hours.',
+    title: 'AI Video Analytics & CCTV Intelligence Platform | Triya',
+    description: 'AI video analytics and CCTV intelligence from Triya — turn any existing camera into a real-time threat-detection system with on-premise edge processing and 85% cost savings. Serving Dubai, Abu Dhabi & the GCC.',
     keywords: ['Triya', 'AI surveillance Dubai', 'surveillance system Abu Dhabi', 'UAE security cameras', 'GCC surveillance', 'edge AI platform', 'Arabic surveillance'],
     openGraph: {
       title: 'Triya - Revolutionary Edge AI Surveillance Platform',
@@ -58,8 +58,8 @@ export const pageMetadata: Record<string, Metadata> = {
     },
   },
   about: {
-    title: 'About Triya | Leading Edge AI Surveillance Company in MENA',
-    description: 'Triya is revolutionizing surveillance with edge AI technology. Based in Abu Dhabi, we deliver 85% cost savings with on-premise processing and Arabic-first capabilities.',
+    title: 'About Triya | AI Video Analytics Company in Abu Dhabi & GCC',
+    description: 'Triya is an AI video analytics company based in Abu Dhabi, turning existing CCTV into intelligent, on-premise security with 85% cost savings across the GCC.',
     keywords: ['about Triya', 'AI surveillance company', 'ADGM startup', 'Abu Dhabi technology', 'edge AI platform', 'surveillance innovation'],
     openGraph: {
       title: 'About Triya - Pioneering Edge AI Surveillance',
@@ -86,8 +86,8 @@ export const pageMetadata: Record<string, Metadata> = {
     },
   },
   smartCities: {
-    title: 'Smart City Surveillance | AI Traffic & Crowd Monitoring - Triya',
-    description: 'Transform urban security with Triya\'s smart city surveillance. Real-time traffic monitoring, crowd analytics, incident detection with 85% cost savings.',
+    title: 'Smart City Video Analytics | AI CCTV Traffic & Crowd - Triya',
+    description: 'Smart city video analytics from Triya — AI CCTV for real-time traffic monitoring, crowd analytics and incident detection, processed on-premise with 85% cost savings.',
     keywords: ['smart city surveillance', 'urban AI security', 'traffic monitoring AI', 'crowd analytics', 'city surveillance system', 'municipal security AI'],
     openGraph: {
       title: 'Smart City AI Surveillance Solutions by Triya',
@@ -100,8 +100,8 @@ export const pageMetadata: Record<string, Metadata> = {
     },
   },
   retail: {
-    title: 'Retail Security AI | Loss Prevention & Customer Analytics - Triya',
-    description: 'Enhance retail security with Triya\'s AI surveillance. Real-time theft detection, customer behavior analytics, queue management with 85% cost savings.',
+    title: 'Retail Video Analytics | AI CCTV Loss Prevention - Triya',
+    description: 'Retail video analytics from Triya — AI CCTV for loss prevention, theft detection and customer analytics on your existing cameras, with 85% cost savings.',
     keywords: ['retail security AI', 'loss prevention system', 'theft detection AI', 'customer analytics', 'retail surveillance', 'store security AI'],
     openGraph: {
       title: 'Retail AI Surveillance Solutions by Triya',
@@ -114,8 +114,8 @@ export const pageMetadata: Record<string, Metadata> = {
     },
   },
   manufacturing: {
-    title: 'Manufacturing Surveillance | Industrial Safety AI Monitoring - Triya',
-    description: 'Ensure workplace safety with Triya\'s manufacturing AI surveillance. PPE compliance, hazard detection, operational efficiency with 85% cost savings.',
+    title: 'Manufacturing Video Analytics | AI CCTV Safety Monitoring - Triya',
+    description: 'Manufacturing video analytics from Triya — AI CCTV for PPE compliance, hazard detection and workplace safety, processed on-premise with 85% cost savings.',
     keywords: ['manufacturing surveillance', 'industrial safety AI', 'PPE detection', 'workplace safety monitoring', 'factory surveillance', 'industrial security AI'],
     openGraph: {
       title: 'Manufacturing AI Surveillance Solutions by Triya',
@@ -128,8 +128,8 @@ export const pageMetadata: Record<string, Metadata> = {
     },
   },
   events: {
-    title: 'Event Security AI | Crowd Control & VIP Protection - Triya',
-    description: 'Secure events with Triya\'s AI surveillance. Real-time crowd monitoring, VIP tracking, incident response with 85% cost savings.',
+    title: 'Event Video Analytics | AI CCTV Crowd Monitoring - Triya',
+    description: 'Event video analytics from Triya — AI CCTV for real-time crowd monitoring, incident response and VIP protection, with 85% cost savings.',
     keywords: ['event security AI', 'crowd control system', 'VIP protection', 'event surveillance', 'concert security', 'stadium surveillance AI'],
     openGraph: {
       title: 'Event AI Surveillance Solutions by Triya',
