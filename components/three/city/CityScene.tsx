@@ -169,6 +169,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     const wetGeos: THREE.BufferGeometry[] = [];
     const windowDarkGeos: THREE.BufferGeometry[] = [];
     const windowLitGeos: THREE.BufferGeometry[] = [];
+    const glassGeos: THREE.BufferGeometry[] = []; // reflective curtain-wall glass (own material)
     const treeGeos: THREE.BufferGeometry[] = [];
     const poleGeos: THREE.BufferGeometry[] = [];
     const lampPositions: THREE.Vector3[] = [];
@@ -188,6 +189,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     const blossomCol = new THREE.Color("#E5AFA3"); // spring blossom canopies
     const winDark = new THREE.Color("#BFB4A0"); // warm, sits in the clay family
     const winLit = new THREE.Color("#FFE2B8"); // warm cream glow, not yellow
+    /* modern building system (architect spec): cool tinted glass for curtain
+       walls + the SC-ignition tints, hoisted so addCurtainWall can route lit
+       floors through the same downtown-wake path as addWindows */
+    const FLOOR_H = 1.6; // one storey
+    const GLASS_DAY = new THREE.Color("#7E96A6"); // deep cool blue-grey glass
+    const GLASS_TEAL = new THREE.Color("#7CA39B"); // deep teal-grey glass variant
+    const scTintWarm = new THREE.Color("#FFDEBC");
+    const scTintTeal = new THREE.Color("#BFD8D2");
 
     /* curated warm-pastel facade palette (weighted — sand/cream dominate,
        color punctuates; clay stays the SIGNAL, these are the chorus) */
@@ -226,8 +235,6 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       /* WP2 routing: downtown dark windows (r<26, hash-picked — NO extra
          rand draws) move to the SC night bucket so the district can ignite
          through the flip; per-building tint alternates warm/teal */
-      const scTintWarm = new THREE.Color("#FFDEBC");
-      const scTintTeal = new THREE.Color("#BFD8D2");
       const pushWin = (g: THREE.BufferGeometry, lit: boolean) => {
         if (!lit && Math.hypot(x, z) < 26 && popCellKey(x + 1.7, z - 2.3) < 0.55) {
           paint(g, popCellKey(x, z) > 0.35 ? scTintWarm : scTintTeal);
@@ -260,6 +267,158 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             g.translate(x + sx * (w / 2 + 0.02), wy, wz);
             pushWin(g, rand() < 0.12);
           }
+        }
+      }
+    };
+
+    /* ARCHETYPE A — glass curtain-wall tower (architect spec): full-height
+       tinted glass per face + floor bands + vertical mullions (NEAR only) +
+       a band of lit floors. Replaces addWindows for tall downtown towers.
+       All Box/Plane (cheap); merged into the existing buckets. */
+    const addCurtainWall = (
+      x: number,
+      z: number,
+      w: number,
+      h: number,
+      d: number,
+      bcol: THREE.Color,
+      dist: number,
+    ) => {
+      if (!high) return;
+      const near = dist < 30;
+      const tint = popCellKey(x, z) > 0.5 ? GLASS_TEAL : GLASS_DAY;
+      const gh = h - 0.32;
+      const gy = 0.18 + gh / 2;
+      // 4 full-height glass faces (unlit cool tint → windowDark bucket)
+      for (const sz of [1, -1]) {
+        const g = new THREE.PlaneGeometry(w - 0.1, gh);
+        if (sz < 0) g.rotateY(Math.PI);
+        g.translate(x, gy, z + sz * (d / 2 + 0.02));
+        paint(g, tint);
+        glassGeos.push(g);
+      }
+      for (const sx of [1, -1]) {
+        const g = new THREE.PlaneGeometry(d - 0.1, gh);
+        g.rotateY(sx > 0 ? Math.PI / 2 : -Math.PI / 2);
+        g.translate(x + sx * (w / 2 + 0.02), gy, z);
+        paint(g, tint);
+        glassGeos.push(g);
+      }
+      // floor bands every other storey (cap 6) — thin slabs ringing the facade
+      const floors = Math.max(2, Math.floor((h - 0.4) / FLOOR_H));
+      const trimCol = bcol.clone().offsetHSL(0, 0, -0.13);
+      let bands = 0;
+      for (let r = 2; r < floors && bands < 6; r += 2) {
+        const yb = 0.4 + r * FLOOR_H;
+        if (yb > h - 0.2) break;
+        const band = new THREE.BoxGeometry(w + 0.04, 0.1, d + 0.04);
+        band.translate(x, yb, z);
+        paint(band, trimCol);
+        buildingGeos.push(band);
+        bands++;
+      }
+      // vertical mullions on the 2 camera-facing faces (NEAR only — the LOD win)
+      if (near) {
+        const cols = THREE.MathUtils.clamp(Math.round(w / 0.9), 2, 4);
+        const mh = h - 0.4;
+        const my = 0.2 + mh / 2;
+        for (let c = 0; c < cols; c++) {
+          const mx = x - ((cols - 1) * 0.9) / 2 + c * 0.9;
+          const m = new THREE.BoxGeometry(0.05, mh, 0.05);
+          m.translate(mx, my, z + d / 2 + 0.03);
+          paint(m, trimCol);
+          buildingGeos.push(m);
+          const mz = z - ((cols - 1) * 0.9) / 2 + c * 0.9;
+          const m2 = new THREE.BoxGeometry(0.05, mh, 0.05);
+          m2.translate(x + w / 2 + 0.03, my, mz);
+          paint(m2, trimCol);
+          buildingGeos.push(m2);
+        }
+      }
+      // a band of 2 lit "sky-lounge" floors (deterministic via popCellKey) —
+      // downtown ones route to scWindow so they ignite with the SC flip
+      const litStart = 1 + Math.floor(popCellKey(x + 3, z) * Math.max(1, floors - 4));
+      const inSC = Math.hypot(x, z) < 26;
+      for (let r = litStart; r < litStart + 2 && r < floors; r++) {
+        const yl = 0.4 + r * FLOOR_H;
+        if (yl > h - 0.4) break;
+        const g = new THREE.PlaneGeometry(w - 0.3, FLOOR_H * 0.7);
+        g.translate(x, yl, z + d / 2 + 0.04);
+        if (inSC) {
+          paint(g, popCellKey(x, z) > 0.35 ? scTintWarm : scTintTeal);
+          scWindowGeos.push(g);
+        } else {
+          paint(g, winLit);
+          windowLitGeos.push(g);
+        }
+      }
+    };
+
+    /* ARCHETYPE B — balcony residential mid-rise. Keeps the warm window
+       scatter + adds stacked balconies (slab + cream railing + glass door)
+       on the camera-facing face(s) + horizontal string bands. The body is
+       shrunk 0.30 by the caller so balconies sit inside the plot envelope. */
+    const addBalconyMidRise = (
+      x: number,
+      z: number,
+      w: number,
+      h: number,
+      d: number,
+      bw: number,
+      bd: number,
+      bcol: THREE.Color,
+    ) => {
+      if (!high) return;
+      addWindows(x, z, bw, h, bd); // warm scatter on the (shrunk) core
+      const floors = Math.max(2, Math.floor((h - 0.4) / FLOOR_H));
+      const trimCol = bcol.clone().offsetHSL(0, 0, -0.07);
+      // horizontal string bands (floor lines) read as modern structure
+      for (let r = 2; r < floors; r += 2) {
+        const yb = 0.4 + r * FLOOR_H;
+        if (yb > h - 0.2) break;
+        const band = new THREE.BoxGeometry(bw + 0.05, 0.08, bd + 0.05);
+        band.translate(x, yb, z);
+        paint(band, trimCol);
+        buildingGeos.push(band);
+      }
+      // balcony faces: +z always, +x for ~half (corner read) — both are
+      // camera-facing in the god/dive views
+      const faces: ("z" | "x")[] = ["z"];
+      if (popCellKey(x, z) > 0.5) faces.push("x");
+      for (const face of faces) {
+        const bwid = (face === "z" ? bw : bd) * 0.72;
+        for (let r = 1; r < floors; r += 2) {
+          const yb = 0.4 + r * FLOOR_H;
+          if (yb > h - 0.6) break;
+          // slab (protrudes 0.30 from the shrunk face → ~original silhouette)
+          const slab = new THREE.BoxGeometry(
+            face === "z" ? bwid : 0.3,
+            0.1,
+            face === "z" ? 0.3 : bwid,
+          );
+          const off = (face === "z" ? bd : bw) / 2 + 0.15;
+          slab.translate(face === "z" ? x : x + off, yb, face === "z" ? z + off : z);
+          paint(slab, baseCream);
+          buildingGeos.push(slab);
+          // railing plate at the outer edge
+          const rail = new THREE.BoxGeometry(
+            face === "z" ? bwid : 0.04,
+            0.32,
+            face === "z" ? 0.04 : bwid,
+          );
+          const roff = (face === "z" ? bd : bw) / 2 + 0.3;
+          rail.translate(face === "z" ? x : x + roff, yb + 0.2, face === "z" ? z + roff : z);
+          paint(rail, baseCream);
+          buildingGeos.push(rail);
+          // tinted glass door behind the balcony
+          const door = new THREE.PlaneGeometry(bwid * 0.85, FLOOR_H * 0.78);
+          if (face === "z") door.translate(x, yb + 0.45, z + bd / 2 + 0.02);
+          else {
+            door.rotateY(Math.PI / 2);
+            door.translate(x + bw / 2 + 0.02, yb + 0.45, z);
+          }
+          paint(door, GLASS_DAY);
+          glassGeos.push(door);
         }
       }
     };
@@ -485,14 +644,31 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
               buildingGeos.push(podium);
             }
 
-            const body = new RoundedBoxGeometry(w, h, d, 2, 0.14);
+            // MODERN BUILDING SYSTEM (architect spec): pick an archetype from
+            // the already-rolled hOrig + distance (NO new rand draws). Balcony
+            // mid-rises shrink the core 0.30 so balconies sit inside the plot
+            // envelope; the collider stays at the ORIGINAL w (conservative).
+            const dist = Math.hypot(x, z);
+            const isBalcony =
+              !retailZone && high && hOrig >= 6 && hOrig <= 11 && dist < 40;
+            const bw = isBalcony ? w - 0.3 : w;
+            const bd = isBalcony ? d - 0.3 : d;
+            const body = new RoundedBoxGeometry(bw, h, bd, 2, 0.14);
             body.translate(x, h / 2, z);
             paintGraded(body, col);
-            // clearance collider: widest of body/podium footprint, +1.6 head-
-            // room for rooftop furniture (AC/antenna) — generators own safety
+            // clearance collider: original footprint + 1.6 headroom (balconies
+            // fit inside the original silhouette → clearance already covers them)
             colliders.push({ x, z, hw: w * 0.7, hd: d * 0.7, h: h + 1.6 });
             buildingGeos.push(body);
-            addWindows(x, z, w, h, d);
+            // archetype dispatch — A glass tower / B balcony mid-rise / else
+            // the original window scatter (short / retail / low-quality)
+            if (!retailZone && high && hOrig > 11) {
+              addCurtainWall(x, z, w, h, d, col, dist);
+            } else if (isBalcony) {
+              addBalconyMidRise(x, z, w, h, d, bw, bd, col);
+            } else {
+              addWindows(x, z, w, h, d);
+            }
 
             if (retailZone) {
               /* WP6 storefront kit: split glazing, recessed door, fascia +
@@ -1691,6 +1867,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     bakeRadial(buildingGeos);
     bakeRadial(windowDarkGeos);
     bakeRadial(windowLitGeos);
+    bakeRadial(glassGeos);
     bakeRadial(treeGeos);
     bakeRadial(poleGeos);
     bakeRadial(retailLitGeos);
@@ -1720,6 +1897,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     const buildings = mergeSafe(buildingGeos);
     const windowsDark = mergeSafe(windowDarkGeos);
     const windowsLit = mergeSafe(windowLitGeos);
+    const glass = mergeSafe(glassGeos);
     const greens = mergeSafe(treeGeos);
     const poles = mergeSafe(poleGeos);
 
@@ -2448,6 +2626,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       buildings,
       windowsDark,
       windowsLit,
+      glass,
       greens,
       poles,
       lampPositions,
@@ -2480,6 +2659,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       c.buildings?.dispose();
       c.windowsDark?.dispose();
       c.windowsLit?.dispose();
+      c.glass?.dispose();
       c.greens?.dispose();
       c.poles?.dispose();
       c.roads?.dispose();
@@ -4335,6 +4515,20 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             roughness={0.5}
             emissive="#FFDEBC"
             emissiveIntensity={0.08}
+          />
+        </mesh>
+      )}
+      {/* modern curtain-wall GLASS — reflective (envMap) so it reads as real
+          tinted glass, not a matte panel; own bucket (+1 draw) */}
+      {city.glass && (
+        <mesh geometry={city.glass}>
+          <meshStandardMaterial
+            ref={popMat}
+            vertexColors
+            roughness={0.22}
+            metalness={0.55}
+            envMap={envMap}
+            envMapIntensity={0.7}
           />
         </mesh>
       )}
