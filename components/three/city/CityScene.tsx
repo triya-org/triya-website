@@ -305,7 +305,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         if (high) {
           const pad = new THREE.PlaneGeometry(8.8, 8.8);
           pad.rotateX(-Math.PI / 2);
-          pad.translate(bx * BLOCK, 0.006, bz * BLOCK);
+          pad.translate(bx * BLOCK, 0.03, bz * BLOCK);
           const hb = Math.abs(Math.sin(bx * 37.7 + bz * 91.3) * 43758.5453) % 1;
           colCap.set("#EDEAE0").offsetHSL((hb - 0.5) * 0.012, 0, (hb - 0.5) * 0.05);
           paint(pad, colCap);
@@ -330,13 +330,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           const pz = bz * BLOCK;
           const lawn = new THREE.PlaneGeometry(8.8, 8.8);
           lawn.rotateX(-Math.PI / 2);
-          lawn.translate(px, 0.011, pz);
+          lawn.translate(px, 0.042, pz);
           paint(lawn, new THREE.Color("#A9B795"));
           parkGeos.push(lawn);
           for (const horizontal of [true, false]) {
             const path = new THREE.PlaneGeometry(horizontal ? 8.8 : 1.0, horizontal ? 1.0 : 8.8);
             path.rotateX(-Math.PI / 2);
-            path.translate(px, 0.016, pz);
+            path.translate(px, 0.05, pz);
             paint(path, new THREE.Color("#EFEADF"));
             parkGeos.push(path);
           }
@@ -1753,7 +1753,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     {
       const ringRoad = new THREE.RingGeometry(6.0, 8.6, 64);
       ringRoad.rotateX(-Math.PI / 2);
-      ringRoad.translate(0, 0.013, 0);
+      ringRoad.translate(0, 0.07, 0);
       paint(ringRoad, new THREE.Color("#45423C")); // carriageway ink asphalt
       roadGeos.push(ringRoad);
       // dashed centerline on the carriageway — reads as a real ring road
@@ -1761,7 +1761,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         const a0 = (k / 22) * Math.PI * 2;
         const dashArc = new THREE.RingGeometry(7.22, 7.4, 6, 1, a0, 0.14);
         dashArc.rotateX(-Math.PI / 2);
-        dashArc.translate(0, 0.015, 0);
+        dashArc.translate(0, 0.084, 0);
         paint(dashArc, new THREE.Color("#FBF8F1"));
         roadGeos.push(dashArc);
       }
@@ -1770,7 +1770,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       // the avenue mouths so entering/exiting cars never clip a curb
       const curbCol = new THREE.Color("#CFC8B6");
       const innerCurb = new THREE.CylinderGeometry(5.95, 5.95, 0.14, 64, 1, true);
-      innerCurb.translate(0, 0.07, 0);
+      innerCurb.translate(0, 0.095, 0);
       paint(innerCurb, curbCol);
       roadGeos.push(innerCurb);
       const innerTop = new THREE.RingGeometry(5.8, 6.07, 64);
@@ -1782,7 +1782,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         const a0 = (q * Math.PI) / 2 + (30 * Math.PI) / 180;
         const aLen = (30 * Math.PI) / 180;
         const arc = new THREE.CylinderGeometry(8.7, 8.7, 0.1, 24, 1, true, a0, aLen);
-        arc.translate(0, 0.05, 0);
+        arc.translate(0, 0.072, 0);
         paint(arc, curbCol);
         roadGeos.push(arc);
         const arcTop = new THREE.RingGeometry(8.58, 8.82, 24, 1, a0, aLen);
@@ -1806,7 +1806,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         horizontal ? 1 : avSeg,
       );
       road.rotateX(-Math.PI / 2);
-      road.translate(0, 0.012, 0);
+      road.translate(0, 0.066, 0);
       paint(road, roadCol);
       roadGeos.push(road);
       // sidewalks flanking the avenue — split into two segments that STOP
@@ -1825,7 +1825,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           walk.rotateX(-Math.PI / 2);
           walk.translate(
             horizontal ? seg * walkMid : s * 3.2,
-            0.016,
+            0.078,
             horizontal ? s * 3.2 : seg * walkMid,
           );
           paint(walk, sideCol);
@@ -1847,7 +1847,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           horizontal ? 1 : stSeg,
         );
         g.rotateX(-Math.PI / 2);
-        g.translate(horizontal ? 0 : c, 0.008, horizontal ? c : 0);
+        g.translate(horizontal ? 0 : c, 0.054, horizontal ? c : 0);
         paint(g, gridCol);
         roadGeos.push(g);
       }
@@ -1860,7 +1860,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         for (const horizontal of [true, false]) {
           const dash = new THREE.PlaneGeometry(horizontal ? 1.3 : 0.16, horizontal ? 0.16 : 1.3);
           dash.rotateX(-Math.PI / 2);
-          dash.translate(horizontal ? s : 0, 0.018, horizontal ? 0 : s);
+          dash.translate(horizontal ? s : 0, 0.082, horizontal ? 0 : s);
           paint(dash, dashCol);
           roadGeos.push(dash);
         }
@@ -1877,7 +1877,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         for (const horizontal of [true, false]) {
           const bar = new THREE.PlaneGeometry(horizontal ? 0.55 : 4.0, horizontal ? 4.0 : 0.55);
           bar.rotateX(-Math.PI / 2);
-          bar.translate(horizontal ? dist + k * 1.0 : 0, 0.02, horizontal ? 0 : dist + k * 1.0);
+          bar.translate(horizontal ? dist + k * 1.0 : 0, 0.08, horizontal ? 0 : dist + k * 1.0);
           paint(bar, walkCol);
           roadGeos.push(bar);
         }
@@ -2135,7 +2135,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       {
         const apron = new THREE.RingGeometry(52, 100, 64, 6);
         apron.rotateX(-Math.PI / 2);
-        apron.translate(0, 0.003, 0);
+        apron.translate(0, 0.006, 0);
         const apos = apron.attributes.position;
         const acol = new Float32Array(apos.count * 3);
         // r2: alternate band + sand lip deepened (the old #E7EADA delta
@@ -2237,7 +2237,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     if (high) {
       const mottle = new THREE.PlaneGeometry(110, 110, 44, 44);
       mottle.rotateX(-Math.PI / 2);
-      mottle.translate(0, 0.004, 0);
+      mottle.translate(0, 0.018, 0);
       const npos = mottle.attributes.position;
       const ncol = new Float32Array(npos.count * 3);
       const nc = new THREE.Color();
@@ -4200,7 +4200,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         // FRAGMENTING into scattered dark patches (projective shadow-map
         // aliasing); halving the texel again resolves them into continuous
         // shadows. normalBias cures self-shadow acne on lit faces.
-        shadow-mapSize={[8192, 8192]}
+        shadow-mapSize={[4096, 4096]}
         shadow-camera-left={-58}
         shadow-camera-right={58}
         shadow-camera-top={58}
@@ -4210,8 +4210,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         shadow-normalBias={0.04}
       />
 
-      {/* ground */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow={high}>
+      {/* ground — dropped to -0.05 so the stacked road/pad/mottle sheets
+          (now spread up to ~0.095) never z-fight it at the grazing god view
+          (founder: shadow/edge conflict with the overlapping ground) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow={high}>
         <planeGeometry args={[420, 420]} />
         <meshStandardMaterial color="#F1EFE8" roughness={1} />
       </mesh>
@@ -4224,11 +4226,11 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       )}
 
       {/* plaza island (the garden core inside the carriageway ring) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]} receiveShadow={high}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]} receiveShadow={high}>
         <circleGeometry args={[5.6, 48]} />
         <meshStandardMaterial color="#F3EEE3" roughness={1} />
       </mesh>
-      <mesh ref={hubRingRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+      <mesh ref={hubRingRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.088, 0]}>
         <ringGeometry args={[5.6, 5.9, 64]} />
         <meshBasicMaterial color="#D97757" transparent opacity={0.15} fog={false} />
       </mesh>
