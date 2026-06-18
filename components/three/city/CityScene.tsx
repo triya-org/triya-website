@@ -2810,6 +2810,13 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
   /* streetlight cast-light POOLS (spec §2): shared radial texture, opacity
      rides night01 (same gate as the wet bucket) */
   const streetPoolMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  // night-only car lights + smart-city scan rings (all gated on night01)
+  const headPoolMeshRef = useRef<THREE.InstancedMesh>(null);
+  const headPoolMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const carLampMeshRef = useRef<THREE.InstancedMesh>(null);
+  const carLampMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const scanRingMeshRef = useRef<THREE.InstancedMesh>(null);
+  const scanRingMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const camBodyMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const ferrisRef = useRef<THREE.Group>(null);
   const ferrisLitMatRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -3176,6 +3183,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
      plateau (the lit road directly under the head) that rolls off SLOWLY
      with a long, clearly-visible skirt (smoothstep tail), so the light
      fades into the road instead of cutting off — believable spill. ---- */
+  // unit scan ring (radius 1, thin band) — scaled per-instance each frame
+  const scanRingGeo = useMemo(() => {
+    const g = new THREE.RingGeometry(0.97, 1.0, 72);
+    g.rotateX(-Math.PI / 2);
+    return g;
+  }, []);
+  useEffect(() => () => scanRingGeo.dispose(), [scanRingGeo]);
+
   const streetPool = useMemo(() => {
     const size = 128;
     const cv = document.createElement("canvas");
@@ -3235,7 +3250,10 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       // pool ~0.6 forward of the base so its rear skirt overlaps the base
       const cxp = pp.x - tmp.x * 1.8 + tmp.x * 0.6;
       const czp = pp.z - tmp.y * 1.8 + tmp.y * 0.6;
-      dummy.position.set(cxp, 0.022, czp);
+      // y 0.09 sits ABOVE the depth-spread road stack (road 0.066, dashes
+      // 0.084) — at 0.022 the pools were buried under the raised road and
+      // no light reached the ground (founder img 43)
+      dummy.position.set(cxp, 0.09, czp);
       dummy.rotation.set(0, yaw, 0);
       dummy.scale.set(Rw, 1, Rl);
       dummy.updateMatrix();
@@ -4152,10 +4170,67 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           dummy.updateMatrix();
           wheels.setMatrixAt(i * 4 + k, dummy.matrix);
         });
+
+        /* night car lights — forward unit vector from the heading (body
+           front is local +x; cabin "back" uses -cos/-(-sin), so fwd is): */
+        const fwx = Math.cos(ry);
+        const fwz = -Math.sin(ry);
+        if (headPoolMeshRef.current) {
+          // headlight ground cast — moving cars only (parked → scale 0)
+          const ps = c.parked ? 0 : s;
+          dummy.position.set(px + fwx * 2.6, 0.095, pz + fwz * 2.6);
+          dummy.rotation.set(0, ry + Math.PI / 2, 0); // pool long-axis along travel
+          dummy.scale.set(1.8 * ps, 1, 4.0 * ps);
+          dummy.updateMatrix();
+          headPoolMeshRef.current.setMatrixAt(i, dummy.matrix);
+        }
+        if (carLampMeshRef.current) {
+          dummy.rotation.set(0, ry, 0);
+          dummy.scale.setScalar(s);
+          dummy.position.set(px + fwx * 0.78, 0.5, pz + fwz * 0.78); // headlamps
+          dummy.updateMatrix();
+          carLampMeshRef.current.setMatrixAt(i * 2, dummy.matrix);
+          dummy.position.set(px - fwx * 0.78, 0.5, pz - fwz * 0.78); // taillamps
+          dummy.updateMatrix();
+          carLampMeshRef.current.setMatrixAt(i * 2 + 1, dummy.matrix);
+        }
       });
       bodies.instanceMatrix.needsUpdate = true;
       cabins.instanceMatrix.needsUpdate = true;
       wheels.instanceMatrix.needsUpdate = true;
+      if (headPoolMeshRef.current) headPoolMeshRef.current.instanceMatrix.needsUpdate = true;
+      if (carLampMeshRef.current) carLampMeshRef.current.instanceMatrix.needsUpdate = true;
+    }
+
+    /* night car-light + scan-ring visibility/intensity (gated on night01) */
+    if (headPoolMatRef.current) {
+      headPoolMatRef.current.opacity = night01 * 0.75;
+      headPoolMeshRef.current!.visible = night01 > 0.01;
+    }
+    if (carLampMatRef.current) {
+      carLampMatRef.current.opacity = night01;
+      carLampMeshRef.current!.visible = night01 > 0.01;
+    }
+    /* smart-city scan rings — 3 teal rings expanding from the hub on a clock
+       cycle, each fading as it grows (per-ring alpha via instanceColor); night
+       only (radar / "the city is watching") */
+    if (scanRingMeshRef.current) {
+      const sr = scanRingMeshRef.current;
+      sr.visible = night01 > 0.01;
+      for (let r = 0; r < 3; r++) {
+        const ph = (t * 0.28 + r / 3) % 1; // 0→1 expand cycle, staggered
+        const rad = 2 + ph * 26;
+        const fade = Math.sin(Math.PI * ph); // grow-in then fade-out
+        dummy.position.set(0, 0.1, 0);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(rad, 1, rad);
+        dummy.updateMatrix();
+        sr.setMatrixAt(r, dummy.matrix);
+        colTmp.setRGB(0.44, 0.89, 0.86).multiplyScalar(fade * night01 * 0.7); // teal
+        sr.setColorAt(r, colTmp);
+      }
+      sr.instanceMatrix.needsUpdate = true;
+      if (sr.instanceColor) sr.instanceColor.needsUpdate = true;
     }
 
     /* drone: patrol + spinning rotors + blinking LED */
@@ -4604,6 +4679,72 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           fog={false}
+        />
+      </instancedMesh>
+
+      {/* NIGHT: car headlight ground cast (reuse the radial pool texture) */}
+      <instancedMesh
+        ref={headPoolMeshRef}
+        args={[streetPool.geo, undefined, city.cars.length]}
+        frustumCulled={false}
+        renderOrder={2}
+      >
+        <meshBasicMaterial
+          ref={headPoolMatRef}
+          map={streetPool.tex}
+          color="#FFF1D8"
+          transparent
+          opacity={0}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          fog={false}
+          toneMapped={false}
+        />
+      </instancedMesh>
+      {/* NIGHT: car head/tail lamp points (front white + rear red via
+          instanceColor; white > 1 so it blooms, red stays sub-threshold) */}
+      <instancedMesh
+        ref={(m) => {
+          (carLampMeshRef as React.MutableRefObject<THREE.InstancedMesh | null>).current = m;
+          if (m && !m.userData.colored) {
+            m.userData.colored = true;
+            const cc = new THREE.Color();
+            for (let i = 0; i < city.cars.length; i++) {
+              m.setColorAt(i * 2, cc.setRGB(1.7, 1.6, 1.35)); // headlamp (blooms)
+              m.setColorAt(i * 2 + 1, cc.setRGB(1.0, 0.12, 0.08)); // taillamp
+            }
+            if (m.instanceColor) m.instanceColor.needsUpdate = true;
+          }
+        }}
+        args={[undefined, undefined, city.cars.length * 2]}
+        frustumCulled={false}
+      >
+        <boxGeometry args={[0.16, 0.12, 0.5]} />
+        <meshBasicMaterial
+          ref={carLampMatRef}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          fog={false}
+          toneMapped={false}
+        />
+      </instancedMesh>
+      {/* NIGHT: smart-city scan rings expanding from the hub (per-ring alpha
+          via instanceColor → teal radar sweep) */}
+      <instancedMesh
+        ref={scanRingMeshRef}
+        args={[scanRingGeo, undefined, 3]}
+        frustumCulled={false}
+        renderOrder={2}
+      >
+        <meshBasicMaterial
+          ref={scanRingMatRef}
+          transparent
+          opacity={1}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          fog={false}
+          toneMapped={false}
         />
       </instancedMesh>
 
