@@ -55,8 +55,14 @@ export default function Home() {
 
   const t = content;
 
+  // Before client mount, reserve a full viewport of cream instead of
+  // returning null — an empty <main className="flex-1"> collapsed and let
+  // the footer ride up under the navbar (the "bottom of the page" flash on
+  // load/reload). The placeholder matches the page background, so it reads
+  // as a clean loading screen and the preloader curtain (also cream) covers
+  // it seamlessly on first visit.
   if (!mounted) {
-    return null;
+    return <div className="min-h-screen bg-background" aria-hidden="true" />;
   }
 
   return (
