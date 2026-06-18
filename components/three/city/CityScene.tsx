@@ -3936,7 +3936,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
 
     /* lights of the city come alive (capped so bloom stays elegant) */
     if (lampMatRef.current)
-      lampMatRef.current.emissiveIntensity = 0.05 + wake * 1.05 + night01 * 0.55;
+      lampMatRef.current.emissiveIntensity = 0.05 + wake * 0.1 + night01 * 1.5; // streetlights ignite at NIGHT, not day (QA leak)
     /* KHAKI-MUD LAW (amended, polish R1): incandescent family stays capped
        at #FFDEBC; civic teal #6FE3DC is the ONE admitted cool family (SC,
        steady); clay remains the only moving light. The night flip boosts
@@ -3961,14 +3961,14 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
     if (scWindowMatRef.current)
       // ignition chases the flip: windows catch as the daylight leaves, so
       // mid-flip (p=.50) never parks dark
-      scWindowMatRef.current.emissiveIntensity = 1.7 * window01(p, 0.475, 0.545);
+      scWindowMatRef.current.emissiveIntensity = 1.15 * window01(p, 0.475, 0.545); // was 1.7 — stop the teal skirt blooming white
     if (wetMatRef.current) wetMatRef.current.opacity = night01;
     // streetlight cast pools ignite at the flip with the wet bucket; a touch
     // brighter at festival so the lit grid reads as casting (spec §2)
     if (streetPoolMatRef.current)
       // pool is now much larger (QA r1) so dial the base alpha back to keep
       // the additive spill tasteful — a soft cast on asphalt, not a wash
-      streetPoolMatRef.current.opacity = night01 * (0.6 + 0.22 * window01(p, 0.7, 0.82));
+      streetPoolMatRef.current.opacity = night01 * (0.42 + 0.15 * window01(p, 0.7, 0.82)); // cap the additive build-up (QA over-bloom)
 
     /* ---- SINGLE animated Bloom pass (spec §3) — drive intensity + threshold
        from p. Day restrained; festival blooms HARD from intensity (1.15), not
@@ -4204,7 +4204,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
 
     /* night car-light + scan-ring visibility/intensity (gated on night01) */
     if (headPoolMatRef.current) {
-      headPoolMatRef.current.opacity = night01 * 0.75;
+      headPoolMatRef.current.opacity = night01 * 0.5;
       headPoolMeshRef.current!.visible = night01 > 0.01;
     }
     if (carLampMatRef.current) {
@@ -4218,7 +4218,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
       const sr = scanRingMeshRef.current;
       sr.visible = night01 > 0.01;
       for (let r = 0; r < 3; r++) {
-        const ph = (t * 0.28 + r / 3) % 1; // 0→1 expand cycle, staggered
+        const ph = (t * 0.24 + r / 3) % 1; // 0→1 expand cycle, staggered (slower=calmer)
         const rad = 2 + ph * 26;
         const fade = Math.sin(Math.PI * ph); // grow-in then fade-out
         dummy.position.set(0, 0.1, 0);
@@ -4226,7 +4226,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         dummy.scale.set(rad, 1, rad);
         dummy.updateMatrix();
         sr.setMatrixAt(r, dummy.matrix);
-        colTmp.setRGB(0.44, 0.89, 0.86).multiplyScalar(fade * night01 * 0.7); // teal
+        colTmp.setRGB(0.5, 0.82, 0.8).multiplyScalar(fade * night01 * 0.5); // teal — desaturated + dimmed so clay stays the lead (QA)
         sr.setColorAt(r, colTmp);
       }
       sr.instanceMatrix.needsUpdate = true;
@@ -4692,7 +4692,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         <meshBasicMaterial
           ref={headPoolMatRef}
           map={streetPool.tex}
-          color="#FFF1D8"
+          color="#FFE0AE"
           transparent
           opacity={0}
           blending={THREE.AdditiveBlending}
@@ -4710,8 +4710,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             m.userData.colored = true;
             const cc = new THREE.Color();
             for (let i = 0; i < city.cars.length; i++) {
-              m.setColorAt(i * 2, cc.setRGB(1.7, 1.6, 1.35)); // headlamp (blooms)
-              m.setColorAt(i * 2 + 1, cc.setRGB(1.0, 0.12, 0.08)); // taillamp
+              m.setColorAt(i * 2, cc.setRGB(1.35, 1.25, 1.05)); // headlamp (gentle bloom)
+              m.setColorAt(i * 2 + 1, cc.setRGB(1.45, 0.06, 0.04)); // taillamp (saturated red)
             }
             if (m.instanceColor) m.instanceColor.needsUpdate = true;
           }
