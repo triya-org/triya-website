@@ -172,7 +172,6 @@ const CRUMBS: Record<"en" | "ar", string[]> = {
 export function LivingCity() {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const productCardRef = useRef<HTMLDivElement>(null);
   const prologueRef = useRef<HTMLDivElement>(null);
   const captionRef = useRef<HTMLDivElement>(null);
   const finaleRef = useRef<HTMLDivElement>(null);
@@ -216,8 +215,6 @@ export function LivingCity() {
       hidden(finaleRef.current);
       parkRefs.current.forEach((el) => hidden(el));
       crumbRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
-      if (productCardRef.current)
-        gsap.set(productCardRef.current, { opacity: 0, y: 48, rotate: 1.5 });
 
       // ENTRY (pre-pin): unchanged contract — the city develops out of
       // paper as the section slides in under the hero (fog veil + bloom
@@ -293,14 +290,8 @@ export function LivingCity() {
         tl.to(captionRef.current, { opacity: 0, y: -16, duration: 0.01 }, 0.325);
       }
 
-      // SC park extra: the REAL chat card answering in-frame (spec §5.2)
-      if (productCardRef.current) {
-        tl.to(
-          productCardRef.current,
-          { opacity: 1, y: 0, rotate: 0, duration: 0.012 },
-          0.575,
-        ).to(productCardRef.current, { opacity: 0, y: -36, duration: 0.012 }, 0.665);
-      }
+      // (the floating chat-card overlay was removed per design — the SC beat
+      // now reads through the in-world query ring + result pins alone)
 
       // finale — in at 0.895 and HOLDS through the cover (never bows out)
       if (finaleRef.current) {
@@ -369,34 +360,8 @@ export function LivingCity() {
             ~150–200px milky band across the hero→city handoff. The hero
             gradient + a higher veil floor cover the seam without it. */}
 
-        {/* SC park proof: the real Triya assistant answering, question and
-            in-world result pins in the SAME frame (the CFO screenshot) */}
-        <div
-          ref={productCardRef}
-          className="pointer-events-none absolute top-1/2 end-8 z-10 hidden w-[520px] -translate-y-1/2 opacity-0 lg:block xl:end-16 xl:w-[580px]"
-          aria-hidden="true"
-        >
-          {/* r3: enlarged (460→520/520→580) + a solid cream backing panel so
-              the chat body copy is legible at 1:1 and does not read as a small
-              dark card competing with the bright neon tower behind it */}
-          <div className="overflow-hidden rounded-2xl bg-cream-50 p-2 shadow-xl ring-1 ring-ink-900/15">
-            {/* slight desaturation quiets the product UI's blue next to the
-                clay detection ring — the screenshot stays authentic */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/product/triya-ai-chat.png"
-              alt=""
-              className="block w-full rounded-xl saturate-[0.82]"
-            />
-          </div>
-          {/* r3: caption given the same legibility pill as the breadcrumbs —
-              it sat as light text over the dark night city (low-contrast seam) */}
-          <p className="mt-3 text-center">
-            <span className="t-caption inline-block rounded-full bg-cream-50/90 px-4 py-1.5 text-ink-700 shadow-sm">
-              Triya — the actual assistant
-            </span>
-          </p>
-        </div>
+        {/* (the floating "Triya — the actual assistant" chat-card overlay was
+            removed per design from the 3D section) */}
 
         {/* copy column — prologue, parks, finale share the start-edge slot */}
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center">
