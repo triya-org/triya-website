@@ -4195,11 +4195,12 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         intensity={1.75}
         color="#FFE3BC"
         castShadow={high}
-        // 4096 over the ±58 frustum ≈ 0.028 u/texel (was 0.057 → acne on
-        // small distant buildings); normalBias offsets along the surface
-        // normal — the proper cure for the speckled self-shadow acne on lit
-        // faces that read as artifacts at the god view
-        shadow-mapSize={[4096, 4096]}
+        // 8192 over the ±58 frustum ≈ 0.014 u/texel — at the grazing god
+        // view the long raking shadows down the distant avenues were
+        // FRAGMENTING into scattered dark patches (projective shadow-map
+        // aliasing); halving the texel again resolves them into continuous
+        // shadows. normalBias cures self-shadow acne on lit faces.
+        shadow-mapSize={[8192, 8192]}
         shadow-camera-left={-58}
         shadow-camera-right={58}
         shadow-camera-top={58}
