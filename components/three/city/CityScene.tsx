@@ -2188,7 +2188,8 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             fq.rotateY(QROT + (hrand() - 0.5) * 0.2);
             fq.translate(
               qcx + (qi * ux + qj * vxq) * cell,
-              0.01,
+              0.04, // clear of the apron (0.006) — was 0.01 and z-fought the
+              //       ground, so the field colors sank in (founder img 42)
               qcz + (qi * uz + qj * vzq) * cell,
             );
             paint(fq, hcol.set(QUILT[(qi + 1) * 3 + (qj + 1)]));
@@ -2206,7 +2207,7 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
             const off = (ql - 0.5) * cell;
             hedge.translate(
               qcx + (alongU ? vxq : ux) * off,
-              0.07,
+              0.1, // sits ON the raised quilt (0.04) — base no longer dips
               qcz + (alongU ? vzq : uz) * off,
             );
             paint(hedge, hcol.set("#8FA06F"));
