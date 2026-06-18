@@ -4195,13 +4195,18 @@ export function CityScene({ progressRef, entryRef, quality = "high", dir = 1, bl
         intensity={1.75}
         color="#FFE3BC"
         castShadow={high}
-        shadow-mapSize={[2048, 2048]}
+        // 4096 over the ±58 frustum ≈ 0.028 u/texel (was 0.057 → acne on
+        // small distant buildings); normalBias offsets along the surface
+        // normal — the proper cure for the speckled self-shadow acne on lit
+        // faces that read as artifacts at the god view
+        shadow-mapSize={[4096, 4096]}
         shadow-camera-left={-58}
         shadow-camera-right={58}
         shadow-camera-top={58}
         shadow-camera-bottom={-58}
         shadow-camera-far={180}
-        shadow-bias={-0.0004}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.04}
       />
 
       {/* ground */}

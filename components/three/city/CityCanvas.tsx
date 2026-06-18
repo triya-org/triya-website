@@ -89,7 +89,10 @@ export function CityCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: CityC
           <BrightnessContrast brightness={0} contrast={0.06} />
           <HueSaturation saturation={0.14} />
           <Vignette eskil={false} offset={0.28} darkness={0.32} />
-          <Noise premultiply opacity={0.5} />
+          {/* film grain dialed WAY back: 0.5 premultiply read as a sandstorm
+              of speckle across the cream ground + building faces (founder:
+              "shadows causing artifacts"). 0.12 keeps a faint editorial tooth */}
+          <Noise premultiply opacity={0.12} />
         </EffectComposer>
       )}
     </Canvas>
