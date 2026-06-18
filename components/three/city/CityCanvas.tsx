@@ -64,7 +64,11 @@ export function CityCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: CityC
       dpr={[1, isMobile ? 1.5 : 1.75]}
       gl={{ antialias: isMobile, powerPreference: "high-performance" }}
     >
-      {!isMobile && <SoftShadows size={32} samples={12} focus={0.6} />}
+      {/* tighter penumbra (size 32→14) + more samples (12→18): the wide
+          soft kernel with few samples gave noisy, jagged, crawling shadow
+          edges along the roads + manufacturing plant (founder). A tighter,
+          better-sampled kernel reads clean and stable. */}
+      {!isMobile && <SoftShadows size={14} samples={18} focus={0.75} />}
       <CityScene
         progressRef={progressRef}
         entryRef={entryRef}
@@ -78,7 +82,7 @@ export function CityCanvas({ progressRef, entryRef, coveredRef, dir = 1 }: CityC
         }
       />
       {!isMobile && (
-        <EffectComposer multisampling={4}>
+        <EffectComposer multisampling={8}>
           <Bloom
             ref={bloomRef}
             mipmapBlur
