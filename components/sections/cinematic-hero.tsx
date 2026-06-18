@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Play } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { HeroFabric } from "@/components/three/HeroFabric";
 import { gsap, SplitText, registerGsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
@@ -38,7 +38,6 @@ export function CinematicHero({
   content,
   videoLoaded,
   onCta,
-  onWatchVideo,
 }: CinematicHeroProps) {
   const rootRef = useRef<HTMLElement>(null);
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
@@ -47,7 +46,6 @@ export function CinematicHero({
   const lensRef = useRef<HTMLSpanElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const watchRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const fabricRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
@@ -113,7 +111,6 @@ export function CinematicHero({
           { y: 20, opacity: 0, scale: 0.97, duration: 0.6 },
           "-=0.4",
         )
-        .from(watchRef.current, { opacity: 0, scale: 0.9, duration: 0.5 }, "-=0.35")
         .from(cueRef.current, { opacity: 0, y: -8, duration: 0.6 }, "-=0.2");
 
       gsap.to(cueRef.current, {
@@ -244,23 +241,9 @@ export function CinematicHero({
         </div>
       </div>
 
-      {/* Watch Video pill — bottom-end, analog.io style */}
-      <div
-        ref={watchRef}
-        className="absolute bottom-24 end-6 sm:end-10 z-10 hidden sm:block"
-      >
-        <button
-          onClick={onWatchVideo}
-          className="inline-flex items-center gap-2 rounded-full border border-cream-50/30 bg-cream-50/10 px-6 py-3 text-sm font-medium text-cream-50 backdrop-blur-sm transition-colors hover:bg-cream-50/20"
-        >
-          <Play className="h-3.5 w-3.5" /> {content.cta2}
-        </button>
-      </div>
-
-      {/* bottom feather into the page — mirrors the city section's top
-          gradient so every hero state (especially dark slides) melts into
-          #FAF9F5 instead of hard-cutting at the section boundary */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-24 bg-gradient-to-b from-transparent to-cream-50" />
+      {/* (Watch Video pill removed per design) */}
+      {/* (bottom feather removed — the 3D section now has a full painted
+          background, so there's no white seam to hide at the boundary) */}
 
       {/* Scroll cue */}
       <div
