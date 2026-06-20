@@ -8,7 +8,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductShowcase } from "@/components/sections/product-showcase";
 import { UseCases } from "@/components/sections/use-cases";
 import { CTASection } from "@/components/sections/cta-section";
-import { ProductSchema } from "@/app/components/structured-data";
+import { ServiceSchema } from "@/app/components/structured-data";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import {
   Dialog,
@@ -52,7 +52,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      <ProductSchema />
+      <ServiceSchema />
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] md:h-[75vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
