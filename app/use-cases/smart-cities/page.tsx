@@ -6,18 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { 
-  Building2, 
-  Car, 
-  Users, 
+import {
+  Building2,
+  Car,
+  Users,
   AlertTriangle,
-  Camera,
-  TrafficCone,
   ArrowRight,
   CheckCircle2,
   Map
 } from "lucide-react";
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 
 export default function SmartCitiesPage() {
   const content = {
@@ -25,7 +22,14 @@ export default function SmartCitiesPage() {
         badge: "Smart Cities",
         title: "Smart City Video Analytics",
         titleHighlight: "for Safer Cities",
-        subtitle: "Transform urban infrastructure with AI CCTV video analytics for traffic management, crowd monitoring, real-time incident detection, and city-wide insights."
+        subtitle: "Turn your existing city CCTV into AI video analytics for traffic monitoring, crowd analytics, license plate recognition, and real-time public safety alerts. No camera replacement, no rip-and-replace."
+      },
+      intro: {
+        title: "Smart city surveillance on the cameras your city already owns",
+        paragraphs: [
+          "Triya adds real-time artificial intelligence to your existing urban CCTV network, turning every camera into a smart city video analytics and public safety system. Because the platform is camera-agnostic and works over standard RTSP/ONVIF feeds, there is no rip-and-replace and no vendor lock-in — your current traffic, intersection and public-space cameras become an intelligent layer for city traffic monitoring AI and urban surveillance AI.",
+          "From vehicle analytics and license plate recognition to crowd density detection, intrusion alerts and abandoned-object detection, Triya watches every camera every second and sends instant alerts the moment something needs attention. Operators work from a single web portal with natural-language video search — searchable in English and Arabic — across the entire city, deployed in the cloud or fully on-premise at the edge for data sovereignty."
+        ]
       },
       challenges: {
         title: "Urban Security & Management Challenges",
@@ -33,60 +37,71 @@ export default function SmartCitiesPage() {
           {
             icon: Car,
             title: "Traffic Congestion",
-            description: "Managing traffic flow and detecting incidents in real-time across city streets"
+            description: "Managing traffic flow and detecting incidents across busy city streets and intersections"
           },
           {
             icon: Users,
             title: "Crowd Control",
-            description: "Monitoring large gatherings and preventing dangerous crowd density"
+            description: "Monitoring large gatherings and detecting dangerous crowd density at events and public spaces"
           },
           {
             icon: AlertTriangle,
             title: "Incident Response",
-            description: "Delayed detection and response to accidents, crimes, or emergencies"
+            description: "Delayed detection of accidents, intrusions, or security threats across the city"
           },
           {
             icon: Map,
             title: "Urban Planning",
-            description: "Limited data on pedestrian and vehicle patterns for city planning"
+            description: "Limited data on pedestrian and vehicle patterns to inform city planning decisions"
           }
         ]
       },
       solution: {
-        title: "Triya.ai Smart City Solution",
-        description: "Create safer, more efficient cities with edge AI surveillance and analytics.",
+        title: "Smart City Video Analytics Capabilities",
+        description: "Turn existing city cameras into a real-time public safety and traffic analytics layer: monitor roads, understand crowds, and respond to incidents faster.",
         features: [
           {
-            title: "Traffic Flow Optimization",
-            description: "Monitor traffic patterns and detect congestion, accidents, or violations in real-time",
-            stats: "30% less congestion"
+            title: "Traffic Monitoring & Vehicle Analytics",
+            description: "Monitor traffic flow and vehicle movement across streets and intersections to understand congestion and road usage patterns.",
+            stats: "Real-time"
           },
           {
-            title: "Public Safety Monitoring",
-            description: "Detect suspicious behavior, unattended objects, and security threats automatically",
-            stats: "50% faster response"
+            title: "License Plate Recognition (LPR/ANPR)",
+            description: "Automatic number plate recognition for access control, parking and enforcement at city entry points and restricted areas.",
+            stats: "LPR / ANPR"
           },
           {
-            title: "Crowd Analytics",
-            description: "Monitor crowd density and movement patterns to prevent stampedes and optimize flow",
-            stats: "Real-time alerts"
+            title: "People Counting & Occupancy",
+            description: "Count people and track occupancy per area to manage public spaces, transit hubs and venues by zone.",
+            stats: "Per-zone"
           },
           {
-            title: "Urban Analytics Dashboard",
-            description: "Comprehensive city-wide insights for better planning and resource allocation",
-            stats: "Data-driven decisions"
+            title: "Crowd Density & Gathering Detection",
+            description: "Detect crowd build-up and gatherings with duration analytics to support event safety and emergency planning.",
+            stats: "Crowd analytics"
+          },
+          {
+            title: "Intrusion & Restricted-Zone Detection",
+            description: "Detect unauthorized entry into restricted zones around public infrastructure, utilities and sensitive sites.",
+            stats: "Instant alerts"
+          },
+          {
+            title: "Suspicious Activity & Abandoned Objects",
+            description: "Flag loitering, suspicious behaviour, abandoned items and camera tampering for faster public safety response.",
+            stats: "Auto detection"
           }
         ]
       },
       benefits: {
-        title: "Key Benefits",
+        title: "Why Cities Choose Triya",
         items: [
-          "Reduce traffic congestion by 30%",
-          "Improve emergency response time by 50%",
-          "Prevent crowd-related incidents",
-          "Optimize city resource allocation",
-          "Complete data sovereignty for citizens",
-          "Arabic and English command center interface"
+          "Works with your existing CCTV — no camera replacement or rip-and-replace",
+          "Real-time traffic, intrusion and suspicious-activity alerts",
+          "Crowd analytics to support event safety and emergency planning",
+          "License plate recognition for access control and enforcement",
+          "Natural-language video search across the whole city network",
+          "Data sovereignty: deploy in the cloud or fully on-premise at the edge",
+          "One web portal for every camera, with alerts via email, SMS or webhook"
         ]
       },
       cta: {
@@ -117,7 +132,7 @@ export default function SmartCitiesPage() {
           {/* Dark overlay for better text visibility */}
           <div className="absolute inset-0 bg-black/50" />
         </div>
-        
+
         <div className="container relative z-10">
           <motion.div
             initial="hidden"
@@ -131,20 +146,20 @@ export default function SmartCitiesPage() {
                 {t.hero.badge}
               </Badge>
             </motion.div>
-            <motion.h1 
+            <motion.h1
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white"
               variants={fadeInUp}
             >
               {t.hero.title}{" "}
               <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
             </motion.h1>
-            <motion.p 
+            <motion.p
               className="text-xl text-gray-200 mb-8"
               variants={fadeInUp}
             >
               {t.hero.subtitle}
             </motion.p>
-            <motion.div 
+            <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
               variants={fadeInUp}
             >
@@ -158,6 +173,35 @@ export default function SmartCitiesPage() {
         </div>
       </section>
 
+      {/* Intro Section */}
+      <section className="py-20">
+        <div className="container">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerChildren}
+            className="max-w-3xl mx-auto"
+          >
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-6"
+              variants={fadeInUp}
+            >
+              {t.intro.title}
+            </motion.h2>
+            {t.intro.paragraphs.map((para, index) => (
+              <motion.p
+                key={index}
+                className="text-lg text-muted-foreground mb-5"
+                variants={fadeInUp}
+              >
+                {para}
+              </motion.p>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Challenges Section */}
       <section className="py-24 bg-muted/50">
         <div className="container">
@@ -167,7 +211,7 @@ export default function SmartCitiesPage() {
             viewport={{ once: true }}
             variants={staggerChildren}
           >
-            <motion.h2 
+            <motion.h2
               className="text-3xl md:text-4xl font-bold text-center mb-12"
               variants={fadeInUp}
             >
@@ -215,7 +259,7 @@ export default function SmartCitiesPage() {
                 {t.solution.description}
               </p>
             </motion.div>
-            
+
             <div className="grid gap-8 md:grid-cols-2">
               {t.solution.features.map((feature, index) => (
                 <motion.div key={index} variants={fadeInUp}>
@@ -249,13 +293,13 @@ export default function SmartCitiesPage() {
             variants={staggerChildren}
             className="max-w-4xl mx-auto"
           >
-            <motion.h2 
+            <motion.h2
               className="text-3xl md:text-4xl font-bold text-center mb-12"
               variants={fadeInUp}
             >
               {t.benefits.title}
             </motion.h2>
-            <motion.div 
+            <motion.div
               className="grid gap-4 md:grid-cols-2"
               variants={fadeInUp}
             >
@@ -270,8 +314,6 @@ export default function SmartCitiesPage() {
         </div>
       </section>
 
-      {/* Related Use Cases */}
-      
       {/* CTA Section */}
       <section className="py-24">
         <div className="container">
