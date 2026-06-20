@@ -34,7 +34,7 @@ const content = {
   contactUs: "Contact Us",
   headquarters: "Headquarters",
   headquartersLocation: "Sky Tower, Al Reem Island, Abu Dhabi, UAE",
-  copyright: "© 2025 Triya.ai. All rights reserved.",
+  copyright: "© 2026 Triya AI Limited. All rights reserved.",
   privacyPolicy: "Privacy Policy",
   termsOfService: "Terms of Service"
 };

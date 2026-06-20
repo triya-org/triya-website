@@ -91,7 +91,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Image
             src="/triya_ai_new_logo.png"
-            alt="Triya AI - Edge AI Surveillance Platform with 85% Cost Savings"
+            alt="Triya AI - AI Video Analytics for Your Existing CCTV"
             width={885}
             height={210}
             className="h-10 md:h-12 w-auto"

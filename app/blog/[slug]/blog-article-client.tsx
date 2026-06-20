@@ -15,7 +15,7 @@ export function BlogArticleClient({ article }: BlogArticleClientProps) {
     backToBlog: "Back to Blog",
     by: "By",
     readyToTransform: "Ready to Transform Your Surveillance?",
-    readyDescription: "Experience the power of edge AI surveillance with 85% cost savings. Get a personalized demo for your business today.",
+    readyDescription: "Experience the power of edge AI surveillance on your existing cameras, with significant cost savings. Get a personalized demo for your business today.",
     requestDemo: "Request Demo",
     viewFaq: "View FAQ"
   };

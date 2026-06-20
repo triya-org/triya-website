@@ -7,7 +7,7 @@ export function OrganizationSchema() {
     "legalName": "TRIYA AI LIMITED",
     "url": "https://www.triya.ai",
     "logo": "https://www.triya.ai/logo.png",
-    "description": "Edge AI surveillance platform delivering 85% cost savings with on-premise video analytics and Arabic-first capabilities",
+    "description": "AI video analytics platform that adds real-time intelligence to existing CCTV with significant cost savings and on-premise processing",
     "foundingDate": "2025-12-08",
     "founder": {
       "@type": "Person",
@@ -15,7 +15,7 @@ export function OrganizationSchema() {
     },
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Office 3122 Tower C2, Al Khatem Tower, ADGM Square",
+      "streetAddress": "Sky Tower, Al Reem Island",
       "addressLocality": "Abu Dhabi",
       "addressRegion": "Abu Dhabi",
       "postalCode": "",
@@ -25,7 +25,7 @@ export function OrganizationSchema() {
       "@type": "ContactPoint",
       "telephone": "+971-58-680-1200",
       "contactType": "sales",
-      "email": "hello@triya.ai",
+      "email": "founders@triya.ai",
       "availableLanguage": ["en", "ar"]
     },
     "sameAs": [
@@ -68,7 +68,7 @@ export function ServiceSchema() {
     "@id": "https://www.triya.ai/#service",
     "serviceType": "AI Video Analytics & Surveillance Platform",
     "name": "Triya AI Video Analytics Platform",
-    "description": "AI video analytics platform that turns existing CCTV cameras into a real-time, on-premise threat-detection system with 85% cost savings.",
+    "description": "AI video analytics platform that turns existing CCTV cameras into a real-time, on-premise threat-detection system with significant cost savings.",
     "provider": {
       "@type": "Organization",
       "@id": "https://www.triya.ai/#organization",
@@ -147,12 +147,12 @@ export function FAQSchema() {
         "name": "What is Triya's edge AI surveillance platform?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Triya is an edge AI surveillance platform that processes video analytics on-premise, delivering 85% cost savings compared to traditional systems while ensuring complete data sovereignty."
+          "text": "Triya is an edge AI surveillance platform that processes video analytics on-premise, delivering significant cost savings compared to traditional systems while ensuring complete data sovereignty."
         }
       },
       {
         "@type": "Question",
-        "name": "How does Triya reduce surveillance costs by 85%?",
+        "name": "How does Triya reduce surveillance costs?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Triya reduces costs through edge computing, eliminating cloud storage fees, reducing bandwidth requirements, and working with existing camera infrastructure without expensive hardware replacements."
@@ -205,7 +205,7 @@ export function LocalBusinessSchema() {
     "email": "hello@triya.ai",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Office 3122 Tower C2, Al Khatem Tower, ADGM Square",
+      "streetAddress": "Sky Tower, Al Reem Island",
       "addressLocality": "Abu Dhabi",
       "addressRegion": "Abu Dhabi",
       "postalCode": "",
@@ -213,8 +213,8 @@ export function LocalBusinessSchema() {
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": "24.4539",
-      "longitude": "54.3773"
+      "latitude": "24.4988",
+      "longitude": "54.4053"
     },
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",

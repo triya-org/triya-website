@@ -41,7 +41,7 @@ export default function Home() {
     hero: {
       title: "Turn Any CCTV Into an",
       titleHighlight: "AI Video Analytics Platform",
-      subtitle: "Triya turns your existing CCTV cameras into a real-time AI video analytics system — detecting incidents on-premise with 85% cost savings. Serving Dubai, Abu Dhabi, and the entire GCC region.",
+      subtitle: "Triya turns your existing CCTV cameras into a real-time AI video analytics system — detecting incidents on-premise with no rip-and-replace and significant cost savings. Trusted by enterprises worldwide.",
       cta1: "Request Demo",
       cta2: "Watch Video"
     },

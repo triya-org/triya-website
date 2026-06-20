@@ -19,8 +19,8 @@ export function ProductShowcase() {
       features: [
         {
           icon: DollarSign,
-          title: "85% Cost Savings",
-          description: "Retrofit existing cameras; a lot cheaper than replacement",
+          title: "Significant Cost Savings",
+          description: "Retrofit existing cameras; far cheaper than rip-and-replace",
           badge: "Cost Effective"
         },
         {
