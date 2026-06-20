@@ -19,30 +19,43 @@ import { MobileNav } from "./mobile-nav";
 
 const content = {
   industries: "Industries",
+  solutions: "Solutions",
   blog: "Blog",
   faq: "FAQ",
   contact: "Contact",
   requestDemo: "Request Demo",
   industryItems: [
     {
-      title: "Manufacturing",
+      title: "Manufacturing & Industrial",
       href: "/use-cases/manufacturing/",
-      description: "PPE compliance and safety monitoring for industrial facilities",
+      description: "Factory safety AI: PPE compliance, fire & smoke, restricted-zone and fall detection",
     },
     {
       title: "Retail",
       href: "/use-cases/retail/",
-      description: "Theft prevention and customer analytics for stores",
+      description: "Retail video analytics: loss prevention, footfall, heatmaps and queue monitoring",
+    },
+    {
+      title: "Real Estate & Facilities",
+      href: "/use-cases/real-estate/",
+      description: "Construction safety, property security and LPR access for communities & facilities",
     },
     {
       title: "Smart Cities",
       href: "/use-cases/smart-cities/",
-      description: "Traffic management and public safety solutions",
+      description: "Traffic monitoring, crowd analytics and public-safety video analytics",
     },
     {
       title: "Event Management",
       href: "/use-cases/events/",
       description: "Crowd analytics and security for major events",
+    },
+  ],
+  solutionItems: [
+    {
+      title: "Add AI to Existing CCTV",
+      href: "/solutions/add-ai-to-existing-cctv/",
+      description: "Camera-agnostic video analytics — works with the cameras you already own",
     },
   ]
 };
@@ -119,6 +132,23 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             
+            <NavigationMenuItem>
+              <NavigationMenuTrigger>{t.solutions}</NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px]">
+                  {t.solutionItems.map((solution) => (
+                    <ListItem
+                      key={solution.title}
+                      title={solution.title}
+                      href={solution.href}
+                    >
+                      {solution.description}
+                    </ListItem>
+                  ))}
+                </ul>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+
             <NavigationMenuItem>
               <Link href="/blog/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
