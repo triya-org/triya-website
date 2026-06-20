@@ -13,8 +13,8 @@ export const faqData: FAQItem[] = [
   },
   {
     category: "Product & Features",
-    question: "How does Triya reduce surveillance costs by 85%?",
-    answer: "Triya reduces costs through multiple factors: eliminating expensive cloud storage fees, reducing bandwidth requirements by processing data locally, preventing losses through real-time alerts, and working with existing camera infrastructure without requiring hardware replacement."
+    question: "How does Triya reduce surveillance costs?",
+    answer: "Triya reduces costs through multiple factors: working with your existing camera infrastructure without requiring hardware replacement, eliminating expensive cloud storage fees, reducing bandwidth by processing data locally, and preventing losses through real-time alerts."
   },
   {
     category: "Product & Features",
@@ -63,7 +63,7 @@ export const faqData: FAQItem[] = [
   {
     category: "Pricing & Support",
     question: "How much does Triya cost?",
-    answer: "Triya offers flexible pricing based on the number of cameras and features required. Our solutions typically cost 85% less than cloud-based alternatives. Contact us for a customized quote based on your specific needs and deployment size."
+    answer: "Triya offers flexible per-camera pricing based on the number of cameras and features required, and typically costs significantly less than cloud-based alternatives. Contact us for a customized quote based on your specific needs and deployment size."
   },
   {
     category: "Pricing & Support",

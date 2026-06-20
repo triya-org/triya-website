@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Frequently Asked Questions - Triya AI Surveillance',
-    description: 'Get answers about Triya\'s 85% cost-saving AI surveillance platform. Installation, pricing, and support in UAE.',
+    description: 'Get answers about Triya\'s AI video analytics platform for existing CCTV — capabilities, deployment, installation, pricing, and support.',
     url: 'https://www.triya.ai/faq/',
     type: 'website',
     images: ['/og-image.png'],
