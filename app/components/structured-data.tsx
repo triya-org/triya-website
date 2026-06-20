@@ -31,10 +31,16 @@ export function OrganizationSchema() {
     "sameAs": [
       "https://www.linkedin.com/company/triyaai"
     ],
-    "areaServed": {
-      "@type": "Place",
-      "name": "Middle East and North Africa"
-    },
+    "areaServed": [
+      {
+        "@type": "Place",
+        "name": "Middle East and North Africa"
+      },
+      {
+        "@type": "Place",
+        "name": "Asia"
+      }
+    ],
     "knowsAbout": [
       "AI surveillance",
       "Edge computing",
@@ -55,64 +61,72 @@ export function OrganizationSchema() {
   );
 }
 
-export function ProductSchema() {
+export function ServiceSchema() {
   const schema = {
     "@context": "https://schema.org",
-    "@type": "Product",
-    "@id": "https://www.triya.ai/#product",
-    "name": "Triya Edge AI Surveillance Platform",
-    "description": "Revolutionary edge AI surveillance platform with 85% cost savings, on-premise processing, and multi-language support including Arabic",
+    "@type": "Service",
+    "@id": "https://www.triya.ai/#service",
+    "serviceType": "AI Video Analytics & Surveillance Platform",
+    "name": "Triya AI Video Analytics Platform",
+    "description": "AI video analytics platform that turns existing CCTV cameras into a real-time, on-premise threat-detection system with 85% cost savings.",
+    "provider": {
+      "@type": "Organization",
+      "@id": "https://www.triya.ai/#organization",
+      "name": "TRIYA AI LIMITED"
+    },
     "brand": {
       "@type": "Brand",
       "name": "Triya"
     },
-    "manufacturer": {
-      "@type": "Organization",
-      "name": "TRIYA AI LIMITED"
-    },
-    "offers": {
-      "@type": "AggregateOffer",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock",
-      "offerCount": "4",
-      "offers": [
+    "areaServed": [
+      {
+        "@type": "Place",
+        "name": "Middle East and North Africa"
+      },
+      {
+        "@type": "Place",
+        "name": "Asia"
+      }
+    ],
+    "category": "Enterprise Security Software",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Triya Solutions",
+      "itemListElement": [
         {
           "@type": "Offer",
-          "name": "Smart City Surveillance",
-          "description": "AI-powered urban security and traffic monitoring"
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Smart City Surveillance",
+            "description": "AI-powered urban security and traffic monitoring"
+          }
         },
         {
           "@type": "Offer",
-          "name": "Retail Security Analytics",
-          "description": "Loss prevention and customer behavior analysis"
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Retail Security Analytics",
+            "description": "Loss prevention and customer behavior analysis"
+          }
         },
         {
           "@type": "Offer",
-          "name": "Manufacturing Safety Monitoring",
-          "description": "PPE compliance and hazard detection"
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Manufacturing Safety Monitoring",
+            "description": "PPE compliance and hazard detection"
+          }
         },
         {
           "@type": "Offer",
-          "name": "Event Security Management",
-          "description": "Crowd control and VIP protection"
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Event Security Management",
+            "description": "Crowd control and VIP protection"
+          }
         }
       ]
-    },
-    "category": "Enterprise Security Software",
-    "isRelatedTo": [
-      {
-        "@type": "Thing",
-        "name": "Artificial Intelligence"
-      },
-      {
-        "@type": "Thing",
-        "name": "Video Surveillance"
-      },
-      {
-        "@type": "Thing",
-        "name": "Edge Computing"
-      }
-    ]
+    }
   };
 
   return (
