@@ -49,7 +49,7 @@ Integration with license plate recognition identifies authorized contractor vehi
 
 Different site areas can have different access restrictions. Excavation zones, heavy equipment areas, or high-security material storage can be restricted to specifically authorized personnel.
 
-Construction sites across Dubai's Business Bay and Abu Dhabi's Al Reem Island have reduced unauthorized access incidents by 85% through AI surveillance implementation, virtually eliminating after-hours theft.
+Construction sites across Dubai's Business Bay and Abu Dhabi's Al Reem Island have dramatically reduced unauthorized access incidents through AI surveillance implementation, virtually eliminating after-hours theft.
 
 ### Personal Protective Equipment (PPE) Compliance Monitoring
 
@@ -218,7 +218,7 @@ High-profile developments and government projects require strict data security. 
 
 **Bandwidth Efficiency**
 
-Construction sites often rely on cellular connections with limited bandwidth and high costs. Triya's architecture transmits only alerts and metadata rather than continuous video streams, reducing bandwidth requirements by 85%.
+Construction sites often rely on cellular connections with limited bandwidth and high costs. Triya's architecture transmits only alerts and metadata rather than continuous video streams, dramatically reducing bandwidth requirements.
 
 **Real-Time Response**
 
@@ -296,7 +296,7 @@ Construction companies implementing AI surveillance report substantial returns:
 
 ### Financial Benefits
 
-- 70-85% reduction in equipment and material theft
+- A large reduction in equipment and material theft
 - 30-40% reduction in insurance premiums through improved safety records
 - 25-35% decrease in time spent on safety compliance documentation
 - Typical ROI achieved in 8-14 months

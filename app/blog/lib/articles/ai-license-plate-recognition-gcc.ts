@@ -137,7 +137,7 @@ Edge processing eliminates network latency, enabling instant vehicle identificat
 
 **Bandwidth Efficiency**
 
-Only processed metadata and alerts are transmitted, rather than continuous video streams. Organizations save 85% on bandwidth costs compared to cloud-based solutions.
+Only processed metadata and alerts are transmitted, rather than continuous video streams. Organizations dramatically cut bandwidth costs compared to cloud-based solutions.
 
 **Reliability in Network Disruptions**
 

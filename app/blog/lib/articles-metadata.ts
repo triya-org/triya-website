@@ -41,7 +41,7 @@ export const articlesMetadata: ArticleMetadata[] = [
   {
     slug: "edge-ai-cost-savings",
     title: {
-      en: "How Edge AI Reduces Surveillance Costs by 85% in UAE Businesses",
+      en: "How Edge AI Dramatically Reduces Surveillance Costs for Businesses",
       ar: "كيف يقلل الذكاء الاصطناعي الطرفي من تكاليف المراقبة بنسبة 85% في الأعمال الإماراتية"
     },
     excerpt: {
@@ -63,7 +63,7 @@ export const articlesMetadata: ArticleMetadata[] = [
       en: ["Edge AI", "Cost Savings", "ROI", "UAE Business"],
       ar: ["الذكاء الاصطناعي الطرفي", "توفير التكاليف", "عائد الاستثمار", "الأعمال الإماراتية"]
     },
-    metaDescription: "Learn how edge AI surveillance reduces costs by 85% for UAE businesses. Compare cloud vs edge costs, calculate ROI, and see real Dubai case studies.",
+    metaDescription: "Learn how edge AI surveillance dramatically reduces costs for UAE businesses. Compare cloud vs edge costs, calculate ROI, and see real Dubai case studies.",
     keywords: ["reduce surveillance costs dubai", "edge ai cost savings", "surveillance ROI calculator", "security system costs UAE"],
   },
   {

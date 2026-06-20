@@ -89,7 +89,7 @@ When pollution levels exceed safe thresholds, the system can implement dynamic m
 
 ## Cost Efficiency Through Edge AI Processing
 
-Traditional cloud-based traffic monitoring systems can cost AED 12-18 million annually for a mid-sized city due to bandwidth, storage, and processing costs. Edge AI surveillance platforms like Triya process data locally at the camera edge, reducing operational costs by up to 85%.
+Traditional cloud-based traffic monitoring systems can cost AED 12-18 million annually for a mid-sized city due to bandwidth, storage, and processing costs. Edge AI surveillance platforms like Triya process data locally at the camera edge, dramatically reducing operational costs.
 
 ### Cost Comparison: Cloud vs. Edge AI
 
@@ -105,7 +105,7 @@ Traditional cloud-based traffic monitoring systems can cost AED 12-18 million an
 - Storage: AED 0.5M annually
 - Total: AED 2M annually
 
-**Savings: AED 11.1M annually (85% reduction)**
+**Savings: AED 11.1M annually (a dramatic reduction)**
 
 
 ## Privacy and Data Sovereignty
