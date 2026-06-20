@@ -57,6 +57,26 @@ const content = {
       href: "/solutions/add-ai-to-existing-cctv/",
       description: "Camera-agnostic video analytics — works with the cameras you already own",
     },
+    {
+      title: "On-Premise & Edge",
+      href: "/solutions/on-premise-video-analytics/",
+      description: "Data-sovereign edge AI — video that never leaves your premises",
+    },
+    {
+      title: "AI Video Search",
+      href: "/solutions/ai-video-search/",
+      description: "Search your CCTV footage in plain English, in seconds",
+    },
+    {
+      title: "PPE Compliance Monitoring",
+      href: "/solutions/ppe-compliance-monitoring/",
+      description: "AI PPE & safety-helmet detection for workplace safety",
+    },
+    {
+      title: "License Plate Recognition",
+      href: "/solutions/license-plate-recognition/",
+      description: "ANPR/LPR for automated gate access and parking",
+    },
   ]
 };
 
@@ -135,7 +155,7 @@ export function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuTrigger>{t.solutions}</NavigationMenuTrigger>
               <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px]">
+                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                   {t.solutionItems.map((solution) => (
                     <ListItem
                       key={solution.title}
