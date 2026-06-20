@@ -27,6 +27,10 @@ const navItemsData = [
     title: "Solutions",
     items: [
       { title: "Add AI to Existing CCTV", href: "/solutions/add-ai-to-existing-cctv/" },
+      { title: "On-Premise & Edge", href: "/solutions/on-premise-video-analytics/" },
+      { title: "AI Video Search", href: "/solutions/ai-video-search/" },
+      { title: "PPE Compliance Monitoring", href: "/solutions/ppe-compliance-monitoring/" },
+      { title: "License Plate Recognition", href: "/solutions/license-plate-recognition/" },
     ],
   },
   { title: "Blog", href: "/blog/" },
