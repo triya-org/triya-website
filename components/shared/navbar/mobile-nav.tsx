@@ -16,10 +16,17 @@ const navItemsData = [
   {
     title: "Industries",
     items: [
-      { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+      { title: "Manufacturing & Industrial", href: "/use-cases/manufacturing/" },
       { title: "Retail", href: "/use-cases/retail/" },
+      { title: "Real Estate & Facilities", href: "/use-cases/real-estate/" },
       { title: "Smart Cities", href: "/use-cases/smart-cities/" },
       { title: "Event Management", href: "/use-cases/events/" },
+    ],
+  },
+  {
+    title: "Solutions",
+    items: [
+      { title: "Add AI to Existing CCTV", href: "/solutions/add-ai-to-existing-cctv/" },
     ],
   },
   { title: "Blog", href: "/blog/" },

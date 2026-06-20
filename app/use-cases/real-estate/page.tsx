@@ -5,115 +5,109 @@ import { fadeInUp, staggerChildren } from "@/lib/motion-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Factory,
-  HardHat,
-  AlertTriangle,
-  Flame,
-  Activity,
-  ArrowRight,
-  CheckCircle2
-} from "lucide-react";
 import Link from "next/link";
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import {
+  Building2,
+  HardHat,
+  ShieldAlert,
+  Car,
+  ArrowRight,
+  CheckCircle2,
+  Clock
+} from "lucide-react";
 
-export default function ManufacturingPage() {
+export default function RealEstatePage() {
   const content = {
       hero: {
-        badge: "Manufacturing",
-        title: "Manufacturing & Industrial Video Analytics",
-        titleHighlight: "for Safer Factories",
-        subtitle: "Turn your existing factory CCTV into real-time, AI-powered worker safety monitoring — PPE compliance, fire and smoke detection, restricted-zone intrusion and fall detection. No camera replacement, no rip-and-replace, no vendor lock-in."
+        badge: "Real Estate & Facilities",
+        title: "Real Estate & Facilities Video Analytics",
+        titleHighlight: "for Property, Construction & Communities",
+        subtitle: "Turn your existing property and construction site CCTV into AI video analytics — enforce site safety, secure perimeters and assets, manage gate access with license plate recognition, and understand how facilities are used. No camera replacement, no rip-and-replace."
       },
       intro: {
-        title: "Industrial video analytics on the cameras you already own",
+        title: "Real estate and facilities video analytics on the cameras you already own",
         paragraphs: [
-          "Triya adds real-time artificial intelligence to your existing factory and plant CCTV, turning every camera into industrial video analytics for worker safety and operations. Because the platform is camera-agnostic and works over standard RTSP/ONVIF feeds, there is no rip-and-replace — your current IP cameras become an intelligent safety layer that watches every shop floor, loading bay and machine line, every second.",
-          "From PPE compliance monitoring and fire and smoke detection to restricted-zone intrusion near machinery and fall detection with instant alerts, Triya turns passive footage into factory safety AI that notifies your team the moment something needs attention — via email, SMS or webhook, from a single web portal, deployed in the cloud for the fastest start or fully on-premise on a Triya Edge Box so video never leaves your premises. Manufacturing is Triya's most mature vertical: a recent 30-day pilot at a Fortune 500 manufacturer covered 22 distinct AI detection scenarios using the customer's existing cameras."
+          "Triya adds real-time artificial intelligence to your existing CCTV across construction sites, communities and managed buildings, turning every camera into a property security analytics and facilities management video analytics system. Because the platform is camera-agnostic and works over standard RTSP/ONVIF feeds from any IP camera, there is no rip-and-replace and no vendor lock-in — your current cameras become an intelligent layer that protects people, assets and the public.",
+          "From construction site safety AI that flags missing helmets and PPE or intrusion into restricted zones, to perimeter and asset protection, license plate recognition gate access, and footfall in sales galleries and amenities, Triya watches every camera every second and alerts your team via email, SMS or webhook the moment something needs attention — across a single site or an entire portfolio, from one web portal, deployed in the cloud or fully on-premise."
         ]
       },
       challenges: {
-        title: "Manufacturing & Industrial Safety Challenges",
+        title: "Real Estate & Facilities Security Challenges",
         items: [
           {
             icon: HardHat,
-            title: "PPE Compliance",
-            description: "Manual monitoring of helmets, vests and safety gear across large facilities is inefficient and error-prone"
+            title: "Site Safety & Compliance",
+            description: "PPE and helmet non-compliance, restricted-zone intrusion and after-hours access go unnoticed on busy construction sites"
           },
           {
-            icon: AlertTriangle,
-            title: "Workplace Accidents",
-            description: "Falls and incidents near machinery need instant detection — delayed response can lead to serious injuries"
+            icon: ShieldAlert,
+            title: "Asset & Material Theft",
+            description: "Perimeter breaches and theft of materials from laydown and storage areas are costly and hard to catch in real time"
           },
           {
-            icon: Flame,
-            title: "Fire & Smoke Risk",
-            description: "Early fire and smoke ignition can go unnoticed by staff until it has spread across the floor"
+            icon: Car,
+            title: "Access & Parking Control",
+            description: "Manual gate access and parking enforcement across communities and basements is slow and inconsistent"
           },
           {
-            icon: Activity,
-            title: "Operational Blind Spots",
-            description: "Limited visibility into restricted-zone intrusion, dwell times and housekeeping standards"
+            icon: Clock,
+            title: "Incident Response",
+            description: "Delayed detection of crowds, dumping and intrusions means issues escalate before teams can act"
           }
         ]
       },
       solution: {
-        title: "Manufacturing Video Analytics Capabilities",
-        description: "Turn existing factory cameras into a real-time safety and operations layer: protect workers, catch hazards early, and keep standards consistent across every line.",
+        title: "Real Estate & Facilities Video Analytics Capabilities",
+        description: "Turn existing site and community cameras into a real-time AI CCTV for facilities — keep workers safe, protect assets, control access, and understand how spaces are used.",
         features: [
           {
-            title: "Fire & Smoke Detection",
-            description: "Detect early fire and smoke ignition across the shop floor, storage and loading areas, with instant alerts so teams can respond before it spreads.",
-            stats: "Instant alerts"
-          },
-          {
-            title: "PPE & Safety-Helmet Compliance",
-            description: "PPE compliance monitoring for safety helmets, vests and protective equipment, flagging workers operating without the required gear.",
-            stats: "Per-zone"
-          },
-          {
-            title: "Restricted-Zone Intrusion",
-            description: "Line-crossing and yellow-line intrusion detection near machinery and hazardous areas, alerting when workers enter restricted zones.",
+            title: "Construction Site Safety",
+            description: "Helmet and PPE compliance, restricted-zone intrusion around active works, after-hours site access detection and worker headcount on site.",
             stats: "Real-time"
           },
           {
-            title: "Fall Detection",
-            description: "Detect people falling down on the floor and trigger instant alerts so responders can reach an injured worker without delay.",
-            stats: "Instant alerts"
+            title: "Site & Asset Security",
+            description: "Perimeter and hoarding breach detection, plus material theft and object-movement monitoring across laydown and storage areas.",
+            stats: "Perimeter"
           },
           {
-            title: "On-Duty & Smoking Detection",
-            description: "Detect sleeping on duty, mobile-phone use, and smoking in prohibited areas to maintain safety and workplace standards.",
-            stats: "Per-shift"
+            title: "Community & Facility Operations",
+            description: "Visitor footfall in sales galleries and amenities, occupancy of shared spaces, cleaning and housekeeping verification, and illegal dumping detection.",
+            stats: "Occupancy"
           },
           {
-            title: "Uniform & Housekeeping Checks",
-            description: "Verify uniform compliance and housekeeping standards across the facility, with image-attached alerts when standards slip.",
-            stats: "Auto alerts"
+            title: "Vehicle & Access Management",
+            description: "License plate recognition gate access, contractor vehicle tracking, and parking enforcement across communities and basements.",
+            stats: "LPR gate access"
           },
           {
-            title: "Loading & Unloading Dwell-Time",
-            description: "Track loading and unloading dwell times at bays and docks to surface delays and improve throughput.",
-            stats: "Per-bay"
+            title: "Crowd Safety at Events & Handovers",
+            description: "Gathering detection, crowd density monitoring and people counting to keep events, launches and handovers safe.",
+            stats: "Crowd density"
+          },
+          {
+            title: "Any Camera, Cloud or Edge",
+            description: "Works over RTSP/ONVIF with any IP camera, with natural-language video search and custom AI modules delivered in weeks.",
+            stats: "No lock-in"
           }
         ]
       },
       benefits: {
-        title: "Why Manufacturers Choose Triya",
+        title: "Why Property & Facilities Teams Choose Triya",
         items: [
           "Works with your existing CCTV — no camera replacement or rip-and-replace",
-          "Real-time PPE, fire/smoke and restricted-zone alerts",
-          "Fall detection with instant alerts to speed up incident response",
-          "Alerts via email, SMS or webhook into the tools you already use",
-          "Privacy-first: deploy in the cloud or fully on-premise on a Triya Edge Box",
-          "Natural-language video search — \"show me intrusions from yesterday\"",
-          "One web portal for every site, with custom AI modules added in weeks"
+          "Real-time PPE, intrusion and after-hours access alerts for site safety",
+          "Perimeter breach, theft and object-movement detection for assets",
+          "License plate recognition for faster, automated gate access",
+          "Footfall and occupancy insights across galleries, amenities and shared spaces",
+          "Privacy-first: deploy in the cloud or fully on-premise at the edge",
+          "One dashboard for every site and community, with alerts via email, SMS or webhook"
         ]
       },
       cta: {
-        title: "Transform Your Manufacturing Security",
-        description: "See how Triya can enhance worker safety and productivity in your facility",
-        primaryButton: "Request Demo",
+        title: "Secure Your Sites, Communities & Facilities",
+        description: "Discover how AI CCTV for facilities can keep workers safe and protect your assets",
+        primaryButton: "Schedule Demo",
       }
   };
 
@@ -121,8 +115,6 @@ export default function ManufacturingPage() {
 
   return (
     <>
-      <Breadcrumbs />
-
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] md:h-[65vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
         {/* Video Background Container */}
@@ -133,9 +125,9 @@ export default function ManufacturingPage() {
             loop
             playsInline
             className="h-full w-full object-cover"
-            aria-label="Manufacturing AI surveillance - PPE detection, fire and smoke detection, fall detection and restricted-zone monitoring in industrial facilities"
+            aria-label="AI surveillance demonstration for real estate and facilities — smart cameras monitoring construction sites, communities and buildings for safety, perimeter security and access control"
           >
-            <source src="/videos/manufacturing_hero_1.mp4" type="video/mp4" />
+            <source src="/videos/hero_1.mp4" type="video/mp4" />
           </video>
           {/* Dark overlay for better text visibility */}
           <div className="absolute inset-0 bg-black/50" />
@@ -150,7 +142,7 @@ export default function ManufacturingPage() {
           >
             <motion.div variants={fadeInUp}>
               <Badge variant="secondary" className="mb-4">
-                <Factory className="h-3 w-3 mr-1" />
+                <Building2 className="h-3 w-3 mr-1" />
                 {t.hero.badge}
               </Badge>
             </motion.div>
@@ -180,6 +172,7 @@ export default function ManufacturingPage() {
           </motion.div>
         </div>
       </section>
+
 
       {/* Intro Section */}
       <section className="py-20">
@@ -211,7 +204,7 @@ export default function ManufacturingPage() {
       </section>
 
       {/* Challenges Section */}
-      <section className="py-24 bg-muted/50">
+      <section className="py-24">
         <div className="container">
           <motion.div
             initial="hidden"
@@ -250,7 +243,7 @@ export default function ManufacturingPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-24">
+      <section className="py-24 bg-muted/50">
         <div className="container">
           <motion.div
             initial="hidden"
@@ -292,7 +285,7 @@ export default function ManufacturingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-24 bg-muted/50">
+      <section className="py-24">
         <div className="container">
           <motion.div
             initial="hidden"
@@ -323,7 +316,7 @@ export default function ManufacturingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-24 bg-primary/5">
         <div className="container">
           <motion.div
             initial="hidden"
@@ -335,10 +328,8 @@ export default function ManufacturingPage() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.cta.title}</h2>
             <p className="text-xl text-muted-foreground mb-8">{t.cta.description}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="gap-2" asChild>
-                <Link href="/contact/">
-                  {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
-                </Link>
+              <Button size="lg" className="gap-2">
+                {t.cta.primaryButton} <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </motion.div>
