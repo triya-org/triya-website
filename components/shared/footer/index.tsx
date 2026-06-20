@@ -11,10 +11,19 @@ const content = {
   description: "Transform any camera into a privacy-first, AI-powered security & analytics solution",
   industries: "Industries",
   industryItems: [
-    { title: "Manufacturing", href: "/use-cases/manufacturing/" },
+    { title: "Manufacturing & Industrial", href: "/use-cases/manufacturing/" },
     { title: "Retail", href: "/use-cases/retail/" },
-    { title: "Event Management", href: "/use-cases/events/" },
+    { title: "Real Estate & Facilities", href: "/use-cases/real-estate/" },
     { title: "Smart Cities", href: "/use-cases/smart-cities/" },
+    { title: "Event Management", href: "/use-cases/events/" },
+  ],
+  solutions: "Solutions",
+  solutionItems: [
+    { title: "Add AI to Existing CCTV", href: "/solutions/add-ai-to-existing-cctv/" },
+    { title: "On-Premise & Edge", href: "/solutions/on-premise-video-analytics/" },
+    { title: "AI Video Search", href: "/solutions/ai-video-search/" },
+    { title: "PPE Compliance Monitoring", href: "/solutions/ppe-compliance-monitoring/" },
+    { title: "License Plate Recognition", href: "/solutions/license-plate-recognition/" },
   ],
   resources: "Resources",
   resourceItems: [
@@ -38,7 +47,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-muted/50">
       <div className="container py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Company Info */}
           <div className="space-y-4">
             <Image
@@ -77,6 +86,22 @@ export function Footer() {
             </nav>
           </div>
           
+          {/* Solutions */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">{t.solutions}</h4>
+            <nav className="flex flex-col space-y-2">
+              {t.solutionItems.map((solution) => (
+                <Link
+                  key={solution.href}
+                  href={solution.href}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {solution.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
           {/* Resources */}
           <div className="space-y-4">
             <h4 className="font-semibold">{t.resources}</h4>
