@@ -21,7 +21,14 @@ export default function RetailPage() {
         badge: "Retail",
         title: "Retail Video Analytics",
         titleHighlight: "for Loss Prevention & Growth",
-        subtitle: "Turn your store CCTV cameras into AI video analytics that prevent theft and shrinkage, deliver customer analytics, and optimize operations for modern retail."
+        subtitle: "Turn your existing store CCTV into AI video analytics — prevent theft and shrinkage, understand shoppers with footfall and heatmaps, and keep service fast. No camera replacement, no rip-and-replace."
+      },
+      intro: {
+        title: "Retail video analytics on the cameras you already own",
+        paragraphs: [
+          "Triya adds real-time artificial intelligence to your existing store CCTV, turning every camera into a retail video analytics and loss-prevention system. Because the platform is camera-agnostic and works over standard RTSP/ONVIF feeds, there is no rip-and-replace — your current cameras become an intelligent layer that protects stock and reveals how customers actually shop.",
+          "From footfall counting and dwell-time heatmaps to queue monitoring, shelf stock-out alerts and shrinkage detection, Triya watches every camera every second and alerts your team the moment something needs attention — across a single store or an entire chain, from one web portal, deployed in the cloud or fully on-premise."
+        ]
       },
       challenges: {
         title: "Retail Security & Operations Challenges",
@@ -49,40 +56,51 @@ export default function RetailPage() {
         ]
       },
       solution: {
-        title: "Triya.ai Retail Solution",
-        description: "Transform your store cameras into intelligent business tools that protect assets and drive revenue.",
+        title: "Retail Video Analytics Capabilities",
+        description: "Turn existing store cameras into a real-time analytics and operations layer: understand customers, protect stock, and keep service fast.",
         features: [
           {
-            title: "Real-time Theft Detection",
-            description: "Identify suspicious behavior and alert staff instantly to prevent losses",
-            stats: "70% loss reduction"
+            title: "Store Footfall Analytics",
+            description: "Customer footfall counts across every store entrance — by hour, day and location — to measure traffic and conversion.",
+            stats: "Per-entrance"
           },
           {
-            title: "Queue Management",
-            description: "Monitor checkout lines and alert staff when additional registers are needed",
-            stats: "40% faster checkout"
+            title: "Section Analytics & Heatmaps",
+            description: "Section-wise footfall, customer dwell-time analysis, and movement & engagement heatmaps to optimize layout and product placement.",
+            stats: "Heatmaps"
           },
           {
-            title: "Customer Analytics",
-            description: "Track foot traffic, dwell time, and shopping patterns to optimize layout",
-            stats: "25% sales increase"
+            title: "Queue & Service-Desk Monitoring",
+            description: "Billing and service-desk wait times, with automated alerts when queues exceed your defined thresholds.",
+            stats: "Real-time alerts"
           },
           {
-            title: "Heat Mapping",
-            description: "Visualize customer movement patterns to improve product placement",
-            stats: "Real-time insights"
+            title: "Shelf & Stock Monitoring",
+            description: "Shelf stock-occupancy levels with automated, image-attached alerts when stock falls below set limits.",
+            stats: "Auto alerts"
+          },
+          {
+            title: "Loss Prevention & Shrinkage",
+            description: "Object-movement, theft and suspicious-activity detection across the shop floor and stockroom to reduce shrinkage.",
+            stats: "Floor & stockroom"
+          },
+          {
+            title: "Staff Presence & Standards",
+            description: "Counter staffing, uniform compliance and housekeeping verification to keep service and standards consistent.",
+            stats: "Compliance"
           }
         ]
       },
       benefits: {
-        title: "Key Benefits",
+        title: "Why Retailers Choose Triya",
         items: [
-          "Reduce shrinkage by up to 70%",
-          "Improve customer satisfaction scores by 35%",
-          "Increase sales conversion by 25%",
-          "Optimize staff allocation in real-time",
-          "Complete GDPR/PDPL compliance",
-          "Arabic and English customer insights"
+          "Works with your existing CCTV — no camera replacement or rip-and-replace",
+          "Real-time theft, shrinkage and suspicious-activity alerts",
+          "Footfall, dwell-time and heatmap analytics to grow sales",
+          "Faster checkout with automated queue alerts",
+          "Shelf stock-out alerts to protect availability and revenue",
+          "Privacy-first: deploy in the cloud or fully on-premise",
+          "One dashboard for every store, with unlimited user access"
         ]
 },
       cta: {
@@ -155,6 +173,35 @@ export default function RetailPage() {
       </section>
 
 
+      {/* Intro Section */}
+      <section className="py-20">
+        <div className="container">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerChildren}
+            className="max-w-3xl mx-auto"
+          >
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-6"
+              variants={fadeInUp}
+            >
+              {t.intro.title}
+            </motion.h2>
+            {t.intro.paragraphs.map((para, index) => (
+              <motion.p
+                key={index}
+                className="text-lg text-muted-foreground mb-5"
+                variants={fadeInUp}
+              >
+                {para}
+              </motion.p>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Challenges Section */}
       <section className="py-24">
         <div className="container">
@@ -164,7 +211,7 @@ export default function RetailPage() {
             viewport={{ once: true }}
             variants={staggerChildren}
           >
-            <motion.h2 
+            <motion.h2
               className="text-3xl md:text-4xl font-bold text-center mb-12"
               variants={fadeInUp}
             >
