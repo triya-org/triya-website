@@ -2,7 +2,7 @@ export const content = {
   en: `
 # The Hidden Costs of Traditional Surveillance
 
-Businesses in the UAE spend millions on surveillance systems, yet most are unaware they're overpaying by up to 85%. Traditional cloud-based surveillance systems come with hidden costs that compound over time, creating an unsustainable financial burden for organizations across Dubai, Abu Dhabi, and the broader GCC region.
+Businesses in the UAE spend millions on surveillance systems, yet most are unaware they're dramatically overpaying. Traditional cloud-based surveillance systems come with hidden costs that compound over time, creating an unsustainable financial burden for organizations across Dubai, Abu Dhabi, and the broader GCC region.
 
 ## Breaking Down the Numbers: Cloud vs Edge
 
@@ -26,7 +26,7 @@ The same 50-camera deployment with Triya's edge AI:
 - **Hardware:** Existing cameras + AED 50,000 edge server
 - **Annual Total:** AED 50,000 one-time + minimal maintenance
 
-**Savings: 85% reduction in total cost of ownership**
+**Savings: a dramatic reduction in total cost of ownership**
 
 ## Real Case Studies from the UAE
 
@@ -109,7 +109,7 @@ Transitioning to edge AI surveillance is surprisingly simple:
 
 ## The Bottom Line
 
-Organizations across the UAE are discovering that edge AI isn't just a technology upgrade—it's a financial transformation. With 85% cost savings, 3-month ROI, and superior performance, the question isn't whether to switch to edge AI, but how quickly you can make the transition.
+Organizations across the UAE are discovering that edge AI isn't just a technology upgrade—it's a financial transformation. With significant cost savings, 3-month ROI, and superior performance, the question isn't whether to switch to edge AI, but how quickly you can make the transition.
 
 ## Ready to Calculate Your Savings?
 

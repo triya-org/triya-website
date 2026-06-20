@@ -203,7 +203,7 @@ Warehouse operations move fast. Forklifts travel at speeds requiring split-secon
 
 **Bandwidth Efficiency**
 
-A typical warehouse with 100 cameras generates approximately 3-5 terabytes of video data daily. Transmitting this volume to cloud servers requires massive bandwidth and incurs significant data transfer costs. Edge processing analyzes video locally and transmits only alerts, metadata, and relevant clips, reducing bandwidth requirements by 85-95%.
+A typical warehouse with 100 cameras generates approximately 3-5 terabytes of video data daily. Transmitting this volume to cloud servers requires massive bandwidth and incurs significant data transfer costs. Edge processing analyzes video locally and transmits only alerts, metadata, and relevant clips, dramatically reducing bandwidth requirements.
 
 **Network Independence**
 

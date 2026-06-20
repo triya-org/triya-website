@@ -137,7 +137,7 @@ Let's analyze a typical 100-camera deployment:
 
 **Results:**
 - 100% of falls detected within 2 seconds
-- Response time improved by 85%
+- Response time improved dramatically
 - Zero infant security incidents
 
 ## The Hidden Costs of "Recording Only"

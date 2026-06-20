@@ -323,7 +323,7 @@ Triya's platform exemplifies camera-agnostic architecture through:
 
 **Flexible Deployment:** Works with existing infrastructure while supporting gradual upgrades
 
-Organizations deploying Triya across the GCC consistently report 70-85% lower total cost of ownership compared to proprietary alternatives, while maintaining complete flexibility to upgrade cameras on their own schedules.
+Organizations deploying Triya across the GCC consistently report a much lower total cost of ownership compared to proprietary alternatives, while maintaining complete flexibility to upgrade cameras on their own schedules.
 
 
 ## The Strategic Imperative

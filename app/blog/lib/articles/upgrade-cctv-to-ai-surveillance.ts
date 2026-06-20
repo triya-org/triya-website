@@ -282,7 +282,7 @@ Triya offers no-obligation evaluation:
 ### Why Triya?
 
 - **Works with existing cameras** - No hardware waste
-- **85% cost reduction** - Proven savings
+- **Significant cost reduction** - Proven savings
 - **Local support** - Teams in Dubai and Abu Dhabi
 - **Compliance ready** - Meet all GCC regulations
 - **Immediate ROI** - Most clients positive in 3 months

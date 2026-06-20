@@ -282,7 +282,7 @@ Hospitality properties implementing AI surveillance realize substantial returns:
 ### Security and Liability Reduction
 
 - 70-80% reduction in security incidents
-- 85% faster incident response times
+- much faster incident response times
 - 60% reduction in liability claims through documentation
 - Insurance premium reductions averaging 20-30%
 

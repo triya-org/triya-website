@@ -156,7 +156,7 @@ Energy efficiency is becoming a critical differentiator in AI surveillance techn
 | Standard Edge AI | 5,000 kWh/year | AED 2,500 | 2.5 tons CO2 |
 | Optimized Edge AI | 2,000 kWh/year | AED 1,000 | 1.0 ton CO2 |
 
-Organizations deploying energy-efficient AI surveillance can reduce their security infrastructure carbon footprint by up to 85% compared to traditional cloud-based systems.
+Organizations deploying energy-efficient AI surveillance can dramatically reduce their security infrastructure carbon footprint compared to traditional cloud-based systems.
 
 ## 9. 5G and Its Impact on Surveillance Networks
 
@@ -220,7 +220,7 @@ Triya is not simply observing these trends; it is building the platform that emb
 ### Triya's Strategic Advantages
 
 - **Edge-Native Architecture:** Triya processes all AI analytics on-premise, eliminating cloud dependency, ensuring data sovereignty, and delivering sub-100ms response times. This is not a feature; it is the foundation.
-- **Camera-Agnostic Deployment:** Triya works with existing camera infrastructure, eliminating the need for expensive hardware replacements and reducing deployment costs by up to 85%.
+- **Camera-Agnostic Deployment:** Triya works with existing camera infrastructure, eliminating the need for expensive hardware replacements and dramatically reducing deployment costs.
 - **Arabic-First Design:** Built from the ground up with full Arabic language support across the interface, reporting, and AI models, Triya delivers native-quality experience for Arabic-speaking operators.
 - **Privacy by Architecture:** With all processing happening at the edge, Triya inherently complies with UAE and Saudi data protection requirements. Data never leaves the premises.
 - **Multi-Modal Ready:** Triya's platform architecture supports integration with audio sensors, IoT devices, and environmental monitoring systems, enabling true multi-modal intelligence.
