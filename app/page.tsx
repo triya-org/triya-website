@@ -3,10 +3,11 @@
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { ProductShowcase } from "@/components/sections/product-showcase";
-import { CTASection } from "@/components/sections/cta-section";
 import { ProductSchema } from "@/app/components/structured-data";
-import { HowItWorks } from "@/components/sections/how-it-works";
+import { WhatItIs } from "@/components/sections/what-it-is";
+import { QueryRoom } from "@/components/sections/query-room";
+import { Proof } from "@/components/sections/proof";
+import { CloseCTA } from "@/components/sections/close-cta";
 import {
   Dialog,
   DialogContent,
@@ -80,24 +81,30 @@ export default function Home() {
         }}
       />
 
-      {/* The Living City — scroll-scrubbed clay-world journey */}
+      {/* The Living City — scroll-scrubbed clay-world journey (the poetic
+          dream: fly through the four industries as atmosphere) */}
       <LivingCity />
 
       {/* The "sheet": slides up OVER the pinned city (z + opaque bg) and
           carries the rest of the page — analog.io cover pattern */}
       <div className="relative z-20 bg-background">
-        {/* Product Showcase */}
-        <ProductShowcase />
+        {/* What it actually is — the crisp literal anchor that grounds the
+            poetry above (retrofit: your cameras → one box → ask anything) */}
+        <WhatItIs />
 
-        {/* How It Works */}
-        <HowItWorks />
+        {/* The Query Room — the marquee. Ink command-room: pick an industry,
+            watch Triya resolve a real query→answer on real footage. This is
+            both the "where to apply" showcase and the "talk to your cameras"
+            demo, fused. (industries also appear in the city above as
+            atmosphere; here they're proof of applicability — self-identify) */}
+        <QueryRoom />
 
-        {/* (industries now live INSIDE the Living City above — the four
-            park beats of the unified 800% journey) */}
+        {/* Proof — the four hard numbers as editorial evidence */}
+        <Proof />
 
-        {/* CTA Section */}
+        {/* Close — confident cream invitation, resolves the page to paper */}
         <div className="relative z-30 bg-background">
-          <CTASection />
+          <CloseCTA />
         </div>
       </div>
 
