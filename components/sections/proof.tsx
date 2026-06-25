@@ -1,15 +1,21 @@
 "use client";
 
-import { CountUp } from "@/components/scroll/CountUp";
+import { useRef } from "react";
+import { gsap, registerGsap } from "@/lib/gsap";
 import { Reveal } from "@/components/scroll/Reveal";
+import { usePrefersReducedMotion } from "@/lib/reduced-motion";
+import { useIsomorphicLayoutEffect } from "@/lib/use-isomorphic-layout-effect";
 
 /**
- * Proof — the four hard numbers, but set as editorial evidence rather than a
- * centered four-up stat strip. Each claim is a full row: an oversized clay
- * numeral, the claim, and the *reason* it's true (a buyer should be able to
- * repeat one to their boss). Rows alternate alignment for an asymmetric,
- * magazine-spread rhythm; hairline dividers between. CountUp is reduced-motion
- * safe and settles on the true value; widths are reserved so nothing shifts.
+ * Proof — the four numbers as editorial *monuments*, not a stat strip and not a
+ * CountUp ticker (the most templated motion in the SaaS playbook). Each numeral
+ * is oversized type-as-image that rises out of a clipped band on scroll — like
+ * a figure being printed/stamped onto the page — with a clay rule that wipes in
+ * under the claim. The reason copy (the real differentiator) is promoted.
+ *
+ * Motion is GSAP ScrollTrigger (wired into Lenis site-wide) rather than Framer
+ * whileInView, which does not fire reliably under this page's smooth-scroll.
+ * Reduced-motion: everything static, no rise, no wipe.
  */
 
 interface Claim {
@@ -64,67 +70,109 @@ export function Proof() {
           </p>
         </Reveal>
 
-        <div className="mt-16 sm:mt-20">
-          {CLAIMS.map((c, i) => {
-            const flip = i % 2 === 1;
-            return (
-              <Reveal
-                key={c.claim}
-                y={32}
-                start="top 86%"
-                className="border-t border-cream-300 py-10 last:border-b sm:py-12"
-              >
-                <div
-                  className={[
-                    "grid items-baseline gap-x-8 gap-y-3 sm:grid-cols-12",
-                    flip ? "sm:text-right" : "",
-                  ].join(" ")}
-                >
-                  {/* numeral */}
-                  <div
-                    className={[
-                      "flex items-baseline sm:col-span-5",
-                      flip ? "sm:order-2 sm:justify-end" : "",
-                    ].join(" ")}
-                  >
-                    {/* clay-500 (not clay-400) clears large-text contrast on the
-                        cream surface — the system already darkens clay for type
-                        on paper (eyebrows use clay-600) */}
-                    <span className="font-display text-[clamp(3.5rem,11vw,7.5rem)] font-semibold leading-[0.85] tracking-tight text-clay-500">
-                      <CountUp value={c.value} />
-                    </span>
-                    {c.unit && (
-                      <span className="ms-1 font-display text-[clamp(1.75rem,4vw,3rem)] font-semibold leading-none text-clay-500/80">
-                        {c.unit}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* claim + reason */}
-                  <div
-                    className={[
-                      "sm:col-span-7",
-                      flip ? "sm:order-1 sm:pe-8" : "sm:ps-8",
-                    ].join(" ")}
-                  >
-                    <h3 className="font-display text-xl font-semibold tracking-tight text-ink-900 sm:text-2xl">
-                      {c.claim}
-                    </h3>
-                    <p
-                      className={[
-                        "mt-2 max-w-md text-[0.975rem] leading-relaxed text-ink-700",
-                        flip ? "sm:ms-auto" : "",
-                      ].join(" ")}
-                    >
-                      {c.reason}
-                    </p>
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
+        <div className="mt-16 sm:mt-24">
+          {CLAIMS.map((c, i) => (
+            <ProofRow key={c.claim} claim={c} flip={i % 2 === 1} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function ProofRow({ claim, flip }: { claim: Claim; flip: boolean }) {
+  const reduced = usePrefersReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const numRef = useRef<HTMLSpanElement>(null);
+  const unitRef = useRef<HTMLSpanElement>(null);
+  const ruleRef = useRef<HTMLDivElement>(null);
+
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || reduced) return;
+    registerGsap();
+
+    const ctx = gsap.context(() => {
+      gsap.set([numRef.current, unitRef.current], { yPercent: 115 });
+      gsap.set(ruleRef.current, { scaleX: 0 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: { trigger: root, start: "top 80%" },
+      });
+      tl.to(numRef.current, { yPercent: 0, duration: 0.95, ease: "power4.out" })
+        .to(
+          unitRef.current,
+          { yPercent: 0, duration: 0.95, ease: "power4.out" },
+          0.08,
+        )
+        .to(
+          ruleRef.current,
+          { scaleX: 1, duration: 0.7, ease: "power3.out" },
+          0.25,
+        );
+    }, root);
+
+    return () => ctx.revert();
+  }, [reduced]);
+
+  return (
+    <div
+      ref={rootRef}
+      className="grid grid-cols-1 items-center gap-y-6 border-t border-cream-300 py-12 last:border-b sm:grid-cols-12 sm:gap-x-10 sm:py-16"
+    >
+      {/* the monument */}
+      <div
+        className={[
+          "flex items-end leading-[0.8] sm:col-span-6",
+          flip ? "sm:order-2 sm:justify-end" : "",
+        ].join(" ")}
+      >
+        <span className="block overflow-hidden">
+          <span
+            ref={numRef}
+            className="block font-display font-semibold tracking-[-0.04em] text-clay-500"
+            style={{ fontSize: "clamp(4.5rem, 15vw, 11rem)" }}
+          >
+            {claim.value}
+          </span>
+        </span>
+        {claim.unit && (
+          <span className="overflow-hidden pb-[0.12em]">
+            <span
+              ref={unitRef}
+              className="block font-display font-semibold leading-none text-clay-500/75"
+              style={{ fontSize: "clamp(2rem, 5vw, 3.75rem)" }}
+            >
+              {claim.unit}
+            </span>
+          </span>
+        )}
+      </div>
+
+      {/* claim + reason */}
+      <div
+        className={["sm:col-span-6", flip ? "sm:order-1 sm:text-right" : ""].join(" ")}
+      >
+        <h3 className="font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.75rem]">
+          {claim.claim}
+        </h3>
+        <div
+          ref={ruleRef}
+          className={[
+            "mt-3 h-[3px] w-16 rounded-full bg-clay-400",
+            flip ? "sm:ms-auto" : "",
+          ].join(" ")}
+          style={{ transformOrigin: flip ? "right" : "left" }}
+        />
+        <p
+          className={[
+            "mt-5 max-w-md text-[1.05rem] leading-relaxed text-ink-700",
+            flip ? "sm:ms-auto" : "",
+          ].join(" ")}
+        >
+          {claim.reason}
+        </p>
+      </div>
+    </div>
   );
 }

@@ -193,10 +193,22 @@ function DeviceStage() {
         aria-label="Your existing cameras feed into a single on-prem Triya edge box, which answers your questions"
       >
         <defs>
-          <linearGradient id="boxFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="hsl(var(--ink-800))" />
+          <linearGradient id="boxFill" x1="0" y1="0" x2="0.25" y2="1">
+            <stop offset="0" stopColor="hsl(var(--ink-700))" />
+            <stop offset="0.55" stopColor="hsl(var(--ink-800))" />
             <stop offset="1" stopColor="hsl(var(--ink-900))" />
           </linearGradient>
+          <linearGradient id="boxSide" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="hsl(var(--ink-900))" />
+            <stop offset="1" stopColor="#000" />
+          </linearGradient>
+          <radialGradient id="boxShadow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="hsl(var(--ink-900))" stopOpacity="0.22" />
+            <stop offset="1" stopColor="hsl(var(--ink-900))" stopOpacity="0" />
+          </radialGradient>
+          <clipPath id="boxClip">
+            <rect x="262" y="144" width="156" height="92" rx="16" />
+          </clipPath>
         </defs>
 
         {/* ── feed wires ── */}
@@ -248,19 +260,23 @@ function DeviceStage() {
           <path d="M562.5,205 l2.5,2.5 l4.5,-5" fill="none" stroke="hsl(var(--cream-50))" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </g>
 
-        {/* ── the box ── */}
-        {/* soft ground shadow */}
-        <ellipse cx="340" cy="252" rx="86" ry="10" fill="hsl(var(--ink-900))" opacity="0.10" />
-        {/* pulsing clay aura (alive) */}
-        {!reduced && (
-          <rect x="258" y="140" width="164" height="100" rx="18" fill="none" stroke="hsl(var(--clay-400))" strokeWidth="2">
-            <animate attributeName="opacity" values="0.0;0.5;0.0" dur="2.6s" repeatCount="indefinite" />
-            <animate attributeName="stroke-width" values="2;7;2" dur="2.6s" repeatCount="indefinite" />
-          </rect>
-        )}
+        {/* ── the box (a real on-prem appliance, not a flowchart node) ── */}
+        {/* raking ground shadow — offset down-right, soft radial */}
+        <ellipse cx="356" cy="250" rx="118" ry="20" fill="url(#boxShadow)" />
+        {/* extruded side/thickness — reads as a physical object with depth */}
+        <rect x="266" y="150" width="156" height="92" rx="16" fill="url(#boxSide)" />
+        {/* the face */}
         <rect x="262" y="144" width="156" height="92" rx="16" fill="url(#boxFill)" stroke="hsl(var(--ink-700))" />
         {/* top sheen */}
-        <rect x="262" y="144" width="156" height="36" rx="16" fill="hsl(var(--cream-50))" opacity="0.04" />
+        <rect x="262" y="144" width="156" height="34" rx="16" fill="hsl(var(--cream-50))" opacity="0.05" />
+        {/* a single specular glint drifting across the top face (premium, calm) */}
+        {!reduced && (
+          <g clipPath="url(#boxClip)">
+            <rect x="-40" y="144" width="34" height="92" fill="hsl(var(--cream-50))" opacity="0.07" transform="skewX(-18)">
+              <animate attributeName="x" values="250;470" dur="4.8s" begin="1.2s" repeatCount="indefinite" />
+            </rect>
+          </g>
+        )}
         {/* wordmark */}
         <text x="340" y="190" textAnchor="middle" className="font-mono" fontSize="17" letterSpacing="4" fill="hsl(var(--cream-100))">
           TRIYA

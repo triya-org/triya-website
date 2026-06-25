@@ -33,6 +33,7 @@ export function QueryRoom() {
   const [answerShown, setAnswerShown] = useState(0);
   const [paused, setPaused] = useState(false); // hover/focus → hold auto-advance
   const [inView, setInView] = useState(false);
+  const [booted, setBooted] = useState(reduced); // "power on" latch (first view)
 
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -54,9 +55,13 @@ export function QueryRoom() {
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), {
-      threshold: 0.25,
-    });
+    const io = new IntersectionObserver(
+      ([e]) => {
+        setInView(e.isIntersecting);
+        if (e.isIntersecting) setBooted(true); // latches: the room boots once
+      },
+      { threshold: 0.25 },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -156,23 +161,57 @@ export function QueryRoom() {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      {/* faint engineering grid — texture, not decoration */}
+      {/* faint engineering grid — paper-under-glass ruling (horizontal datum
+          lines only). Boots on (fades in left-untouched) when the room enters. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        /* paper-under-glass ruling (horizontal datum lines only) — carries the
-           editorial paper DNA into the dark band instead of a generic blueprint
-           graph-grid */
+        className="pointer-events-none absolute inset-0 transition-opacity duration-[1100ms] ease-out"
         style={{
+          opacity: booted ? 0.05 : 0,
           backgroundImage:
             "linear-gradient(hsl(var(--cream-100)) 1px, transparent 1px)",
           backgroundSize: "100% 40px",
         }}
       />
 
-      <div className="container relative">
-        {/* header */}
-        <div className="max-w-2xl">
+      {/* cinematic seams — the ink room emerges from paper at the top and
+          dissolves back into paper at the bottom (the city's "paper" language) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-36"
+        style={{ background: "linear-gradient(to bottom, hsl(var(--cream-50)), transparent)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-36"
+        style={{ background: "linear-gradient(to top, hsl(var(--cream-100)), transparent)" }}
+      />
+
+      {/* one-shot "power on" scan that sweeps the room when it first enters */}
+      {booted && !reduced && (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 z-20 h-44"
+          initial={{ top: "-16%", opacity: 1 }}
+          animate={{ top: "112%", opacity: [1, 1, 0] }}
+          transition={{ duration: 1.05, ease: "easeInOut" }}
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, hsl(var(--clay-400)/0.16), transparent)",
+          }}
+        >
+          <div className="absolute inset-x-0 top-1/2 h-px bg-clay-400/80 shadow-[0_0_18px_3px_hsl(var(--clay-400)/0.6)]" />
+        </motion.div>
+      )}
+
+      <div className="container relative z-10">
+        {/* header — develops in as the room boots */}
+        <motion.div
+          className="max-w-2xl"
+          initial={false}
+          animate={{ opacity: booted ? 1 : 0, y: booted ? 0 : 16 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        >
           <p className="t-eyebrow !text-clay-300">Talk to your cameras · Live query</p>
           <h2
             id="query-room-title"
@@ -185,7 +224,7 @@ export function QueryRoom() {
             already own and resolves the exact moment — camera, timestamp, the
             lot — on-premise, in front of you.
           </p>
-        </div>
+        </motion.div>
 
         {/* console */}
         <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:gap-10">
@@ -265,6 +304,8 @@ export function QueryRoom() {
               queryShown={queryShown}
               answerCells={answerCells}
               answerShown={answerShown}
+              active={active}
+              onPick={setActive}
             />
           </div>
         </div>
@@ -334,9 +375,11 @@ function Viewport({
           )}
           <span className="relative inline-flex h-2 w-2 rounded-full bg-clay-400" />
         </span>
-        <span className="font-mono text-[0.65rem] tracking-wider text-cream-100">
-          {ch.cameraId}
-        </span>
+        <ScrambleText
+          value={ch.cameraId}
+          reduced={reduced}
+          className="font-mono text-[0.65rem] tracking-wider text-cream-100"
+        />
       </div>
 
       {/* HUD: timestamp + location (top-right) */}
@@ -457,6 +500,8 @@ function Conversation({
   queryShown,
   answerCells,
   answerShown,
+  active,
+  onPick,
 }: {
   ch: Channel;
   phase: Phase;
@@ -464,6 +509,8 @@ function Conversation({
   queryShown: number;
   answerCells: { c: string; em: boolean }[];
   answerShown: number;
+  active: number;
+  onPick: (i: number) => void;
 }) {
   const typingQuery = !reduced && phase === "query";
   const typingAnswer = !reduced && phase === "answer";
@@ -525,6 +572,31 @@ function Conversation({
         <Chip>{ch.latency} on-prem</Chip>
         <Chip muted>{ch.location}</Chip>
       </div>
+
+      {/* ask it yourself — the visitor picks a question and fires the engine */}
+      <div className="mt-5 border-t border-[hsl(var(--border))] pt-4">
+        <p className="t-eyebrow mb-3 !text-ink-300">Ask it yourself</p>
+        <div className="flex flex-wrap gap-2">
+          {CHANNELS.map((c, i) => {
+            const on = i === active;
+            return (
+              <button
+                key={c.id}
+                onClick={() => onPick(i)}
+                aria-pressed={on}
+                className={[
+                  "rounded-full border px-3 py-1.5 text-start text-[0.8rem] leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-800",
+                  on
+                    ? "border-clay-400 bg-clay-400/15 text-clay-200"
+                    : "border-[hsl(var(--border))] text-ink-300 hover:border-ink-300 hover:text-cream-100",
+                ].join(" ")}
+              >
+                {c.chip}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -577,4 +649,51 @@ function Dots() {
       <span className="h-1 w-1 animate-bounce rounded-full bg-current" />
     </span>
   );
+}
+
+const SCRAMBLE_GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+
+/** camera-ID readout that "acquires" — scrambles its glyphs then locks on
+ *  channel switch, the way a real surveillance feed feels like it's tuning in */
+function ScrambleText({
+  value,
+  reduced,
+  className,
+}: {
+  value: string;
+  reduced: boolean;
+  className?: string;
+}) {
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    if (reduced) {
+      setDisplay(value);
+      return;
+    }
+    const steps = 11;
+    let frame = 0;
+    const id = setInterval(() => {
+      frame += 1;
+      const settled = Math.floor((frame / steps) * value.length);
+      setDisplay(
+        value
+          .split("")
+          .map((c, i) => {
+            if (c === "-" || c === " ") return c;
+            return i < settled
+              ? c
+              : SCRAMBLE_GLYPHS[Math.floor(Math.random() * SCRAMBLE_GLYPHS.length)];
+          })
+          .join(""),
+      );
+      if (frame >= steps) {
+        clearInterval(id);
+        setDisplay(value);
+      }
+    }, 38);
+    return () => clearInterval(id);
+  }, [value, reduced]);
+
+  return <span className={className}>{display}</span>;
 }

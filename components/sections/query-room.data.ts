@@ -32,6 +32,8 @@ export interface Channel {
   index: string;
   label: string;
   verb: string;
+  /** short natural-language form of the query, for the "ask it yourself" chips */
+  chip: string;
   cameraId: string;
   location: string;
   timestamp: string;
@@ -52,6 +54,7 @@ export const CHANNELS: Channel[] = [
     index: "01",
     label: "Manufacturing",
     verb: "Catch safety violations before they cost you",
+    chip: "Anyone without a hard hat?",
     cameraId: "CCTV-131-LT-2-G-38-B1",
     location: "Assembly Line 3 · Press Bay",
     timestamp: "14:22:07",
@@ -69,13 +72,14 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 match",
     latency: "0.3s",
     video: "/videos/manufacturing_hero_1.mp4",
-    poster: "/images/industries/manufacturing_1.png",
+    poster: "/images/industries/manufacturing.jpg",
   },
   {
     id: "retail",
     index: "02",
     label: "Retail",
     verb: "Find the moment in seconds, not shifts",
+    chip: "A bag left unattended?",
     cameraId: "CCTV-204-RT-1-F-12-A2",
     location: "Aisle 6 · Electronics",
     timestamp: "17:48:31",
@@ -93,13 +97,14 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 match",
     latency: "0.4s",
     video: "/videos/retail_hero_1.mp4",
-    poster: "/images/industries/retail_1.png",
+    poster: "/images/industries/retail.jpg",
   },
   {
     id: "smart-cities",
     index: "03",
     label: "Smart Cities",
     verb: "See the incident the instant it happens",
+    chip: "Any vehicle going the wrong way?",
     cameraId: "CCTV-069-SC-3-J-30-C1",
     location: "Junction 30 · Eastbound",
     timestamp: "19:03:55",
@@ -117,13 +122,14 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 incident",
     latency: "0.3s",
     video: "/videos/smartcity_hero_1.mp4",
-    poster: "/images/industries/smart-cities_1.png",
+    poster: "/images/industries/smart-cities.jpg",
   },
   {
     id: "events",
     index: "04",
     label: "Events",
     verb: "Move the crowd before it becomes a crush",
+    chip: "Where’s the crowd too dense?",
     cameraId: "CCTV-318-EV-2-H-22-D4",
     location: "North Gate · Concourse",
     timestamp: "20:41:12",
@@ -141,7 +147,7 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 zone",
     latency: "0.2s",
     video: "/videos/event_hero_4.mp4",
-    poster: "/images/industries/events_1.png",
+    poster: "/images/industries/events.jpg",
   },
 ];
 
