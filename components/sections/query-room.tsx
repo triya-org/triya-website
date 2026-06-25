@@ -1,29 +1,48 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
-import { CHANNELS, answerToText, type Channel } from "@/components/sections/query-room.data";
+import {
+  CHANNELS,
+  SCENARIOS,
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  answerToText,
+  type Channel,
+  type Category,
+  type Scenario,
+} from "@/components/sections/query-room.data";
 
 /**
- * The Query Room — the marquee "where to apply" + "talk to your cameras" demo.
+ * The Command Room — the product's Scenarios & Alerts, made cinematic.
  *
- * Out-designs corem's coverflow-of-gadgets by being a *conversation*, not a
- * gallery: pick an industry channel, Triya runs a real natural-language query
- * against that vertical's real footage, and the answer *resolves out of the
- * frame* — scanline sweep → bounding-box snap → camera-ID/timestamp telemetry →
- * typed answer in Triya's own voice → an on-prem sovereignty stamp. One ink
- * command-room band; clay is the only signal colour.
+ * Two movements in one ink band: (1) a live console that DEMOS four flagship
+ * detection scenarios firing on real footage — scanline → bounding-box/zone snap
+ * → camera-ID/timestamp telemetry → typed alert in Triya's voice → an on-prem
+ * stamp; and (2) "the standing watch", a living roster of the full detection
+ * library across security / safety / compliance / operations.
  *
- * Craft contract (Sade): only the active channel's <video> is in the DOM;
- * keyboard-driven radiogroup; auto-advance pauses on hover/focus and when the
- * section scrolls out of view; full static fallback under prefers-reduced-motion
- * (poster + pre-resolved box + complete answer, no scrub, no auto-advance).
+ * Craft contract: only the active scenario's <video> is in the DOM; keyboard
+ * radiogroup; auto-advance pauses on hover/focus and off-screen; full static
+ * fallback under prefers-reduced-motion (poster + pre-resolved box + complete
+ * alert + static roster, no scrub, no auto-fire).
  */
 
 type Phase = "query" | "scan" | "answer" | "done";
 
-const HOLD_MS = 5200; // dwell on a resolved answer before auto-advancing
+const HOLD_MS = 5200; // dwell on a resolved alert before auto-advancing
+
+/** category tints — clay stays dominant; safety/operations get rare muted
+ *  amber/green accents, matching the product's own scenario taxonomy */
+const CAT_TINT: Record<Category, string> = {
+  security: "hsl(var(--clay-400))",
+  compliance: "hsl(var(--clay-300))",
+  safety: "hsl(38 70% 56%)",
+  operations: "hsl(150 30% 52%)",
+};
 
 export function QueryRoom() {
   const reduced = usePrefersReducedMotion();
@@ -36,6 +55,7 @@ export function QueryRoom() {
   const [booted, setBooted] = useState(reduced); // "power on" latch (first view)
 
   const sectionRef = useRef<HTMLElement>(null);
+  const consoleRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const radioRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -151,6 +171,14 @@ export function QueryRoom() {
     radioRefs.current[next]?.focus();
   };
 
+  // jump from a wall row to its live demo in the console above
+  const demoScenario = (demoId: string) => {
+    const idx = CHANNELS.findIndex((c) => c.id === demoId);
+    if (idx < 0) return;
+    setActive(idx);
+    consoleRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
     <section
       ref={sectionRef}
@@ -212,26 +240,26 @@ export function QueryRoom() {
           animate={{ opacity: booted ? 1 : 0, y: booted ? 0 : 16 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
         >
-          <p className="t-eyebrow !text-clay-300">Talk to your cameras · Live query</p>
+          <p className="t-eyebrow !text-clay-300">Scenarios &amp; Alerts · Always-on detection</p>
           <h2
             id="query-room-title"
             className="t-display-2 mt-4 text-cream-50"
           >
-            Ask. Watch it <em className="not-italic text-clay-400">answer</em>.
+            See what it <em className="not-italic text-clay-400">catches</em>.
           </h2>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-300">
-            Pick your world. Triya runs your question against the cameras you
-            already own and resolves the exact moment — camera, timestamp, the
-            lot — on-premise, in front of you.
+            Switch on a detection and Triya watches your own footage around the
+            clock — flagging the exact moment it fires, on-premise. Here are four
+            of them, live.
           </p>
         </motion.div>
 
         {/* console */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:gap-10">
+        <div ref={consoleRef} className="mt-12 grid gap-8 lg:grid-cols-12 lg:gap-10">
           {/* ── channel index (radiogroup) ── */}
           <div
             role="radiogroup"
-            aria-label="Choose an industry to query"
+            aria-label="Choose a detection scenario"
             className="flex gap-3 overflow-x-auto pb-2 lg:col-span-3 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0"
           >
             {CHANNELS.map((c, i) => {
@@ -280,6 +308,13 @@ export function QueryRoom() {
                   >
                     {c.verb}
                   </p>
+                  <span className="mt-2 hidden items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-ink-300 lg:inline-flex">
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ background: CAT_TINT[c.category] }}
+                    />
+                    {CATEGORY_LABELS[c.category]}
+                  </span>
                 </button>
               );
             })}
@@ -309,8 +344,197 @@ export function QueryRoom() {
             />
           </div>
         </div>
+
+        {/* ── movement 2: the standing watch — the full detection library ── */}
+        <DetectionWall reduced={reduced} inView={inView} onDemo={demoScenario} />
       </div>
     </section>
+  );
+}
+
+/* ──────────────────── the standing watch (detection wall) ──────────────────── */
+
+function DetectionWall({
+  reduced,
+  inView,
+  onDemo,
+}: {
+  reduced: boolean;
+  inView: boolean;
+  onDemo: (demoId: string) => void;
+}) {
+  // one active scenario "fires" in the periphery at a slow, irregular cadence —
+  // the wall catching something while you read it. Off when off-screen/reduced.
+  const [firingId, setFiringId] = useState<string | null>(null);
+  const activeIds = useMemo(
+    () => SCENARIOS.filter((s) => s.status === "active").map((s) => s.id),
+    [],
+  );
+
+  useEffect(() => {
+    if (reduced || !inView || activeIds.length === 0) return;
+    let tick = 0;
+    const id = setInterval(() => {
+      tick += 1;
+      // skip ~1 in 3 ticks so the cadence reads irregular, not metronomic
+      if (tick % 3 === 0) return;
+      const pick = activeIds[Math.floor(Math.random() * activeIds.length)];
+      setFiringId(pick);
+      setTimeout(() => setFiringId((cur) => (cur === pick ? null : cur)), 750);
+    }, 1900);
+    return () => clearInterval(id);
+  }, [reduced, inView, activeIds]);
+
+  return (
+    <div className="mt-20 sm:mt-28">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-xl">
+          <p className="t-eyebrow !text-clay-300">The standing watch</p>
+          <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight text-cream-50 sm:text-3xl">
+            Everything it can watch for.
+          </h3>
+          <p className="mt-3 text-ink-300">
+            Pre-built detections across four fronts. Switch one on and it runs
+            24/7 on your own footage — alerting the moment it fires.
+          </p>
+        </div>
+        <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-ink-500">
+          {SCENARIOS.filter((s) => s.status === "active").length} armed ·{" "}
+          {SCENARIOS.length} ready
+        </p>
+      </div>
+
+      {/* category lanes */}
+      <div className="mt-10 grid gap-x-10 gap-y-10 border-t border-[hsl(var(--border))] pt-10 sm:grid-cols-2 lg:grid-cols-4">
+        {CATEGORY_ORDER.map((cat) => {
+          const items = SCENARIOS.filter((s) => s.category === cat);
+          return (
+            <div key={cat}>
+              <div className="mb-4 flex items-center gap-2">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: CAT_TINT[cat] }}
+                />
+                <span className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-300">
+                  {CATEGORY_LABELS[cat]}
+                </span>
+              </div>
+              <ul className="space-y-px">
+                {items.map((s) => (
+                  <ScenarioRow
+                    key={s.id}
+                    s={s}
+                    reduced={reduced}
+                    firing={firingId === s.id}
+                    onDemo={onDemo}
+                  />
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* the manifest is still being written + a soft bridge */}
+      <div className="mt-8 flex flex-col gap-4 border-t border-[hsl(var(--border))] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-mono text-[0.75rem] text-ink-500">
+          + more on the watch every release
+          {!reduced && <span className="ms-1 inline-block animate-pulse">▌</span>}
+        </p>
+        <Link
+          href="/contact/"
+          className="group inline-flex items-center gap-2 text-sm text-ink-300 transition-colors hover:text-cream-50"
+        >
+          Don’t see yours? Triya can likely learn it
+          <ArrowRight className="h-4 w-4 text-clay-400 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ScenarioRow({
+  s,
+  reduced,
+  firing,
+  onDemo,
+}: {
+  s: Scenario;
+  reduced: boolean;
+  firing: boolean;
+  onDemo: (demoId: string) => void;
+}) {
+  const isActive = s.status === "active";
+  const interactive = !!s.demoId;
+  const Tag: ElementType = interactive ? "button" : "div";
+
+  return (
+    <li className="relative">
+      <Tag
+        {...(interactive
+          ? {
+              onClick: () => onDemo(s.demoId!),
+              type: "button" as const,
+              "aria-label": `Demo the ${s.name} scenario`,
+            }
+          : {})}
+        className={[
+          "group relative block w-full border-b border-[hsl(var(--border))]/40 py-3 text-start transition-colors",
+          interactive
+            ? "cursor-pointer hover:border-clay-400/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-clay-400"
+            : "",
+        ].join(" ")}
+      >
+        {/* the firing sweep — a clay underline that wipes the row */}
+        {firing && !reduced && (
+          <motion.span
+            aria-hidden="true"
+            initial={{ scaleX: 0, opacity: 0.9 }}
+            animate={{ scaleX: 1, opacity: 0 }}
+            transition={{ duration: 0.75, ease: "easeOut" }}
+            className="absolute inset-x-0 bottom-0 h-px origin-left bg-clay-400"
+          />
+        )}
+        <div className="flex items-center gap-2.5">
+          {/* status dot */}
+          <span className="relative flex h-2 w-2 shrink-0">
+            {isActive && !reduced && (
+              <span
+                className={[
+                  "absolute inline-flex h-full w-full rounded-full bg-clay-400",
+                  firing ? "animate-ping" : "opacity-0",
+                ].join(" ")}
+              />
+            )}
+            <span
+              className={[
+                "relative inline-flex h-2 w-2 rounded-full",
+                isActive ? "bg-clay-400" : "border border-ink-300",
+              ].join(" ")}
+            />
+          </span>
+          <span
+            className={[
+              "font-display text-[0.98rem] font-medium tracking-tight",
+              isActive ? "text-cream-50" : "text-ink-300 group-hover:text-cream-100",
+            ].join(" ")}
+          >
+            {s.name}
+          </span>
+          {interactive && (
+            <span className="ms-auto font-mono text-[0.55rem] uppercase tracking-wider text-clay-300 opacity-0 transition-opacity group-hover:opacity-100">
+              demo →
+            </span>
+          )}
+        </div>
+        <p className="mt-1 ps-[18px] text-[0.8rem] leading-snug text-ink-500">
+          {s.description}
+        </p>
+        <p className="mt-1.5 ps-[18px] font-mono text-[0.6rem] uppercase tracking-[0.12em] text-ink-300">
+          {isActive ? "● Active" : "○ Available"} · Detects {s.detects.join(", ")}
+        </p>
+      </Tag>
+    </li>
   );
 }
 

@@ -92,11 +92,12 @@ export default function Home() {
             poetry above (retrofit: your cameras → one box → ask anything) */}
         <WhatItIs />
 
-        {/* The Query Room — the marquee. Ink command-room: pick an industry,
-            watch Triya resolve a real query→answer on real footage. This is
-            both the "where to apply" showcase and the "talk to your cameras"
-            demo, fused. (industries also appear in the city above as
-            atmosphere; here they're proof of applicability — self-identify) */}
+        {/* The Command Room — the product's Scenarios & Alerts, made cinematic.
+            Movement 1: a live console demoing four flagship detection scenarios
+            firing on real footage. Movement 2: "the standing watch" — the full
+            detection library across security/safety/compliance/operations.
+            (industries live in the city above; here it's about WHAT Triya
+            detects, mirroring the app's scenario grid.) */}
         <QueryRoom />
 
         {/* Proof — the four hard numbers as editorial evidence */}
