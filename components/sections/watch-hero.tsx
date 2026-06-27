@@ -171,7 +171,7 @@ export function WatchHero({
   return (
     <section
       ref={rootRef}
-      className="dark relative flex min-h-[100dvh] items-end overflow-hidden bg-ink-900 text-cream-50"
+      className="dark relative flex min-h-[calc(100dvh-var(--nav-h))] items-end overflow-hidden bg-ink-900 text-cream-50"
     >
       {/* z0 — ambient feed (Seedance stand-in) + grade */}
       <div className="absolute inset-0 z-0">
