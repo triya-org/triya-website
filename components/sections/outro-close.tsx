@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { WatchField } from "@/components/three/watch-field/WatchField";
+import { PerceptionStack } from "@/components/sections/perception-stack";
 import { gsap, SplitText, registerGsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import { useIsomorphicLayoutEffect } from "@/lib/use-isomorphic-layout-effect";
@@ -24,6 +25,9 @@ export function OutroClose() {
     registerGsap();
     const ctx = gsap.context(() => {
       const split = new SplitText(headRef.current, { type: "lines" });
+      // Guard: under React StrictMode's double-invoke (and before fonts settle)
+      // split.lines can momentarily be empty; gsap.from([]) logs "target null".
+      if (!split.lines.length) return () => split.revert();
       gsap.from(split.lines, {
         yPercent: 110,
         opacity: 0,
@@ -45,6 +49,21 @@ export function OutroClose() {
       <div className="absolute inset-0 z-0 opacity-60">
         <WatchField intensity={0.6} />
       </div>
+
+      {/* RESOLVE — the hero's perception stack returns, arriving exploded and
+          COLLAPSING back into a single watched frame as the close centres, so
+          the page ends on the gesture it opened with. Behind the copy, faint. */}
+      <PerceptionStack
+        variant="close"
+        className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden h-[78vh] w-[78vw] -translate-x-1/2 -translate-y-1/2 opacity-[0.45] sm:block"
+      />
+      {/* centre scrim keeps the headline legible over the stack */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-[2]"
+        style={{ background: "radial-gradient(60% 55% at 50% 48%, hsl(var(--ink-900)/0.82), transparent 80%)" }}
+      />
+
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-clay-400/50 to-transparent" />
 
       <div className="container relative z-10">

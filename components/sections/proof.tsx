@@ -13,9 +13,19 @@ import { useIsomorphicLayoutEffect } from "@/lib/use-isomorphic-layout-effect";
  * a figure being printed/stamped onto the page — with a clay rule that wipes in
  * under the claim. The reason copy (the real differentiator) is promoted.
  *
- * Motion is GSAP ScrollTrigger (wired into Lenis site-wide) rather than Framer
- * whileInView, which does not fire reliably under this page's smooth-scroll.
- * Reduced-motion: everything static, no rise, no wipe.
+ * ALIVE, not just revealed (the calm cream room still has to move):
+ *   • AMBIENT  — a fine paper grain drifts over the whole room, each numeral
+ *     carries a slow clay sheen, and a soft glow breathes behind it. Nothing is
+ *     ever frozen even when you sit still. (CSS keyframes, see globals.css.)
+ *   • DEPTH    — the monument and its copy parallax against the scroll at
+ *     different rates (rect + rAF, NOT a ScrollTrigger pin — robust against the
+ *     Living City's 800% pin per the codebase gotcha).
+ *   • POINTER  — the monument and copy drift toward/away from the cursor at
+ *     different rates, so the row gains a parallax tilt under the pointer.
+ *
+ * The entrance is GSAP ScrollTrigger (wired into Lenis site-wide) rather than
+ * Framer whileInView, which does not fire reliably under this page's smooth
+ * scroll. Reduced-motion: everything static — no grain, sheen, glow or parallax.
  */
 
 interface Claim {
@@ -56,9 +66,52 @@ const CLAIMS: Claim[] = [
 ];
 
 export function Proof() {
+  const reduced = usePrefersReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // POINTER LIFE — broadcast a normalised cursor vector (-1..1) on the section
+  // as CSS vars; each row's monument + copy read it at different multipliers for
+  // a parallax tilt. Cheap (one listener, vars inherit), and gated on reduced.
+  useIsomorphicLayoutEffect(() => {
+    const el = sectionRef.current;
+    if (!el || reduced) return;
+
+    let raf = 0;
+    const onMove = (e: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = el.getBoundingClientRect();
+        const px = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        const py = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        el.style.setProperty("--px", String(Math.max(-1, Math.min(1, px))));
+        el.style.setProperty("--py", String(Math.max(-1, Math.min(1, py))));
+      });
+    };
+    const onLeave = () => {
+      el.style.setProperty("--px", "0");
+      el.style.setProperty("--py", "0");
+    };
+
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+    };
+  }, [reduced]);
+
   return (
-    <section className="relative overflow-hidden bg-cream-100 py-24 sm:py-32">
-      <div className="container">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden bg-cream-100 py-24 sm:py-32"
+      style={{ ["--px" as string]: 0, ["--py" as string]: 0 }}
+    >
+      {/* AMBIENT — drifting paper grain so the room is never frozen */}
+      {!reduced && <div className="proof-grain" aria-hidden="true" />}
+
+      <div className="container relative">
         <Reveal className="max-w-2xl">
           <p className="t-eyebrow mb-4">The proof</p>
           <h2 className="t-display-2 text-ink-900">
@@ -83,10 +136,13 @@ export function Proof() {
 function ProofRow({ claim, flip }: { claim: Claim; flip: boolean }) {
   const reduced = usePrefersReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
+  const monumentRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
   const numRef = useRef<HTMLSpanElement>(null);
   const unitRef = useRef<HTMLSpanElement>(null);
   const ruleRef = useRef<HTMLDivElement>(null);
 
+  // ENTRANCE — the numeral rises out of its clip band, the rule wipes in.
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root || reduced) return;
@@ -115,6 +171,65 @@ function ProofRow({ claim, flip }: { claim: Claim; flip: boolean }) {
     return () => ctx.revert();
   }, [reduced]);
 
+  // DEPTH — scroll parallax derived straight from getBoundingClientRect on a
+  // passive scroll + rAF loop (NOT a ScrollTrigger pin: the Living City already
+  // pins for 800% and would feed any new pin stale start/end positions). The
+  // monument lags the scroll, the copy leads it, so the row gains depth. This
+  // sets translateY only; the pointer parallax (CSS-var calc) lives in inline
+  // style on the same elements, and CSS transforms compose, so they don't fight.
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    const monument = monumentRef.current;
+    const copy = copyRef.current;
+    if (!root || !monument || !copy || reduced) return;
+
+    let raf = 0;
+    const apply = () => {
+      raf = 0;
+      const r = root.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      // -1 (entering from below) .. 1 (leaving past top), 0 at viewport centre
+      const p = Math.max(
+        -1,
+        Math.min(1, (r.top + r.height / 2 - vh / 2) / (vh / 2 + r.height / 2)),
+      );
+      monument.style.setProperty("--sy", `${(p * 26).toFixed(2)}px`);
+      copy.style.setProperty("--sy", `${(p * -14).toFixed(2)}px`);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+
+    apply();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [reduced]);
+
+  // Two transforms, two elements: the OUTER cell carries the scroll parallax
+  // (--sy, applied with no CSS transition so it stays locked to the scroll), the
+  // INNER wrapper carries the pointer parallax (--px/--py, with the .proof-*
+  // transition so it eases as the cursor moves and resets). Splitting them means
+  // neither overwrites the other and scroll fidelity isn't smeared by easing.
+  const scrollMonument = {
+    transform: "translate3d(0, var(--sy, 0px), 0)",
+  } as React.CSSProperties;
+  const scrollCopy = {
+    transform: "translate3d(0, var(--sy, 0px), 0)",
+  } as React.CSSProperties;
+  const pointerMonument = {
+    transform:
+      "translate3d(calc(var(--px, 0) * 12px), calc(var(--py, 0) * 9px), 0)",
+  } as React.CSSProperties;
+  const pointerCopy = {
+    transform:
+      "translate3d(calc(var(--px, 0) * -5px), calc(var(--py, 0) * -4px), 0)",
+  } as React.CSSProperties;
+
   return (
     <div
       ref={rootRef}
@@ -122,56 +237,75 @@ function ProofRow({ claim, flip }: { claim: Claim; flip: boolean }) {
     >
       {/* the monument */}
       <div
+        ref={monumentRef}
+        style={scrollMonument}
         className={[
-          "flex items-end leading-[0.8] sm:col-span-6",
-          flip ? "sm:order-2 sm:justify-end" : "",
+          "sm:col-span-6",
+          flip ? "sm:order-2" : "",
         ].join(" ")}
       >
-        <span className="block overflow-hidden">
-          <span
-            ref={numRef}
-            className="block font-display font-semibold tracking-[-0.04em] text-clay-500"
-            style={{ fontSize: "clamp(4.5rem, 15vw, 11rem)" }}
-          >
-            {claim.value}
-          </span>
-        </span>
-        {claim.unit && (
-          <span className="overflow-hidden pb-[0.12em]">
+        <div
+          style={pointerMonument}
+          className={[
+            "proof-monument flex items-end leading-[0.8]",
+            flip ? "sm:justify-end" : "",
+          ].join(" ")}
+        >
+          {/* soft glow breathing behind the numeral (ambient) */}
+          <div className="proof-glow" aria-hidden="true" />
+          <span className="relative z-[1] block overflow-hidden">
             <span
-              ref={unitRef}
-              className="block font-display font-semibold leading-none text-clay-500/75"
-              style={{ fontSize: "clamp(2rem, 5vw, 3.75rem)" }}
+              ref={numRef}
+              className="proof-num block font-display font-semibold tracking-[-0.04em]"
+              style={{ fontSize: "clamp(4.5rem, 15vw, 11rem)" }}
             >
-              {claim.unit}
+              {claim.value}
             </span>
           </span>
-        )}
+          {claim.unit && (
+            <span className="relative z-[1] overflow-hidden pb-[0.12em]">
+              <span
+                ref={unitRef}
+                className="proof-unit block font-display font-semibold leading-none"
+                style={{ fontSize: "clamp(2rem, 5vw, 3.75rem)" }}
+              >
+                {claim.unit}
+              </span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* claim + reason */}
       <div
-        className={["sm:col-span-6", flip ? "sm:order-1 sm:text-right" : ""].join(" ")}
+        ref={copyRef}
+        style={scrollCopy}
+        className={[
+          "sm:col-span-6",
+          flip ? "sm:order-1 sm:text-right" : "",
+        ].join(" ")}
       >
-        <h3 className="font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.75rem]">
-          {claim.claim}
-        </h3>
-        <div
-          ref={ruleRef}
-          className={[
-            "mt-3 h-[3px] w-16 rounded-full bg-clay-400",
-            flip ? "sm:ms-auto" : "",
-          ].join(" ")}
-          style={{ transformOrigin: flip ? "right" : "left" }}
-        />
-        <p
-          className={[
-            "mt-5 max-w-md text-[1.05rem] leading-relaxed text-ink-700",
-            flip ? "sm:ms-auto" : "",
-          ].join(" ")}
-        >
-          {claim.reason}
-        </p>
+        <div className="proof-copy" style={pointerCopy}>
+          <h3 className="font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.75rem]">
+            {claim.claim}
+          </h3>
+          <div
+            ref={ruleRef}
+            className={[
+              "mt-3 h-[3px] w-16 rounded-full bg-clay-400",
+              flip ? "sm:ms-auto" : "",
+            ].join(" ")}
+            style={{ transformOrigin: flip ? "right" : "left" }}
+          />
+          <p
+            className={[
+              "mt-5 max-w-md text-[1.05rem] leading-relaxed text-ink-700",
+              flip ? "sm:ms-auto" : "",
+            ].join(" ")}
+          >
+            {claim.reason}
+          </p>
+        </div>
       </div>
     </div>
   );

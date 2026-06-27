@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/scroll/Reveal";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
+import { useSectionProgress } from "@/lib/use-section-progress";
 
 /**
  * "What it actually is" — the crisp literal anchor that grounds the poetic
@@ -77,19 +79,30 @@ export function WhatItIs() {
   return (
     <section className="relative bg-cream-50 py-24 sm:py-32">
       <div className="container">
-        <Reveal className="max-w-3xl">
-          <p className="t-eyebrow mb-4">What it is</p>
-          <h2 className="t-display-2 text-ink-900">
-            Keep every camera you own. <br className="hidden sm:block" />
-            Add one box. <em>Talk to all of them.</em>
-          </h2>
-          <p className="t-lead mt-6 max-w-2xl">
-            Triya isn’t another camera system to buy and install. It’s the
-            intelligence layer for the one you already run — a single on-prem box
-            that turns thousands of passive feeds into something you can question
-            in your own words.
-          </p>
-        </Reveal>
+        <div className="max-w-3xl">
+          <Reveal>
+            <p className="t-eyebrow mb-4">What it is</p>
+          </Reveal>
+          {/* SIGNATURE — the statement fills word-by-word from dim→bright as the
+              section scrolls through centre (Scale's scrubbed word reveal, in
+              Triya's clay). The emphasis phrase lands in clay. */}
+          <WordFill
+            className="t-display-2 text-ink-900"
+            segments={[
+              { t: "Keep every camera you own." },
+              { t: "Add one box.", br: true },
+              { t: "Talk to all of them.", em: true },
+            ]}
+          />
+          <Reveal>
+            <p className="t-lead mt-6 max-w-2xl">
+              Triya isn’t another camera system to buy and install. It’s the
+              intelligence layer for the one you already run — a single on-prem
+              box that turns thousands of passive feeds into something you can
+              question in your own words.
+            </p>
+          </Reveal>
+        </div>
 
         {/* centerpiece + legend */}
         <div className="mt-14 grid items-center gap-10 sm:mt-16 lg:grid-cols-12 lg:gap-12">
@@ -157,6 +170,76 @@ export function WhatItIs() {
         </Reveal>
       </div>
     </section>
+  );
+}
+
+/* ───────────────────────── word-fill headline ───────────────────────── */
+
+interface FillSeg {
+  t: string;
+  /** force a line break AFTER this segment */
+  br?: boolean;
+  /** the payoff phrase — fills to clay instead of ink */
+  em?: boolean;
+}
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+/**
+ * The statement reveals word-by-word as the section travels through the
+ * viewport: each word brightens from a dim wash to full ink (or clay for the
+ * payoff), left to right, scrubbed by scroll. Reduced motion → fully lit.
+ */
+function WordFill({
+  segments,
+  className,
+}: {
+  segments: FillSeg[];
+  className?: string;
+}) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const p = useSectionProgress(ref, { mode: "through", reducedValue: 1 });
+
+  // flatten segments → words, each carrying its em flag and whether a break
+  // follows the segment it ends.
+  const words = useMemo(() => {
+    const out: { t: string; em: boolean; brAfter: boolean }[] = [];
+    segments.forEach((seg) => {
+      const parts = seg.t.split(" ").filter(Boolean);
+      parts.forEach((w, i) =>
+        out.push({ t: w, em: !!seg.em, brAfter: !!seg.br && i === parts.length - 1 }),
+      );
+    });
+    return out;
+  }, [segments]);
+
+  // confine the fill to the middle of the pass so it reads as a deliberate
+  // sweep, not a slow crawl across the whole scroll range.
+  const local = clamp01((p - 0.1) / 0.5);
+  const N = words.length;
+
+  return (
+    <h2 ref={ref} className={className}>
+      {words.map((w, i) => {
+        // each word fills over ~1/N of `local`, with a little overlap (+1.6)
+        const f = reduced ? 1 : clamp01(local * (N + 1.6) - i);
+        return (
+          <span key={i}>
+            <span
+              style={{
+                opacity: 0.18 + 0.82 * f,
+                color: w.em ? "hsl(var(--clay-500))" : undefined,
+                transition: "opacity 140ms linear",
+              }}
+            >
+              {w.t}
+            </span>
+            {w.brAfter ? <br className="hidden sm:block" /> : " "}
+          </span>
+        );
+      })}
+    </h2>
   );
 }
 

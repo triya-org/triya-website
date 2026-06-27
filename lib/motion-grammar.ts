@@ -33,3 +33,34 @@ export const DUR = {
   scan: 1.1,
   lock: 0.42,
 } as const;
+
+/**
+ * STACK — the third verb, added for the Scale-adapted "how the AI sees" beats.
+ * A camera frame EXPLODES into its translucent perception layers (feed →
+ * detections → wireframe → on-prem data plane) in 3D and reassembles. Slow,
+ * dimensional, scroll-scrubbed (so it reads as linear `ease:none` against
+ * scroll); pointer adds a gentle spring-y parallax tilt on top.
+ *
+ * Used by the hero (explode on enter) and resolved by the close (collapse back
+ * into one watched frame) so the page opens and closes on the same gesture.
+ */
+export const STACK_SPRING = {
+  type: "spring",
+  stiffness: 90,
+  damping: 22,
+  mass: 1,
+} as const;
+
+/** word-fill (What It Is): the dim→bright sweep eases per word as it lands. */
+export const FILL_CSS = LOCK_CSS;
+
+/**
+ * The page's dark/light rhythm (Scale's cinematic↔editorial alternation), so
+ * every section knows which beat it is and the transitions between them land:
+ *   Hero(dark) → WhatItIs(light) → LivingCity(warm) → Talk(dark) →
+ *   WatchFloor(dark) → Proof(light) → Close(dark).
+ * Dark beats carry the 3D/stack motion; light beats are the calm editorial
+ * exhale (word-fill, count-ups). Adjacent same-tone beats get a seam (a sheet
+ * slide or a tone wash) rather than a hard cut.
+ */
+export const RHYTHM = ["dark", "light", "warm", "dark", "dark", "light", "dark"] as const;
