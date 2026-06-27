@@ -5,7 +5,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { ProductSchema } from "@/app/components/structured-data";
 import { WhatItIs } from "@/components/sections/what-it-is";
 import { TalkToCameras } from "@/components/sections/talk-to-cameras";
-import { DetectionDeck } from "@/components/sections/detection-deck";
+import { WatchFloor } from "@/components/sections/watch-floor";
 import { Proof } from "@/components/sections/proof";
 import { OutroClose } from "@/components/sections/outro-close";
 import { SmoothScroll } from "@/components/scroll/SmoothScroll";
@@ -85,8 +85,9 @@ export default function Home() {
         {/* THE SET-PIECE — talk to your cameras: query → scan → lock → answer */}
         <TalkToCameras />
 
-        {/* WHERE TO APPLY — the real detection library, switchable on one instrument */}
-        <DetectionDeck />
+        {/* WHERE TO APPLY — the Watch Floor: a live control room where the real
+            detections fire autonomously and any feed flies open on demand */}
+        <WatchFloor />
 
         {/* LIGHT ROOM 2 — the four numbers as bright editorial monuments */}
         <Proof />
