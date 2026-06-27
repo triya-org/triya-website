@@ -246,31 +246,62 @@ function storefrontPart(rand: () => number, x: number, z: number, w: number, d: 
   return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
 }
 
-/** a ribbed stadium bowl (events signature) */
+/** a ribbed stadium bowl with a tall roof canopy + floodlight masts (events signature) */
 function stadiumParts(rand: () => number, cx: number, cz: number): Part[] {
   const SX = 1.3;
+  const pointAt = (r: number, y: number, a: number): [number, number, number] => [
+    cx + Math.cos(a) * r * SX,
+    y,
+    cz + Math.sin(a) * r,
+  ];
   const oval = (r: number, y: number): number[] => {
     const pts: number[] = [];
-    const n = 52;
+    const n = 56;
     for (let i = 0; i < n; i++) {
       const a0 = (i / n) * Math.PI * 2;
       const a1 = ((i + 1) / n) * Math.PI * 2;
-      pts.push(cx + Math.cos(a0) * r * SX, y, cz + Math.sin(a0) * r, cx + Math.cos(a1) * r * SX, y, cz + Math.sin(a1) * r);
+      pts.push(...pointAt(r, y, a0), ...pointAt(r, y, a1));
     }
     return pts;
   };
-  const struts: number[] = [];
-  const n = 52;
+  const n = 56;
+  // seating ribs: bottom tier → top tier, now climbing far higher
+  const ribs: number[] = [];
   for (let i = 0; i < n; i += 3) {
     const a = (i / n) * Math.PI * 2;
-    struts.push(cx + Math.cos(a) * 2.2 * SX, 0, cz + Math.sin(a) * 2.2, cx + Math.cos(a) * 4.2 * SX, 1.7, cz + Math.sin(a) * 4.2);
+    ribs.push(...pointAt(2.2, 0, a), ...pointAt(4.4, 3.4, a));
+  }
+  // roof canopy: vertical supports from the top tier up to an over-sailing lip
+  const roof: number[] = [];
+  for (let i = 0; i < n; i += 4) {
+    const a = (i / n) * Math.PI * 2;
+    roof.push(...pointAt(4.4, 3.4, a), ...pointAt(4.7, 5.0, a)); // mast up
+    roof.push(...pointAt(4.7, 5.0, a), ...pointAt(3.6, 5.0, a)); // cantilever inward
+  }
+  // four floodlight masts for unmistakable vertical presence
+  const masts: number[] = [];
+  const mastH = 7.4;
+  for (const a of [0.9, Math.PI - 0.9, Math.PI + 0.9, -0.9]) {
+    const [bx, , bz] = pointAt(4.7, 5.0, a);
+    masts.push(bx, 5.0, bz, bx, mastH, bz); // pole
+    // light rig: a small horizontal bar with three lamps
+    const rig = mastH + 0.1;
+    masts.push(bx - 0.7, rig, bz, bx + 0.7, rig, bz);
+    for (const dx of [-0.6, 0, 0.6]) {
+      masts.push(bx + dx, rig, bz - 0.18, bx + dx, rig + 0.45, bz - 0.18, bx + dx, rig + 0.45, bz - 0.18, bx + dx, rig + 0.45, bz + 0.18, bx + dx, rig + 0.45, bz + 0.18, bx + dx, rig, bz + 0.18, bx + dx, rig, bz + 0.18, bx + dx, rig, bz - 0.18);
+    }
   }
   return [
-    linePart(rand, lineGeo(oval(2.2, 0))),
-    linePart(rand, lineGeo(oval(3.2, 0.8))),
-    linePart(rand, lineGeo(oval(4.2, 1.7))),
-    linePart(rand, lineGeo(struts)),
-    linePart(rand, lineGeo(oval(1.5, -0.1))),
+    linePart(rand, lineGeo(oval(1.5, -0.1))), // pitch edge
+    linePart(rand, lineGeo(oval(2.2, 0))), // tier 1
+    linePart(rand, lineGeo(oval(3.0, 1.1))), // tier 2
+    linePart(rand, lineGeo(oval(3.7, 2.2))), // tier 3
+    linePart(rand, lineGeo(oval(4.4, 3.4))), // tier 4 (top of bowl)
+    linePart(rand, lineGeo(oval(3.6, 5.0))), // inner roof lip
+    linePart(rand, lineGeo(oval(4.7, 5.0))), // outer roof lip
+    linePart(rand, lineGeo(ribs)),
+    linePart(rand, lineGeo(roof)),
+    linePart(rand, lineGeo(masts)),
   ];
 }
 
@@ -357,12 +388,14 @@ function smartCities(rand: () => number): Part[] {
 
 function events(rand: () => number): Part[] {
   const parts: Part[] = [];
-  parts.push(...stadiumParts(rand, -2.5, 0));
-  parts.push(ferrisPart(rand, 5, 3.2, -1, 3));
+  // the stadium sits left; the bowl now reaches high, so the ferris wheel and
+  // flanking buildings are pushed clear to the right/back to stay legible.
+  parts.push(...stadiumParts(rand, -3.5, 0.5));
+  parts.push(ferrisPart(rand, 7, 3.6, -3.5, 3.2));
   // a couple of detailed buildings flanking the grounds
-  parts.push(buildingPart(rand, 5.5, 4, 2.6, 6, 2.6, true));
-  parts.push(buildingPart(rand, 2.5, 5.5, 3, 5, 3, true));
-  parts.push(linePart(rand, gridGeo(22, 10)));
+  parts.push(buildingPart(rand, 7, 4.5, 2.6, 6, 2.6, true));
+  parts.push(buildingPart(rand, 4.5, 6, 3, 5, 3, true));
+  parts.push(linePart(rand, gridGeo(24, 11)));
   return parts;
 }
 
