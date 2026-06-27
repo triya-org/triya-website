@@ -46,6 +46,19 @@ html.lenis body {
     --ink-500: 42 9% 39%;     /* #6B665A muted text */
     --ink-300: 43 11% 62%;    /* #A8A293 */
 
+    /* Steel — the "watching" half of the Standing Watch duotone. Cool,
+       desaturated slate for the calm idle/scan state on the dark spine;
+       clay #D97757 stays reserved for the rare "caught/detected" flare. */
+    --steel-200: 213 24% 82%;  /* #C3CDDA bright readout on dark */
+    --steel-300: 212 18% 65%;  /* #94A1B2 */
+    --steel-400: 213 16% 50%;  /* #6B7A8E scan line / idle reticle */
+    --steel-500: 214 18% 36%;  /* #4C586B */
+    --steel-600: 215 20% 24%;  /* #313B49 field marks */
+
+    /* Standing Watch motion grammar (mirror of lib/motion-grammar.ts). */
+    --ease-drift: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-lock: cubic-bezier(0.16, 1, 0.3, 1);
+
     /* Semantic tokens (Tailwind reads these) */
     --background: var(--cream-50);
     --foreground: var(--ink-900);
@@ -249,6 +262,14 @@ html.lenis body {
     .btn-tactile:active,
     .card-lift:hover {
       transform: none;
+    }
+    /* Defense-in-depth: the Standing Watch components already gate these on
+       prefers-reduced-motion in JS, but kill the looping keyframe utilities
+       site-wide too (REC dots, carets, scan pulses) so nothing breathes. */
+    .animate-ping,
+    .animate-pulse,
+    .animate-bounce {
+      animation: none !important;
     }
   }
 }

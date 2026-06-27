@@ -39,6 +39,14 @@ const config: Config = {
           300: "hsl(var(--cream-300))",
           400: "hsl(var(--cream-400))",
         },
+        /* steel = the "watching" half of the Standing Watch duotone */
+        steel: {
+          200: "hsl(var(--steel-200))",
+          300: "hsl(var(--steel-300))",
+          400: "hsl(var(--steel-400))",
+          500: "hsl(var(--steel-500))",
+          600: "hsl(var(--steel-600))",
+        },
         ink: {
           300: "hsl(var(--ink-300))",
           500: "hsl(var(--ink-500))",

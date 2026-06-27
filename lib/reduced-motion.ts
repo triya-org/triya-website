@@ -8,7 +8,14 @@ import { useEffect, useState } from "react";
  * usable and beautiful for users who opt out of motion.
  */
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+  // Lazy initial read so opt-out users don't get one animated frame before the
+  // effect runs (SSR-safe: window is absent on the server → false).
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
