@@ -8,10 +8,10 @@ import { WatchField } from "@/components/three/watch-field/WatchField";
 import { ScrambleText } from "@/components/viewport/DetectionViewport";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import { LOCK, DRIFT } from "@/lib/motion-grammar";
+import { useIsomorphicLayoutEffect } from "@/lib/use-isomorphic-layout-effect";
 import {
   CHANNELS,
   SCENARIOS,
-  CATEGORY_LABELS,
   CATEGORY_ORDER,
   type Category,
   type BoundingBox,
@@ -130,16 +130,17 @@ export function WatchFloor() {
   const active = monitors[idx];
   const [phase, setPhase] = useState<Phase>(reduced ? "locked" : "scan");
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const alertKey = useRef(0);
-  const sectionRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // visibility
   useEffect(() => {
-    const el = sectionRef.current;
+    const el = stageRef.current;
     if (!el) return;
     const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), {
       threshold: 0.2,
@@ -147,6 +148,41 @@ export function WatchFloor() {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // SCROLL IS THE MOTION: the stage is CSS position:sticky (layout-native, so
+  // it's immune to the city's pin above). The active scenario is derived
+  // DIRECTLY from the section's scroll position via getBoundingClientRect — no
+  // GSAP/ScrollTrigger cached start/end to go stale. As you scroll the runway,
+  // the floor sweeps one detection at a time.
+  useIsomorphicLayoutEffect(() => {
+    if (reduced || !rootRef.current) return;
+    const root = rootRef.current;
+    const last = monitors.length - 1;
+    let raf = 0;
+
+    const update = () => {
+      const rect = root.getBoundingClientRect();
+      const runway = rect.height - window.innerHeight;
+      const p = runway > 0 ? Math.min(1, Math.max(0, -rect.top / runway)) : 0;
+      setProgress(p);
+      // /0.92 so the last scenario fully arms a touch before the runway ends
+      const i = Math.min(last, Math.floor((p / 0.92) * monitors.length));
+      setIdx((prev) => (prev === i ? prev : i));
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [reduced, monitors.length]);
 
   // reduced motion: static armed frame + a pre-filled log, no timers
   useEffect(() => {
@@ -187,16 +223,6 @@ export function WatchFloor() {
     return () => clearTimeout(t);
   }, [idx, inView, reduced, active]);
 
-  // guided autoplay
-  useEffect(() => {
-    if (reduced || !inView || paused) return;
-    const id = window.setInterval(
-      () => setIdx((i) => (i + 1) % monitors.length),
-      5000,
-    );
-    return () => window.clearInterval(id);
-  }, [reduced, inView, paused, monitors.length]);
-
   // single <video>: keep the prior footage playing through the scan and swap
   // src only at LOCK (no freeze-to-poster during the re-target), play in view
   useEffect(() => {
@@ -230,13 +256,13 @@ export function WatchFloor() {
   return (
     <section
       id="watch-floor"
-      ref={sectionRef}
+      ref={rootRef}
       aria-labelledby="watch-floor-title"
-      className="dark relative overflow-hidden bg-ink-900 py-20 text-cream-100 sm:py-28"
-      onPointerEnter={() => setPaused(true)}
-      onPointerLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={() => setPaused(false)}
+      className={`dark relative bg-ink-900 text-cream-100 ${reduced ? "py-20" : "h-[440vh]"}`}
+    >
+    <div
+      ref={stageRef}
+      className={`flex flex-col overflow-hidden ${reduced ? "py-4" : "sticky top-0 h-screen justify-center py-10"}`}
     >
       <div className="absolute inset-0 z-0 opacity-70">
         <WatchField intensity={0.6} />
@@ -252,43 +278,42 @@ export function WatchFloor() {
             </h2>
             <p className="mt-4 max-w-xl text-[1.05rem] leading-relaxed text-steel-200">
               The real scenarios you switch on per camera — running live on your
-              own footage, on-prem. Watch one arm, or pick any below.
+              own footage, on-prem. <span className="text-cream-100">Scroll to sweep the floor.</span>
             </p>
           </div>
-          <p className="shrink-0 font-mono text-[0.7rem] uppercase tracking-[0.16em] text-steel-400">
-            {SCENARIOS.filter((s) => s.status === "active").length} armed ·{" "}
-            {SCENARIOS.length} ready
-          </p>
+          <ScrollProgress idx={idx} total={monitors.length} progress={progress} reduced={reduced} />
         </div>
 
       </div>
 
-      {/* monitor + rail/log — full-bleed so the feed reads cinematic, not a widget */}
-      <div className="relative z-10 mx-[calc(50%-50vw)] mt-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1720px] gap-5 lg:grid-cols-[1.9fr_1fr]">
-          <MonitorView
-            active={active}
-            phase={phase}
-            reduced={reduced}
-            videoRef={videoRef}
-          />
-
-          <div className="flex flex-col gap-5">
-            <AlertLog alerts={alerts} reduced={reduced} />
-            <ScenarioRail
-              monitors={monitors}
-              activeId={active.id}
+      {/* monitor + log + camera wall — full-bleed so the feed reads cinematic, not a widget */}
+      <div className="relative z-10 mt-6 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="grid gap-4 lg:grid-cols-[1.9fr_1fr]">
+            <MonitorView
+              active={active}
+              phase={phase}
               reduced={reduced}
-              railRefs={railRefs}
-              onPick={(i) => setIdx(i)}
-              onKey={onRailKey}
+              videoRef={videoRef}
             />
+            <AlertLog alerts={alerts} reduced={reduced} />
           </div>
+
+          {/* THE CAMERA WALL — every scenario is a live feed tile; pick any to
+              drive the monitor. This is the switcher, as a NOC wall, not a list. */}
+          <CameraWall
+            monitors={monitors}
+            activeId={active.id}
+            reduced={reduced}
+            railRefs={railRefs}
+            onPick={(i) => setIdx(i)}
+            onKey={onRailKey}
+          />
         </div>
       </div>
 
       <div className="container relative z-10">
-        <div className="mt-8 flex flex-col gap-3 border-t border-[hsl(var(--border))] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 border-t border-[hsl(var(--border))] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-[0.75rem] text-steel-300">
             Runs 24/7 on the cameras you already own — every frame processed at the edge.
           </p>
@@ -301,7 +326,44 @@ export function WatchFloor() {
           </Link>
         </div>
       </div>
+    </div>
     </section>
+  );
+}
+
+/* ───────────────────────── scroll progress HUD ───────────────────────── */
+
+function ScrollProgress({
+  idx,
+  total,
+  progress,
+  reduced,
+}: {
+  idx: number;
+  total: number;
+  progress: number;
+  reduced: boolean;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-3">
+      <div className="text-right">
+        <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-steel-300">
+          {reduced ? "Scenario" : "Sweeping"}
+        </p>
+        <p className="font-display text-lg leading-none text-cream-50">
+          <span className="tabular-nums text-clay-400">{String(idx + 1).padStart(2, "0")}</span>
+          <span className="text-steel-400"> / {String(total).padStart(2, "0")}</span>
+        </p>
+      </div>
+      {!reduced && (
+        <div className="h-12 w-1 overflow-hidden rounded-full bg-ink-700">
+          <div
+            className="w-full rounded-full bg-clay-400"
+            style={{ height: `${Math.max(6, progress * 100)}%` }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -332,7 +394,7 @@ function MonitorView({
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover"
-          style={{ filter: "saturate(0.55) brightness(0.84) contrast(1.06)" }}
+          style={{ filter: "saturate(0.96) brightness(1.04) contrast(1.08)" }}
         />
       ) : (
         <video
@@ -344,18 +406,19 @@ function MonitorView({
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 h-full w-full object-cover"
-          style={{ filter: "saturate(0.55) brightness(0.84) contrast(1.06)" }}
+          style={{ filter: "saturate(0.96) brightness(1.04) contrast(1.08)" }}
         />
       )}
 
-      {/* cool wash — pushes the warm footage toward a neutral steel base */}
+      {/* cool wash — a light neutral grade so the footage stays crisp and reads
+          as a live feed, not a muddy brown rectangle */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
-        style={{ background: "hsl(213 32% 12% / 0.4)" }}
+        style={{ background: "hsl(213 32% 14% / 0.16)" }}
       />
       {/* grade */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />
       {/* CRT scanline texture */}
       {!reduced && (
         <div
@@ -369,7 +432,7 @@ function MonitorView({
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: "inset 0 0 150px 24px rgba(0,0,0,0.6)" }}
+        style={{ boxShadow: "inset 0 0 120px 8px rgba(0,0,0,0.45)" }}
       />
 
       {/* ambient secondary detections (steel = passively watching) for density */}
@@ -659,9 +722,9 @@ function AlertLog({ alerts, reduced }: { alerts: Alert[]; reduced: boolean }) {
   );
 }
 
-/* ───────────────────────── scenario rail ───────────────────────── */
+/* ───────────────────────── the camera wall ───────────────────────── */
 
-function ScenarioRail({
+function CameraWall({
   monitors,
   activeId,
   reduced,
@@ -677,66 +740,142 @@ function ScenarioRail({
   onKey: (e: React.KeyboardEvent, i: number) => void;
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="Choose a detection scenario"
-      className="rounded-2xl border border-[hsl(var(--border))] bg-ink-800/30 p-4"
-    >
-      {CATEGORY_ORDER.map((cat) => {
-        const items = monitors.filter((m) => m.scenario.category === cat);
-        if (!items.length) return null;
-        return (
-          <div key={cat} className="mb-3 last:mb-0">
-            <div className="mb-1.5 flex items-center gap-1.5 px-1">
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: CAT_TINT[cat] }} />
-              <span className="font-mono text-[0.58rem] uppercase tracking-[0.2em] text-steel-400">
-                {CATEGORY_LABELS[cat]}
-              </span>
-            </div>
-            {items.map((m) => {
-              const i = monitors.indexOf(m);
-              const on = m.id === activeId;
-              return (
-                <button
-                  key={m.id}
-                  ref={(el) => {
-                    railRefs.current[m.id] = el;
-                  }}
-                  role="radio"
-                  aria-checked={on}
-                  aria-label={`${m.scenario.name} — detects ${m.scenario.detects.join(", ")}`}
-                  tabIndex={on ? 0 : -1}
-                  onClick={() => onPick(i)}
-                  onKeyDown={(e) => onKey(e, i)}
-                  className="group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start transition-colors hover:bg-ink-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-400"
-                >
-                  {on && (
-                    <motion.span
-                      layoutId="rail-marker"
-                      className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-clay-400"
-                      transition={{ duration: 0.35, ease: DRIFT }}
-                    />
+    <div className="mt-5">
+      <div className="mb-2.5 flex items-center justify-between px-0.5">
+        <span className="t-eyebrow !text-steel-300">The camera wall · pick any feed</span>
+        <span className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-steel-400">
+          {monitors.length} cameras
+        </span>
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Choose a detection scenario"
+        className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9"
+      >
+        {monitors.map((m, i) => {
+          const on = m.id === activeId;
+          const tint = CAT_TINT[m.scenario.category];
+          return (
+            <button
+              key={m.id}
+              ref={(el) => {
+                railRefs.current[m.id] = el;
+              }}
+              role="radio"
+              aria-checked={on}
+              aria-label={`${m.scenario.name} — detects ${m.scenario.detects.join(", ")}`}
+              tabIndex={on ? 0 : -1}
+              onClick={() => onPick(i)}
+              onKeyDown={(e) => onKey(e, i)}
+              className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-black text-start outline-none transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-clay-400"
+            >
+              {/* feed still — desaturated when idle, lit when active or hovered */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={m.poster}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover transition-all duration-500"
+                style={{
+                  filter: on
+                    ? "saturate(1) brightness(0.92) contrast(1.05)"
+                    : "saturate(0.4) brightness(0.5) contrast(1.04)",
+                }}
+              />
+              {/* idle scrim lifts on hover */}
+              <div
+                aria-hidden="true"
+                className={`absolute inset-0 bg-ink-900/40 transition-opacity duration-500 ${on ? "opacity-0" : "opacity-100 group-hover:opacity-30"}`}
+              />
+              {/* category tint glow on the active feed */}
+              {on && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  style={{ boxShadow: `inset 0 0 30px -6px ${tint}` }}
+                />
+              )}
+
+              {/* mini detection bracket, scaled into the tile */}
+              <MiniDetection box={m.box} tint={tint} on={on} reduced={reduced} />
+
+              {/* active ring + shared morph marker */}
+              {on && (
+                <motion.span
+                  layoutId="cam-active-ring"
+                  className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-clay-400"
+                  transition={{ duration: 0.4, ease: DRIFT }}
+                />
+              )}
+
+              {/* corner HUD: live dot + cam id */}
+              <div className="absolute left-1.5 top-1.5 flex items-center gap-1">
+                <span className="relative flex h-1.5 w-1.5">
+                  {!reduced && on && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-clay-400/70" />
                   )}
                   <span
-                    className={`relative inline-flex h-1.5 w-1.5 shrink-0 rounded-full ${m.scenario.status === "active" ? "bg-clay-400" : "border border-steel-400"}`}
+                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${on ? "bg-clay-400" : "bg-steel-400"}`}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={`block truncate font-display text-[0.9rem] font-medium tracking-tight ${on ? "text-cream-50" : "text-steel-200 group-hover:text-cream-100"}`}
-                    >
-                      {m.scenario.name}
-                    </span>
+                </span>
+                {on && (
+                  <span className="font-mono text-[0.5rem] font-semibold tracking-wider text-clay-300">
+                    LIVE
                   </span>
-                  <span className="shrink-0 font-mono text-[0.52rem] uppercase tracking-wider text-steel-400">
-                    {m.scenario.detects[0]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </div>
+
+              {/* bottom gradient + name */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-2 pb-1.5 pt-5">
+                <p
+                  className={`truncate font-display text-[0.72rem] font-medium leading-tight tracking-tight ${on ? "text-cream-50" : "text-steel-200 group-hover:text-cream-100"}`}
+                >
+                  {m.scenario.name}
+                </p>
+                <p className="truncate font-mono text-[0.5rem] uppercase tracking-wider text-steel-400">
+                  {m.scenario.detects[0]}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* a compact corner-bracket detection inside a wall tile */
+function MiniDetection({
+  box,
+  tint,
+  on,
+  reduced,
+}: {
+  box: BoundingBox;
+  tint: string;
+  on: boolean;
+  reduced: boolean;
+}) {
+  return (
+    <motion.div
+      aria-hidden="true"
+      className="pointer-events-none absolute"
+      style={{ left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%`, height: `${box.h}%` }}
+      animate={reduced ? { opacity: on ? 0.95 : 0.5 } : { opacity: on ? [0.7, 1, 0.7] : 0.45 }}
+      transition={reduced ? { duration: 0 } : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+    >
+      {(["tl", "tr", "bl", "br"] as const).map((c) => {
+        const isR = c.includes("r");
+        const isB = c.includes("b");
+        return (
+          <span
+            key={c}
+            className={`absolute h-2 w-2 ${isB ? "bottom-0 border-b" : "top-0 border-t"} ${isR ? "right-0 border-r" : "left-0 border-l"}`}
+            style={{ borderColor: tint, borderWidth: on ? 1.5 : 1 }}
+          />
         );
       })}
-    </div>
+    </motion.div>
   );
 }
 
