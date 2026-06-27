@@ -343,7 +343,7 @@ export function LivingCity() {
     <div ref={rootRef} data-section="living-city" className="relative -mb-[100vh]">
       <div
         ref={stageRef}
-        className="relative h-screen w-full overflow-hidden bg-cream-50"
+        className="relative h-[100dvh] w-full overflow-hidden bg-cream-50"
       >
         {/* THE city — one canvas on the page, carrying all four industries */}
         <div className="absolute inset-0">
