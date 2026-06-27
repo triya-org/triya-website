@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { WatchField } from "@/components/three/watch-field/WatchField";
-import { ScrambleText } from "@/components/viewport/DetectionViewport";
+import { ScrambleText, Caret } from "@/components/viewport/DetectionViewport";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import { LOCK, DRIFT } from "@/lib/motion-grammar";
 import {
@@ -201,11 +201,14 @@ export function WatchFloor() {
     return () => cancelAnimationFrame(raf);
   }, [reduced, n]);
 
-  // the detection sequence on each land: scan (re-target) → lock (box draws on)
+  // the detection sequence on each land: while "scan", the centre live overlay
+  // is faded out so the clicked card visibly TRAVELS to centre (springs, grows,
+  // de-blurs); at "lock" the overlay boots back up (fade-in + scan wipe + the
+  // detection draws on). 620ms ≈ the cover spring's settle time.
   useEffect(() => {
     if (reduced || !inView) return;
     setPhase("scan");
-    const t = setTimeout(() => setPhase("locked"), 560);
+    const t = setTimeout(() => setPhase("locked"), 620);
     return () => clearTimeout(t);
   }, [idx, inView, reduced]);
 
@@ -270,7 +273,7 @@ export function WatchFloor() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="t-eyebrow !text-steel-300">Where to apply · The watch floor</p>
           <h2 id="watch-floor-title" className="t-display-2 mt-3 text-cream-50">
-            Nine detections, <em className="not-italic text-clay-400">always watching</em>.
+            Every detection, <em className="not-italic text-clay-400">always watching</em>.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[1.05rem] leading-relaxed text-steel-200">
             The real scenarios you switch on per camera — each running live on
@@ -317,14 +320,14 @@ export function WatchFloor() {
           clean slide so a switch always reads as a deliberate move */}
       <div className="container relative z-10 mt-8">
         <div className="mx-auto max-w-xl text-center">
-          <div className="min-h-[6.5rem]">
+          <div className="min-h-[7.5rem]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
-                initial={reduced ? false : { opacity: 0, y: 14 }}
+                initial={reduced ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduced ? undefined : { opacity: 0, y: -10 }}
-                transition={{ duration: 0.42, ease: DRIFT }}
+                exit={reduced ? undefined : { opacity: 0, y: -8, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.34, ease: DRIFT }}
               >
                 <p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-steel-400">
                   <span style={{ color: tint }}>{active.detect}</span> ·{" "}
@@ -335,9 +338,13 @@ export function WatchFloor() {
                 <h3 className="mt-2 font-display text-2xl font-semibold tracking-tight text-cream-50 sm:text-[1.85rem]">
                   {active.scenario.name}
                 </h3>
-                <p className="mx-auto mt-2 max-w-md text-[1rem] leading-relaxed text-steel-200">
-                  {active.caption}
-                </p>
+                {/* the description TYPES in — Triya reading out what it sees */}
+                <Typewriter
+                  key={active.id}
+                  text={active.caption}
+                  reduced={reduced}
+                  className="mx-auto mt-2 block max-w-md text-[1rem] leading-relaxed text-steel-200"
+                />
               </motion.div>
             </AnimatePresence>
           </div>
@@ -422,8 +429,47 @@ function CoverCard({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={m.poster} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-      <div aria-hidden="true" className="absolute inset-0 bg-ink-900/35" />
+      {/* side cards get a scrim; the centre card stays clean so it reads bright
+          as it travels in before the live overlay boots up over it */}
+      {!isCenter && <div aria-hidden="true" className="absolute inset-0 bg-ink-900/35" />}
     </motion.button>
+  );
+}
+
+/* ───────────────────────── typewriter ───────────────────────── */
+
+/** Types `text` out character by character on mount / text change (Triya
+ *  reading out what it sees). Reduced motion → the full line, instantly. */
+function Typewriter({
+  text,
+  reduced,
+  className,
+}: {
+  text: string;
+  reduced: boolean;
+  className?: string;
+}) {
+  const [shown, setShown] = useState(reduced ? text.length : 0);
+  useEffect(() => {
+    if (reduced) {
+      setShown(text.length);
+      return;
+    }
+    setShown(0);
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      setShown(i);
+      if (i >= text.length) window.clearInterval(id);
+    }, 16);
+    return () => window.clearInterval(id);
+  }, [text, reduced]);
+
+  return (
+    <span className={className}>
+      {text.slice(0, shown)}
+      {!reduced && shown < text.length && <Caret />}
+    </span>
   );
 }
 
@@ -444,9 +490,18 @@ function LiveMonitor({
 }) {
   const locked = phase === "locked";
   return (
+    // outer = centring only (plain div; framer must not clobber the translate);
+    // inner motion.div fades out during "scan" so the travelling card shows,
+    // and boots back in at "lock".
     <div
-      className="cf-card absolute left-1/2 top-1/2 z-[55] aspect-video -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/15 bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)]"
+      className="pointer-events-none absolute left-1/2 top-1/2 z-[55] -translate-x-1/2 -translate-y-1/2"
       style={{ width: CARD_W }}
+    >
+    <motion.div
+      className="cf-card relative aspect-video w-full overflow-hidden rounded-2xl border border-white/15 bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)]"
+      initial={false}
+      animate={{ opacity: reduced || locked ? 1 : 0 }}
+      transition={{ duration: locked ? 0.34 : 0.18, ease: DRIFT }}
     >
       {/* poster always sits under the video so a src-swap never flashes black */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -543,6 +598,7 @@ function LiveMonitor({
           </p>
         </motion.div>
       )}
+    </motion.div>
     </div>
   );
 }
