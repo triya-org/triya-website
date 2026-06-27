@@ -10,7 +10,12 @@ import { Proof } from "@/components/sections/proof";
 import { OutroClose } from "@/components/sections/outro-close";
 import { SmoothScroll } from "@/components/scroll/SmoothScroll";
 import { WatchHero } from "@/components/sections/watch-hero";
+// LivingCity is disabled while testing the line-art version — re-enable by
+// swapping <LineIndustries /> back to <LivingCity /> below. (kept imported so
+// re-enabling is a one-line change)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { LivingCity } from "@/components/sections/living-city";
+import { LineIndustries } from "@/components/sections/line-industries";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -74,10 +79,12 @@ export default function Home() {
           box, talk to all of them (the deliberate bright beat after the dark hero) */}
       <WhatItIs />
 
-      {/* The Living City — the warm, dreamlike "where it's deployed" interlude
-          (crown jewel, untouched). Enters from the cream light room; the dark
-          sheet below covers it on exit (warm → dark, the page's best cut). */}
-      <LivingCity />
+      {/* WHERE IT'S DEPLOYED — EXPERIMENT: the line-art industry sections are
+          shown IN PLACE OF the Living City while we test the silhouette look.
+          The Living City is only disabled, fully intact — to restore it, comment
+          out <LineIndustries /> and uncomment <LivingCity />. */}
+      {/* <LivingCity /> — disabled while testing the line-art version */}
+      <LineIndustries />
 
       {/* The dark "Standing Watch" sheet: slides up OVER the pinned city
           (z + opaque dark bg) and carries the rest of the page. */}
