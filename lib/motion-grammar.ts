@@ -55,6 +55,14 @@ export const STACK_SPRING = {
 export const FILL_CSS = LOCK_CSS;
 
 /**
+ * SNAP — the detection "bite". When Triya catches something the box should
+ * slightly overshoot then settle, like a reticle locking on (a sharper, more
+ * physical cousin of LOCK). Used by the industry sections' "catch" moment.
+ */
+export const SNAP_CSS = "cubic-bezier(0.2, 1.25, 0.3, 1)";
+export const SNAP = [0.2, 1.25, 0.3, 1] as const;
+
+/**
  * The page's dark/light rhythm (Scale's cinematic↔editorial alternation), so
  * every section knows which beat it is and the transitions between them land:
  *   Hero(dark) → WhatItIs(light) → LivingCity(warm) → Talk(dark) →
