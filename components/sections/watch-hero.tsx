@@ -174,7 +174,7 @@ export function WatchHero({
     >
       {/* z0 — ambient feed (Seedance stand-in) + grade */}
       <div className="absolute inset-0 z-0">
-        {videoLoaded && (
+        {videoLoaded && !reduced && (
           <video
             ref={videoRef}
             autoPlay
@@ -197,6 +197,10 @@ export function WatchHero({
       <div ref={fieldRef} className="absolute inset-0 z-[1]">
         <WatchField intensity={1.05} />
       </div>
+
+      {/* z2 — a live detection locks onto the footage: the hero SHOWS the
+          product seeing, not just claims it (clear of the bottom-start copy) */}
+      <HeroDetection reduced={reduced} />
 
       {/* z10 — content, anchored bottom-start (editorial) */}
       <div
@@ -265,6 +269,75 @@ export function WatchHero({
         <ChevronDown className="h-6 w-6" />
       </div>
     </section>
+  );
+}
+
+/**
+ * A live detection that periodically re-acquires and locks onto the hero
+ * footage — so the hero SHOWS Triya seeing, not just claims it. Sits top-end,
+ * clear of the bottom-start headline. Reduced motion → a single static lock.
+ */
+function HeroDetection({ reduced }: { reduced: boolean }) {
+  const [locked, setLocked] = useState(reduced);
+
+  useEffect(() => {
+    if (reduced) return;
+    let cancelled = false;
+    let t: ReturnType<typeof setTimeout>;
+    const cycle = (lock: boolean) => {
+      if (cancelled) return;
+      setLocked(lock);
+      t = setTimeout(() => cycle(!lock), lock ? 5200 : 1100);
+    };
+    const init = setTimeout(() => cycle(true), 1600);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      clearTimeout(init);
+    };
+  }, [reduced]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[2]" aria-hidden="true">
+      <div className="absolute right-[7%] top-[19%] hidden h-[40%] w-[22%] sm:block lg:right-[11%] lg:w-[16%]">
+        <div
+          className={[
+            "relative h-full w-full rounded-[3px] transition-all duration-500",
+            locked
+              ? "border-2 border-clay-400 shadow-[0_0_22px_-3px_hsl(var(--clay-400)/0.85)]"
+              : "border border-dashed border-steel-300/70",
+          ].join(" ")}
+          style={{ transitionTimingFunction: "var(--ease-lock)" }}
+        >
+          {/* corner ticks */}
+          <span className="absolute -left-px -top-px h-3 w-3 border-l-2 border-t-2 border-clay-400/80" />
+          <span className="absolute -right-px -top-px h-3 w-3 border-r-2 border-t-2 border-clay-400/80" />
+          <span className="absolute -bottom-px -left-px h-3 w-3 border-b-2 border-l-2 border-clay-400/80" />
+          <span className="absolute -bottom-px -right-px h-3 w-3 border-b-2 border-r-2 border-clay-400/80" />
+
+          {/* locked label */}
+          <div
+            className={[
+              "absolute -top-6 left-0 flex items-center gap-1.5 whitespace-nowrap rounded bg-clay-400 px-2 py-0.5 transition-opacity duration-300",
+              locked ? "opacity-100" : "opacity-0",
+            ].join(" ")}
+          >
+            <span className="font-mono text-[0.6rem] font-semibold uppercase tracking-wider text-ink-900">
+              Person · 98%
+            </span>
+          </div>
+          {/* acquiring label */}
+          <div
+            className={[
+              "absolute -top-6 left-0 font-mono text-[0.6rem] uppercase tracking-wider text-steel-200 transition-opacity duration-300",
+              locked ? "opacity-0" : "opacity-100",
+            ].join(" ")}
+          >
+            Acquiring…
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
