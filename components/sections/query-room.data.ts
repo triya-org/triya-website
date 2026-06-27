@@ -60,25 +60,25 @@ export const CHANNELS: Channel[] = [
     category: "compliance",
     detects: ["Person"],
     verb: "Flag anyone out of required PPE or uniform",
-    chip: "Anyone without a hard hat?",
+    chip: "Anyone missing their hi-vis vest?",
     cameraId: "CCTV-131-LT-2-G-38-B1",
     location: "Assembly Line 3 · Press Bay",
     timestamp: "14:22:07",
-    query: "Flag anyone on the floor not in required PPE.",
+    query: "Flag anyone on the floor not in the required hi-vis.",
     answer: [
       { t: "1 worker on " },
       { t: "CCTV-131", em: true },
-      { t: " entered the press area at " },
+      { t: " entered the press bay at " },
       { t: "14:22", em: true },
       {
-        t: " without a hard hat — required PPE for that zone. Compliance held everywhere else this hour. Alert raised to the shift supervisor.",
+        t: " without a hi-vis vest — required for that zone. Compliance held everywhere else this hour. Alert raised to the shift supervisor.",
       },
     ],
-    box: { x: 37, y: 28, w: 27, h: 46, label: "PPE — NO HARD HAT" },
+    box: { x: 13, y: 8, w: 31, h: 86, label: "NO HI-VIS VEST" },
     matchChip: "1 alert",
     latency: "0.3s",
     video: "/videos/manufacturing_hero_1.mp4",
-    poster: "/images/industries/manufacturing.jpg",
+    poster: "/images/scenarios/manufacturing.jpg",
   },
   {
     id: "intrusion",
@@ -105,7 +105,7 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 alert",
     latency: "0.4s",
     video: "/videos/retail_hero_1.mp4",
-    poster: "/images/industries/retail.jpg",
+    poster: "/images/scenarios/retail.jpg",
   },
   {
     id: "no-parking",
@@ -132,7 +132,7 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 incident",
     latency: "0.3s",
     video: "/videos/smartcity_hero_1.mp4",
-    poster: "/images/industries/smart-cities.jpg",
+    poster: "/images/scenarios/smartcity.jpg",
   },
   {
     id: "crowd",
@@ -159,13 +159,24 @@ export const CHANNELS: Channel[] = [
     matchChip: "1 zone",
     latency: "0.2s",
     video: "/videos/event_hero_4.mp4",
-    poster: "/images/industries/events.jpg",
+    poster: "/images/scenarios/events.jpg",
   },
 ];
 
 /* ── the full detection library (the "standing watch" wall) ── */
 
 export type ScenarioStatus = "active" | "available" | "soon";
+
+/** a still "preview" for an available (no-live-footage) scenario in the deck */
+export interface ScenarioPreview {
+  poster: string;
+  cameraId: string;
+  location: string;
+  timestamp: string;
+  box: BoundingBox;
+  /** plain-language alert behaviour, shown in the deck detail */
+  alert: string;
+}
 
 export interface Scenario {
   id: string;
@@ -176,6 +187,8 @@ export interface Scenario {
   status: ScenarioStatus;
   /** if this scenario is one of the flagships, the CHANNELS id to demo on click */
   demoId?: string;
+  /** for available scenarios (no flagship footage): a still detection preview */
+  preview?: ScenarioPreview;
 }
 
 export const CATEGORY_LABELS: Record<Category, string> = {
@@ -229,6 +242,14 @@ export const SCENARIOS: Scenario[] = [
     detects: ["Person", "Behavior"],
     description: "Smoking in restricted zones — multi-layer AI with auto-validation.",
     status: "available",
+    preview: {
+      poster: "/images/scenarios/manufacturing.jpg",
+      cameraId: "CCTV-077-MF-1-D-09-S2",
+      location: "Loading Dock · No-Smoking Zone",
+      timestamp: "11:36:02",
+      box: { x: 52, y: 22, w: 34, h: 48, label: "NO-SMOKING ZONE", mode: "zone" },
+      alert: "Raises only after a multi-layer pass confirms it — so steam and exhaust don’t trip the alarm.",
+    },
   },
   {
     id: "fire-smoke",
@@ -237,6 +258,14 @@ export const SCENARIOS: Scenario[] = [
     detects: ["Hazard"],
     description: "Fire and smoke hazards caught by multi-stage AI that clears false alarms.",
     status: "available",
+    preview: {
+      poster: "/images/scenarios/manufacturing.jpg",
+      cameraId: "CCTV-012-MF-2-A-03-F1",
+      location: "Machine Hall · Bay 2",
+      timestamp: "03:14:48",
+      box: { x: 55, y: 12, w: 34, h: 46, label: "SMOKE — HAZARD", mode: "zone" },
+      alert: "A multi-stage check validates the hazard before it raises, clearing dust and glare as false alarms.",
+    },
   },
   // compliance
   {
@@ -255,6 +284,14 @@ export const SCENARIOS: Scenario[] = [
     detects: ["Person"],
     description: "People without a lab coat in designated clean or lab areas.",
     status: "available",
+    preview: {
+      poster: "/images/scenarios/manufacturing.jpg",
+      cameraId: "CCTV-145-MF-3-C-21-L1",
+      location: "Clean Room · Entry Vestibule",
+      timestamp: "09:02:19",
+      box: { x: 12, y: 6, w: 32, h: 90, label: "NO LAB COAT" },
+      alert: "Flags entry to a designated clean area without a lab coat, after a sustained breach.",
+    },
   },
   {
     id: "phone-usage",
@@ -263,6 +300,14 @@ export const SCENARIOS: Scenario[] = [
     detects: ["Person"],
     description: "Prolonged phone use in work zones or restricted areas.",
     status: "available",
+    preview: {
+      poster: "/images/scenarios/retail.jpg",
+      cameraId: "CCTV-231-RT-1-B-14-P3",
+      location: "Checkout Lane · Till 4",
+      timestamp: "16:51:33",
+      box: { x: 26, y: 33, w: 18, h: 62, label: "PHONE USE" },
+      alert: "Triggers on prolonged phone use in a work zone — not a glance, a pattern.",
+    },
   },
   // operations
   {
@@ -272,6 +317,14 @@ export const SCENARIOS: Scenario[] = [
     detects: ["Person"],
     description: "Zones that should be staffed — alerts when no one shows up in a set window.",
     status: "available",
+    preview: {
+      poster: "/images/scenarios/smartcity.jpg",
+      cameraId: "CCTV-058-SC-2-E-17-A1",
+      location: "Control Post · Gate 2",
+      timestamp: "02:47:55",
+      box: { x: 30, y: 56, w: 40, h: 38, label: "NO ACTIVITY", mode: "zone" },
+      alert: "Inverts the usual alert — it fires when a post that should be staffed sits empty past your window.",
+    },
   },
 ];
 
