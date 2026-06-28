@@ -264,15 +264,78 @@ function stackPart(rand: () => number, x: number, z: number, h: number): Part {
   return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
 }
 
-/** retail awning slab + storefront frame on the +z face */
-function storefrontPart(rand: () => number, x: number, z: number, w: number, d: number): Part {
+/* a clean low-rise SHOP: body + glazed shopfront (wide mullioned bays) + a
+ * cantilevered awning + a fascia sign band + ONE tidy band of upper windows on
+ * the street face only. Reads unmistakably as a storefront and stays legible
+ * when shops stand shoulder-to-shoulder (no busy 4-face window grid). */
+function shopPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  w: number,
+  h: number,
+  d: number,
+): Part {
   const pieces: THREE.BufferGeometry[] = [];
-  const awning = new THREE.BoxGeometry(w + 0.3, 0.18, 0.7);
-  awning.translate(x, 2.0, z + d / 2 + 0.3);
-  pieces.push(awning);
-  const frame = new THREE.BoxGeometry(w * 0.8, 1.5, 0.06);
-  frame.translate(x, 0.85, z + d / 2 + 0.03);
-  pieces.push(frame);
+  const body = new THREE.BoxGeometry(w, h, d);
+  body.translate(x, h / 2, z);
+  pieces.push(body);
+
+  const fz = z + d / 2; // street-facing (+z) facade
+  // shopfront glazing: a row of wide glass bays at ground level
+  const gw = w * 0.88;
+  const gh = Math.min(1.6, h - 1.0);
+  const bays = Math.max(2, Math.round(gw / 1.0));
+  const bw = gw / bays;
+  for (let i = 0; i < bays; i++) {
+    const bx = x - gw / 2 + bw * (i + 0.5);
+    const g = new THREE.PlaneGeometry(bw * 0.86, gh);
+    g.translate(bx, 0.12 + gh / 2, fz + 0.02);
+    pieces.push(g);
+  }
+  // cantilevered awning over the shopfront
+  const awn = new THREE.BoxGeometry(w * 0.98, 0.1, 0.55);
+  awn.translate(x, gh + 0.42, fz + 0.28);
+  pieces.push(awn);
+  // fascia sign band above the awning
+  const sign = new THREE.BoxGeometry(w * 0.72, 0.42, 0.12);
+  sign.translate(x, gh + 0.78, fz + 0.04);
+  pieces.push(sign);
+  // ONE tidy, evenly-spaced upper window band (only if there's a clear floor)
+  const uy = gh + 1.45;
+  if (uy < h - 0.45) {
+    const cols = Math.max(2, Math.round(w / 1.1));
+    const span = w * 0.78;
+    const stepU = span / Math.max(1, cols - 1);
+    for (let c = 0; c < cols; c++) {
+      const ux = x - span / 2 + stepU * c;
+      const g = new THREE.PlaneGeometry(0.5, 0.7);
+      g.translate(ux, uy, fz + 0.02);
+      pieces.push(g);
+    }
+  }
+  // parapet cap (a crisp roofline)
+  const cap = new THREE.BoxGeometry(w + 0.12, 0.16, d + 0.12);
+  cap.translate(x, h + 0.04, z);
+  pieces.push(cap);
+  addRoof(rand, pieces, x, z, w, h, d);
+  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
+}
+
+/* a freestanding retail PYLON sign — a tall slim pole carrying a sign box.
+ * An unmistakable shopping-district landmark on the forecourt. */
+function pylonPart(rand: () => number, x: number, z: number, h: number): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const pole = new THREE.BoxGeometry(0.16, h, 0.16);
+  pole.translate(x, h / 2, z);
+  pieces.push(pole);
+  const box = new THREE.BoxGeometry(1.7, 1.15, 0.28);
+  box.translate(x, h - 0.6, z);
+  pieces.push(box);
+  // a divider line across the sign box reads as two brand panels
+  const div = new THREE.BoxGeometry(1.7, 0.04, 0.3);
+  div.translate(x, h - 0.6, z);
+  pieces.push(div);
   return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
 }
 
@@ -383,18 +446,36 @@ function manufacturing(rand: () => number): Part[] {
 
 function retail(rand: () => number): Part[] {
   const parts: Part[] = [];
-  // a high street: a row of window-grid mid-rises with storefronts + awnings
-  const lots: [number, number, number][] = [
-    [-6, 6, 5.5],
-    [-2, 5.5, 6],
-    [2.2, 7, 5],
-    [6, 6, 6.5],
+  // A SHOPPING DISTRICT, not an office block. A parade of low-rise shops stands
+  // shoulder-to-shoulder along the street facing the camera (each with a glazed
+  // shopfront, awning, fascia sign + a tidy upper window band); behind them a
+  // clean department-store anchor and one landmark tower give depth; a
+  // freestanding pylon sign marks the forecourt.
+  const parade: [number, number, number][] = [
+    // [w, h, d]
+    [3.2, 3.6, 2.8],
+    [2.6, 4.2, 2.8],
+    [3.8, 4.8, 3.0], // a larger store anchoring the middle of the parade
+    [2.4, 3.4, 2.8],
+    [3.2, 3.9, 2.8],
   ];
-  for (const [x, h, d] of lots) {
-    const w = 3.2;
-    parts.push(buildingPart(rand, x, 0, w, h, d, h > 6));
-    parts.push(storefrontPart(rand, x, 0, w, d));
+  const gap = 0.34;
+  const total =
+    parade.reduce((s, [w]) => s + w, 0) + gap * (parade.length - 1);
+  const zFront = 3.0;
+  let cx = -total / 2;
+  for (const [w, h, d] of parade) {
+    parts.push(shopPart(rand, cx + w / 2, zFront, w, h, d));
+    cx += w + gap;
   }
+  // a wide, low DEPARTMENT STORE / big-box anchor behind the parade (its big
+  // glazed frontage reads as a mall) + one moderate landmark for depth — kept
+  // short so the district stays horizontal and unmistakably retail, not office.
+  parts.push(shopPart(rand, -4.2, -3.4, 6.6, 4.6, 4.2));
+  parts.push(towerPart(rand, 4.6, -3.6, 3.0, 6.2, 3.0));
+  // a forecourt pylon sign — unmistakably retail
+  parts.push(pylonPart(rand, 7.8, 4.4, 5.4));
+  // street grid / forecourt
   parts.push(linePart(rand, gridGeo(20, 9)));
   return parts;
 }
