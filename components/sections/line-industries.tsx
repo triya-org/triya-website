@@ -63,6 +63,7 @@ interface Ind {
   crane: [number, number];
   anchor: [number, number, number];
   lift: number; // world-y lift so the silhouette breaks the upper third
+  fitScale?: number; // extra zoom-out on the auto-fit (1 = fit, <1 = more margin)
   toneTint?: string;
   detection: Detection;
 }
@@ -130,8 +131,9 @@ const INDUSTRIES: Ind[] = [
     tint: CLAY,
     scanAxis: "h",
     crane: [0.46, -0.5],
-    anchor: [0, 9.5, 0],
+    anchor: [2, 0.5, 5.5], // a vehicle parked on the street, at ground level
     lift: 0,
+    fitScale: 0.74, // towers are tall — zoom out further to show the whole city + ground
     toneTint: "radial-gradient(60% 60% at 50% 45%, hsl(205 30% 50%/0.10), transparent 70%)",
     detection: {
       label: "NO-PARKING — VEHICLE 2m",
@@ -215,6 +217,7 @@ function IndustryRow({ ind }: { ind: Ind }) {
 
   const progressRef = useRef(0);
   const caughtRef = useRef(false);
+  const enteredRef = useRef(false); // latches true once in view → drives assemble
   const stageSizeRef = useRef<{ w: number; h: number }>({ w: 1, h: 1 });
 
   const [near, setNear] = useState(false); // mount the canvas
@@ -222,15 +225,31 @@ function IndustryRow({ ind }: { ind: Ind }) {
 
   const cardFrac = ind.flip ? { fx: 0.21, fy: 0.62 } : { fx: 0.79, fy: 0.62 };
 
-  // mount canvas when near; track on-screen for frameloop gating
+  // Mount the canvas EARLY (pre-warm the dynamic import + WebGL + geometry) and
+  // LATCH it mounted — once a district has spawned we keep it, so scrolling back
+  // up past it never despawns/reassembles it. Then latch `entered` once it's on
+  // screen so it assembles into view reliably (never blank-until-scroll).
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
-    const ioNear = new IntersectionObserver(([e]) => setNear(e.isIntersecting), {
-      rootMargin: "700px 0px",
-    });
+    const ioNear = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setNear(true); // latch: mount once, never unmount
+      },
+      { rootMargin: "1100px 0px" },
+    );
+    const ioEnter = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) enteredRef.current = true;
+      },
+      { rootMargin: "0px 0px -15% 0px" },
+    );
     ioNear.observe(el);
-    return () => ioNear.disconnect();
+    ioEnter.observe(el);
+    return () => {
+      ioNear.disconnect();
+      ioEnter.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -314,11 +333,13 @@ function IndustryRow({ ind }: { ind: Ind }) {
                 reduced
                 color={ind.lineColor}
                 progressRef={progressRef}
+                enteredRef={enteredRef}
                 anchorLocal={ind.anchor}
                 craneFrom={ind.crane[1]}
                 craneTo={ind.crane[1]}
                 xBias={0}
                 lift={ind.lift}
+                fitScale={ind.fitScale ?? 1}
                 onAnchor={() => {}}
               />
             ) : null}
@@ -384,11 +405,13 @@ function IndustryRow({ ind }: { ind: Ind }) {
               reduced={reduced}
               color={ind.lineColor}
               progressRef={progressRef}
+              enteredRef={enteredRef}
               anchorLocal={ind.anchor}
               craneFrom={ind.crane[0]}
               craneTo={ind.crane[1]}
               xBias={ind.flip ? -1.0 : 1.0}
               lift={ind.lift}
+              fitScale={ind.fitScale ?? 1}
               onAnchor={onAnchor}
             />
           ) : (

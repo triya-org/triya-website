@@ -36,11 +36,13 @@ export function LineArtScene({
   reduced,
   color,
   progressRef,
+  enteredRef,
   anchorLocal,
   craneFrom,
   craneTo,
   xBias,
   lift = 0,
+  fitScale = 1,
   onAnchor,
 }: {
   industry: Industry;
@@ -48,6 +50,8 @@ export function LineArtScene({
   color: string;
   /** scroll progress 0..1 of the section's sticky runway (mutated by parent) */
   progressRef: React.MutableRefObject<number>;
+  /** flips true once the section is in view — drives the time-based assemble */
+  enteredRef: React.MutableRefObject<boolean>;
   /** detection anchor in district/model space */
   anchorLocal: [number, number, number];
   /** crane rotation.y range (radians) mapped across the assemble band */
@@ -57,6 +61,8 @@ export function LineArtScene({
   xBias: number;
   /** world-y lift so the district breaks the upper third (kills top dead-band) */
   lift?: number;
+  /** extra zoom-out multiplier on the auto-fit (1 = fit; <1 = more margin) */
+  fitScale?: number;
   /** called each frame with the anchor's screen position (px, in canvas space) */
   onAnchor: (a: AnchorReport) => void;
 }) {
@@ -75,11 +81,13 @@ export function LineArtScene({
         reduced={reduced}
         color={color}
         progressRef={progressRef}
+        enteredRef={enteredRef}
         anchorLocal={anchorLocal}
         craneFrom={craneFrom}
         craneTo={craneTo}
         xBias={xBias}
         lift={lift}
+        fitScale={fitScale}
         onAnchor={onAnchor}
       />
     </Canvas>
@@ -91,53 +99,64 @@ function Model({
   reduced,
   color,
   progressRef,
+  enteredRef,
   anchorLocal,
   craneFrom,
   craneTo,
   xBias,
   lift,
+  fitScale,
   onAnchor,
 }: {
   industry: Industry;
   reduced: boolean;
   color: string;
   progressRef: React.MutableRefObject<number>;
+  enteredRef: React.MutableRefObject<boolean>;
   anchorLocal: [number, number, number];
   craneFrom: number;
   craneTo: number;
   xBias: number;
   lift: number;
+  fitScale: number;
   onAnchor: (a: AnchorReport) => void;
 }) {
-  const { camera, size, invalidate } = useThree();
+  const { camera, size, invalidate, viewport } = useThree();
   const parts = useMemo(() => buildCityModel(industry), [industry]);
 
   // dispose the externally-built geometries when the canvas unmounts (r3f does
   // not auto-dispose geometry passed as a prop) — prevents GPU buffer leaks
   useEffect(() => () => parts.forEach((p) => p.geo.dispose()), [parts]);
 
-  // auto-fit: scale to the district's largest dimension so the WHOLE model —
-  // buildings AND the ground grid — frames inside the viewport (never cropped).
-  // Centre the bbox so the floor sits low and the structure reads in full.
-  const fit = useMemo(() => {
+  const bbox = useMemo(() => {
     const box = new THREE.Box3();
     const v = new THREE.Vector3();
     for (const p of parts) {
       p.geo.computeBoundingBox();
       if (p.geo.boundingBox) box.union(p.geo.boundingBox);
     }
-    const sizeV = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(v.clone());
-    const maxDim = Math.max(sizeV.x, sizeV.y, sizeV.z) || 1;
-    const scale = 6.2 / maxDim;
-    return { scale, center: center.clone() };
+    return {
+      size: box.getSize(new THREE.Vector3()),
+      center: box.getCenter(v.clone()),
+    };
   }, [parts]);
+
+  // auto-fit: scale so the WHOLE model — buildings AND the ground grid — fits
+  // the viewport on BOTH axes (whichever is binding), so a tall district like
+  // Smart Cities zooms out enough to show its base/ground, and a wide-flat one
+  // still fills nicely. Centred, so the floor reads in full.
+  const fit = useMemo(() => {
+    const fitW = (viewport.width * 0.84) / (bbox.size.x || 1);
+    const fitH = (viewport.height * 0.84) / (bbox.size.y || 1);
+    return { scale: Math.min(fitW, fitH) * fitScale, center: bbox.center };
+  }, [bbox, viewport.width, viewport.height, fitScale]);
 
   const outer = useRef<THREE.Group>(null);
   const segs = useRef<(THREE.LineSegments | null)[]>([]);
   const anchorObj = useRef<THREE.Object3D>(null);
   const tmp = useRef(new THREE.Vector3());
   const report = useRef<AnchorReport>({ x: 0, y: 0, on: false });
+  const asm = useRef(reduced ? 1 : 0); // assemble progress (time-based)
 
   // reduced motion uses frameloop "demand": kick a few renders so the static
   // layout lays out and the anchor projects (incl. after size settles)
@@ -158,11 +177,16 @@ function Model({
     };
   }, [reduced, invalidate]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const p = reduced ? 1 : progressRef.current;
+    const dt = Math.min(0.05, delta);
 
-    // assemble: 0.12 → 0.62 of the runway
-    const aRaw = reduced ? 1 : easeOutCubic(remap(p, 0.12, 0.62));
+    // ASSEMBLE — time-based, eased toward 1 once the section is in view (not
+    // tied to scroll position), so the district is reliably visible on arrival
+    // and assembles smoothly instead of popping or staying blank until scroll.
+    const target = reduced || enteredRef.current ? 1 : 0;
+    asm.current += (target - asm.current) * dt * 2.6;
+    const aRaw = reduced ? 1 : easeOutCubic(Math.min(1, Math.max(0, asm.current)));
     for (let i = 0; i < parts.length; i++) {
       const m = segs.current[i];
       const part = parts[i];
@@ -175,9 +199,9 @@ function Model({
       (m.material as THREE.LineBasicMaterial).opacity = 0.05 + 0.85 * aRaw;
     }
 
-    // crane: rotate across the assemble→settle band, + a tiny idle breath
+    // crane: rotate with scroll across the runway, + a tiny idle breath
     if (outer.current) {
-      const craneT = reduced ? 1 : easeOutCubic(remap(p, 0.12, 0.78));
+      const craneT = reduced ? 1 : easeOutCubic(remap(p, 0.05, 0.85));
       const breath = reduced ? 0 : Math.sin(p * Math.PI * 6) * 0.012;
       outer.current.rotation.y = craneFrom + (craneTo - craneFrom) * craneT + breath;
       outer.current.rotation.x = -0.16;
