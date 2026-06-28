@@ -131,7 +131,7 @@ const INDUSTRIES: Ind[] = [
     slug: "events",
     lineColor: "#D97757",
     tint: CLAY,
-    anchor: [-3.5, 3.4, 0.5],
+    anchor: [-2.0, 2.6, -0.3],
     detection: {
       label: "CROWD GATHERING — DENSE",
       klass: "PERSON · HEADCOUNT",

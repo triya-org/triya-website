@@ -29,45 +29,6 @@ const explode = (rand: () => number): [number, number, number] => [
 
 /* ---- ported city building generators (geometry only; no paint/colour) ---- */
 
-/** window grid on all four facades (port of CityScene addWindows) */
-function addWindows(
-  rand: () => number,
-  out: THREE.BufferGeometry[],
-  x: number,
-  z: number,
-  w: number,
-  h: number,
-  d: number,
-) {
-  if (h < 4.5) return;
-  const rows = Math.floor((h - 2.2) / 1.5);
-  const colsX = Math.max(2, Math.floor(w / 1.15));
-  const colsZ = Math.max(2, Math.floor(d / 1.15));
-  for (let r = 0; r < rows; r++) {
-    const wy = 1.6 + r * 1.5;
-    for (let c = 0; c < colsX; c++) {
-      if (rand() < 0.34) continue;
-      const wx = x - ((colsX - 1) * 1.0) / 2 + c * 1.0;
-      for (const sz of [1, -1]) {
-        const g = new THREE.PlaneGeometry(0.55, 0.85);
-        if (sz < 0) g.rotateY(Math.PI);
-        g.translate(wx, wy, z + sz * (d / 2 + 0.02));
-        out.push(g);
-      }
-    }
-    for (let c = 0; c < colsZ; c++) {
-      if (rand() < 0.34) continue;
-      const wz = z - ((colsZ - 1) * 1.0) / 2 + c * 1.0;
-      for (const sx of [1, -1]) {
-        const g = new THREE.PlaneGeometry(0.55, 0.85);
-        g.rotateY(sx > 0 ? Math.PI / 2 : -Math.PI / 2);
-        g.translate(x + sx * (w / 2 + 0.02), wy, wz);
-        out.push(g);
-      }
-    }
-  }
-}
-
 /** floor bands + vertical mullions + parapet crown (port of addCurtainWall) */
 function addTowerDetail(
   out: THREE.BufferGeometry[],
@@ -174,26 +135,6 @@ function circleXY(R: number, cx: number, cy: number, cz: number, n = 40): number
     );
   }
   return pts;
-}
-
-/* a detailed city building → one merged line geometry, as a Part */
-function buildingPart(
-  rand: () => number,
-  x: number,
-  z: number,
-  w: number,
-  h: number,
-  d: number,
-  tower: boolean,
-): Part {
-  const pieces: THREE.BufferGeometry[] = [];
-  const body = new THREE.BoxGeometry(w, h, d);
-  body.translate(x, h / 2, z);
-  pieces.push(body);
-  addWindows(rand, pieces, x, z, w, h, d);
-  if (tower) addTowerDetail(pieces, x, z, w, h, d);
-  addRoof(rand, pieces, x, z, w, h, d);
-  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
 }
 
 function linePart(rand: () => number, geo: THREE.BufferGeometry): Part {
@@ -514,6 +455,39 @@ function ferrisPart(rand: () => number, cx: number, cy: number, cz: number, Rad:
   return { geo: lineGeo(pts), pos: [0, 0, 0], ex: explode(rand) };
 }
 
+/** a big-top festival TENT: conical roof on a short wall + an apex flag pole.
+ * An unmistakable event-grounds signature. */
+function tentPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  R: number,
+  h: number,
+): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const wallH = 0.7;
+  const wall = new THREE.CylinderGeometry(R * 0.92, R * 0.92, wallH, 14);
+  wall.translate(x, wallH / 2, z);
+  pieces.push(wall);
+  const cone = new THREE.ConeGeometry(R, h, 14);
+  cone.translate(x, wallH + h / 2, z);
+  pieces.push(cone);
+  // apex flag pole + a small triangular pennant
+  const apex = wallH + h;
+  const pole = new THREE.BoxGeometry(0.04, 0.95, 0.04);
+  pole.translate(x, apex + 0.47, z);
+  pieces.push(pole);
+  const pennant = new THREE.Shape();
+  pennant.moveTo(0, 0);
+  pennant.lineTo(0.6, -0.16);
+  pennant.lineTo(0, -0.32);
+  pennant.closePath();
+  const pg = new THREE.ExtrudeGeometry(pennant, { depth: 0.01, bevelEnabled: false });
+  pg.translate(x + 0.02, apex + 0.85, z);
+  pieces.push(pg);
+  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
+}
+
 /* ---- districts: detailed slices of the same city ---- */
 
 function manufacturing(rand: () => number): Part[] {
@@ -606,13 +580,14 @@ function smartCities(rand: () => number): Part[] {
 
 function events(rand: () => number): Part[] {
   const parts: Part[] = [];
-  // the stadium sits left; the bowl now reaches high, so the ferris wheel and
-  // flanking buildings are pushed clear to the right/back to stay legible.
-  parts.push(...stadiumParts(rand, -3.5, 0.5));
-  parts.push(ferrisPart(rand, 7, 3.6, -3.5, 3.2));
-  // a couple of detailed buildings flanking the grounds
-  parts.push(buildingPart(rand, 7, 4.5, 2.6, 6, 2.6, true));
-  parts.push(buildingPart(rand, 4.5, 6, 3, 5, 3, true));
+  // EVENT GROUNDS. The ferris wheel is the foreground feature; the stadium bowl
+  // sits behind it (its four floodlight masts read above the wheel). Festival
+  // marquees flank the grounds — unmistakably "events", no office clutter.
+  parts.push(...stadiumParts(rand, -1.0, -3.6)); // stadium, set back
+  parts.push(ferrisPart(rand, 1.0, 3.9, 3.6, 3.4)); // ferris, foreground
+  // big-top festival tents on the grounds
+  parts.push(tentPart(rand, 7.8, 3.4, 1.9, 2.1)); // front-right marquee
+  parts.push(tentPart(rand, -6.6, 3.8, 1.5, 1.7)); // front-left marquee
   parts.push(linePart(rand, gridGeo(24, 11)));
   return parts;
 }
