@@ -9,42 +9,40 @@ import { usePrefersReducedMotion, detectWebGL } from "@/lib/reduced-motion";
 import { useSectionProgress } from "@/lib/use-section-progress";
 import { DRIFT, SNAP } from "@/lib/motion-grammar";
 import type { Industry } from "@/components/three/lineart/models";
-import type { AnchorReport } from "@/components/three/lineart/LineArtScene";
+import type { AnchorReport, DistrictConfig } from "@/components/three/lineart/LineArtSwitcher";
 
 /**
- * THE SWEEP — four industry districts, one always-watching system.
+ * THE WATCH FLOOR (industries) — ONE pinned, scroll-driven switcher.
  *
- * Each section is a dark, near-full-bleed line-art district. As you scroll its
- * sticky runway, the district ASSEMBLES from scattered fragments under a moving
- * scan line and the camera CRANES around it; the instant it settles, Triya
- * CATCHES the one thing that district watches for — a detection reticle snaps in
- * over a real subject (a person/vehicle/crowd silhouette) with an overshoot, a
- * confidence count-up ticks, and a leader line bends out to a parked HUD card.
- * The whole move is driven by ONE scroll-progress value, so the 3D, the overlay
- * and the text never desync. Reverses cleanly on scroll-up.
+ * The four districts (Manufacturing → Retail → Smart Cities → Events) used to be
+ * four full-bleed sections you scrolled past. They're now collapsed into a single
+ * scene that PINS in the viewport (CSS sticky + getBoundingClientRect, like the
+ * Watch Floor — no GSAP pin). Scroll selects the active industry across four
+ * zones of the runway; on each change a scan-wipe swaps the line-art (old erases
+ * ahead of the sweep, new draws on behind it) and the name + body + bullets TYPE
+ * in (fired once on land, not scrubbed per character). HUD + index update to match.
  *
- * No GSAP pin (the app has a stale-pin issue) — sticky + getBoundingClientRect.
- * Mobile → a static stacked layout; reduced-motion → the assembled final state.
+ * Reduced motion / mobile → a static stacked layout (instant, fully legible).
  * Copy harvested verbatim from living-city.tsx's PARKS.
  */
 
+const LineArtSwitcher = dynamic(
+  () => import("@/components/three/lineart/LineArtSwitcher").then((m) => m.LineArtSwitcher),
+  { ssr: false },
+);
 const LineArtScene = dynamic(
   () => import("@/components/three/lineart/LineArtScene").then((m) => m.LineArtScene),
   { ssr: false },
 );
 
-const remap = (v: number, a: number, b: number) =>
-  Math.max(0, Math.min(1, (v - a) / (b - a)));
-
-type ScanAxis = "v" | "h";
 type Subject = "person" | "vehicle" | "crowd";
 
 interface Detection {
-  label: string; // primary chip, e.g. "PPE — NO HARD HAT"
-  klass: string; // class line, e.g. "PERSON · COMPLIANCE"
-  conf?: number; // confidence % (count-up) — omit to show `metric`
-  metric?: string; // a non-confidence metric (e.g. headcount)
-  provenance: string; // Triya's credibility signature
+  label: string;
+  klass: string;
+  conf?: number;
+  metric?: string;
+  provenance: string;
   cameraId: string;
   subject: Subject;
 }
@@ -56,15 +54,10 @@ interface Ind {
   body: string;
   bullets: string[];
   slug: string;
-  flip: boolean; // true → text RIGHT, district LEFT-bleed
   lineColor: string;
-  tint: string; // the catch colour (Triya clay)
-  scanAxis: ScanAxis;
-  crane: [number, number];
+  tint: string;
   anchor: [number, number, number];
-  lift: number; // world-y lift so the silhouette breaks the upper third
-  fitScale?: number; // extra zoom-out on the auto-fit (1 = fit, <1 = more margin)
-  toneTint?: string;
+  fitScale?: number;
   detection: Detection;
 }
 
@@ -79,13 +72,9 @@ const INDUSTRIES: Ind[] = [
     body: "Monitor production lines, ensure worker safety, and prevent equipment theft with 24/7 AI surveillance.",
     bullets: ["Safety compliance monitoring", "Theft prevention"],
     slug: "manufacturing",
-    flip: false,
     lineColor: "#D97757",
     tint: CLAY,
-    scanAxis: "v",
-    crane: [0.34, -0.32],
     anchor: [0.5, 3.2, 0.5],
-    lift: 0,
     detection: {
       label: "PPE — NO HARD HAT",
       klass: "PERSON · COMPLIANCE",
@@ -102,14 +91,9 @@ const INDUSTRIES: Ind[] = [
     body: "Enhance customer experience, prevent shoplifting, and optimize store operations with intelligent monitoring.",
     bullets: ["Loss prevention", "Queue management"],
     slug: "retail",
-    flip: true,
     lineColor: "#E8E0D2",
     tint: CLAY,
-    scanAxis: "h",
-    crane: [-0.28, 0.18],
     anchor: [2.2, 3.4, 2.4],
-    lift: 0,
-    toneTint: "radial-gradient(60% 60% at 50% 45%, hsl(var(--clay-500)/0.10), transparent 70%)",
     detection: {
       label: "LOITERING — 4m12s",
       klass: "PERSON · BEHAVIOR",
@@ -126,15 +110,9 @@ const INDUSTRIES: Ind[] = [
     body: "Create safer urban environments with traffic monitoring, crowd management, and incident detection.",
     bullets: ["Traffic analysis", "Incident response"],
     slug: "smart-cities",
-    flip: false,
     lineColor: "#A9BCC8",
     tint: CLAY,
-    scanAxis: "h",
-    crane: [0.46, -0.5],
-    anchor: [2, 0.5, 5.5], // a vehicle parked on the street, at ground level
-    lift: 0,
-    fitScale: 0.74, // towers are tall — zoom out further to show the whole city + ground
-    toneTint: "radial-gradient(60% 60% at 50% 45%, hsl(205 30% 50%/0.10), transparent 70%)",
+    anchor: [3, 0.5, 6.5],
     detection: {
       label: "NO-PARKING — VEHICLE 2m",
       klass: "VEHICLE · ZONE",
@@ -151,13 +129,9 @@ const INDUSTRIES: Ind[] = [
     body: "Ensure attendee safety, optimize crowd flow, and enhance event experiences with intelligent surveillance.",
     bullets: ["Real-time queue analytics", "VIP corridor protection"],
     slug: "events",
-    flip: true,
     lineColor: "#D97757",
     tint: CLAY,
-    scanAxis: "v",
-    crane: [-0.34, 0.42],
     anchor: [-3.5, 3.4, 0.5],
-    lift: 0,
     detection: {
       label: "CROWD GATHERING — DENSE",
       klass: "PERSON · HEADCOUNT",
@@ -169,8 +143,15 @@ const INDUSTRIES: Ind[] = [
   },
 ];
 
-/** WebGL capability (ignores reduced-motion, unlike useCanRender3D): the canvas
- *  should still mount under reduced motion so it can paint a static district. */
+const N = INDUSTRIES.length;
+const CONFIGS: DistrictConfig[] = INDUSTRIES.map((i) => ({
+  id: i.id,
+  color: i.lineColor,
+  fitScale: i.fitScale ?? 1,
+  anchor: i.anchor,
+}));
+
+/** WebGL capability (ignores reduced-motion) */
 function useCapable3D(): boolean {
   const [capable, setCapable] = useState(false);
   useEffect(() => {
@@ -180,7 +161,6 @@ function useCapable3D(): boolean {
   return capable;
 }
 
-/** below-md → the static stacked layout */
 function useCompact(): boolean {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -194,19 +174,16 @@ function useCompact(): boolean {
 }
 
 export function LineIndustries() {
-  return (
-    <div className="bg-ink-900">
-      {INDUSTRIES.map((ind) => (
-        <IndustryRow key={ind.id} ind={ind} />
-      ))}
-    </div>
-  );
+  const reduced = usePrefersReducedMotion();
+  const compact = useCompact();
+  if (reduced || compact) return <StaticStack reduced={reduced} />;
+  return <PinnedSwitcher />;
 }
 
-function IndustryRow({ ind }: { ind: Ind }) {
-  const reduced = usePrefersReducedMotion();
+/* ───────────────────────── the pinned switcher (desktop) ───────────────────────── */
+
+function PinnedSwitcher() {
   const capable = useCapable3D();
-  const compact = useCompact();
 
   const outerRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -216,36 +193,38 @@ function IndustryRow({ ind }: { ind: Ind }) {
   const dotRef = useRef<SVGCircleElement>(null);
 
   const progressRef = useRef(0);
-  const caughtRef = useRef(false);
-  const enteredRef = useRef(false); // latches true once in view → drives assemble
+  const activeRef = useRef(0);
+  const wipeRef = useRef(0);
   const stageSizeRef = useRef<{ w: number; h: number }>({ w: 1, h: 1 });
+  const showDetectRef = useRef(false);
 
-  const [near, setNear] = useState(false); // mount the canvas
-  const [caught, setCaught] = useState(false); // the detection has fired
+  const [near, setNear] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const [active, setActive] = useState(0);
+  const [pair, setPair] = useState({ from: -1, to: 0 });
+  // starts "wiping" at wipe=0 (district hidden) so nothing flashes before the
+  // entrance wipe actually runs (which only starts once `entered`)
+  const [wiping, setWiping] = useState(true);
+  const [showDetect, setShowDetect] = useState(false);
 
-  const cardFrac = ind.flip ? { fx: 0.21, fy: 0.62 } : { fx: 0.79, fy: 0.62 };
+  const cardFrac = { fx: 0.79, fy: 0.62 };
 
-  // Mount the canvas EARLY (pre-warm the dynamic import + WebGL + geometry) and
-  // LATCH it mounted — once a district has spawned we keep it, so scrolling back
-  // up past it never despawns/reassembles it. Then latch `entered` once it's on
-  // screen so it assembles into view reliably (never blank-until-scroll).
+  // mount early + latch (never despawn); flag entered when the stage fills view
   useEffect(() => {
-    const el = outerRef.current;
-    if (!el) return;
+    const outer = outerRef.current;
+    const stage = stageRef.current;
+    if (!outer || !stage) return;
     const ioNear = new IntersectionObserver(
       ([e]) => {
-        if (e.isIntersecting) setNear(true); // latch: mount once, never unmount
+        if (e.isIntersecting) setNear(true);
       },
       { rootMargin: "1100px 0px" },
     );
-    const ioEnter = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) enteredRef.current = true;
-      },
-      { rootMargin: "0px 0px -15% 0px" },
-    );
-    ioNear.observe(el);
-    ioEnter.observe(el);
+    const ioEnter = new IntersectionObserver(([e]) => setEntered(e.isIntersecting), {
+      threshold: 0.55,
+    });
+    ioNear.observe(outer);
+    ioEnter.observe(stage);
     return () => {
       ioNear.disconnect();
       ioEnter.disconnect();
@@ -263,155 +242,97 @@ function IndustryRow({ ind }: { ind: Ind }) {
     return () => ro.disconnect();
   }, []);
 
-  // ONE scroll-progress source drives everything (sticky runway, rect+rAF)
+  // scroll progress → active zone (4 zones across the pinned runway)
   useSectionProgress(outerRef, {
     mode: "pin",
     onUpdate: (p) => {
       progressRef.current = p;
-
-      const sc = scanRef.current;
-      if (sc) {
-        const t = remap(p, 0.12, 0.62);
-        const fade = p < 0.1 ? 0 : p > 0.66 ? Math.max(0, 1 - (p - 0.66) / 0.06) : 1;
-        if (ind.scanAxis === "v") sc.style.top = `${t * 100}%`;
-        else sc.style.left = `${t * 100}%`;
-        sc.style.opacity = String(fade);
-      }
-
-      // THE CATCH fires at 0.8; re-arms (hysteresis) only below 0.7
-      const want = caughtRef.current ? p >= 0.7 : p >= 0.8;
-      if (want !== caughtRef.current) {
-        caughtRef.current = want;
-        setCaught(want);
+      const idx = Math.min(N - 1, Math.max(0, Math.floor(p * N)));
+      if (idx !== activeRef.current) {
+        activeRef.current = idx;
+        setActive(idx);
       }
     },
   });
 
-  // glue the reticle + leader line to the projected building anchor each frame
-  const onAnchor = useCallback(
-    (a: AnchorReport) => {
-      const wrap = reticleWrapRef.current;
-      if (wrap) {
-        wrap.style.transform = `translate(${a.x}px, ${a.y}px)`;
-        wrap.style.opacity = caughtRef.current && a.on ? "1" : "0";
-      }
-      const sz = stageSizeRef.current;
-      const cx = cardFrac.fx * sz.w;
-      const cy = cardFrac.fy * sz.h;
-      const line = lineRef.current;
-      if (line) {
-        const midX = a.x + (cx - a.x) * 0.5;
-        line.setAttribute("d", `M ${cx} ${cy} L ${midX} ${cy} L ${midX} ${a.y} L ${a.x} ${a.y}`);
-      }
-      const dot = dotRef.current;
-      if (dot) {
-        dot.setAttribute("cx", String(a.x));
-        dot.setAttribute("cy", String(a.y));
-      }
-    },
-    [cardFrac.fx, cardFrac.fy],
-  );
+  // on land (active change, once entered) → scan-wipe + type-in (fired once)
+  useEffect(() => {
+    if (!entered) return;
+    setPair((prev) => ({ from: prev.to, to: active }));
+    setWiping(true);
+    setShowDetect(false);
+    showDetectRef.current = false;
+    wipeRef.current = 0;
+    if (scanRef.current) scanRef.current.style.opacity = "1";
 
+    let raf = 0;
+    let start: number | null = null;
+    const DUR = 0.78; // seconds — fast + identical every time
+    const step = (ts: number) => {
+      if (start == null) start = ts;
+      const t = Math.min(1, (ts - start) / 1000 / DUR);
+      wipeRef.current = t;
+      if (scanRef.current) {
+        scanRef.current.style.left = `${t * 100}%`;
+        scanRef.current.style.opacity = t < 1 ? "1" : "0";
+      }
+      if (t < 1) raf = requestAnimationFrame(step);
+      else {
+        setWiping(false);
+        setShowDetect(true);
+        showDetectRef.current = true;
+      }
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [active, entered]);
+
+  // glue the reticle + leader line to the projected anchor (only once landed)
+  const onAnchor = useCallback((a: AnchorReport) => {
+    const wrap = reticleWrapRef.current;
+    if (wrap) {
+      wrap.style.transform = `translate(${a.x}px, ${a.y}px)`;
+      wrap.style.opacity = showDetectRef.current && a.on ? "1" : "0";
+    }
+    const sz = stageSizeRef.current;
+    const cx = cardFrac.fx * sz.w;
+    const cy = cardFrac.fy * sz.h;
+    const line = lineRef.current;
+    if (line) {
+      const midX = a.x + (cx - a.x) * 0.5;
+      line.setAttribute("d", `M ${cx} ${cy} L ${midX} ${cy} L ${midX} ${a.y} L ${a.x} ${a.y}`);
+    }
+    const dot = dotRef.current;
+    if (dot) {
+      dot.setAttribute("cx", String(a.x));
+      dot.setAttribute("cy", String(a.y));
+    }
+  }, []);
+
+  const ind = INDUSTRIES[active];
   const d = ind.detection;
   const show3D = capable && near;
 
-  /* ───────────── mobile: static stacked layout ───────────── */
-  if (compact) {
-    return (
-      <section
-        ref={outerRef}
-        aria-labelledby={`line-${ind.id}`}
-        className="dark relative overflow-hidden border-t border-white/5 bg-ink-900 text-cream-100"
-      >
-        <div ref={stageRef} className="relative h-[52vh] w-full overflow-hidden">
-          {ind.toneTint && <div aria-hidden className="absolute inset-0" style={{ background: ind.toneTint }} />}
-          <HudScanlines />
-          <div aria-hidden className="absolute inset-0">
-            {show3D ? (
-              <LineArtScene
-                industry={ind.id}
-                reduced
-                color={ind.lineColor}
-                progressRef={progressRef}
-                enteredRef={enteredRef}
-                anchorLocal={ind.anchor}
-                craneFrom={ind.crane[1]}
-                craneTo={ind.crane[1]}
-                xBias={0}
-                lift={ind.lift}
-                fitScale={ind.fitScale ?? 1}
-                onAnchor={() => {}}
-              />
-            ) : null}
-          </div>
-          <StageHud cameraId={d.cameraId} reduced compact />
-        </div>
-        <div className="container py-10">
-          <p className="mb-3 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.22em] text-clay-400">
-            <span style={{ color: ind.tint }}>◣</span>
-            {ind.index} / {ind.title}
-          </p>
-          <h2 id={`line-${ind.id}`} className="t-display-2 text-cream-50">
-            {ind.title}
-          </h2>
-          <p className="t-lead mt-4 max-w-md text-steel-200">{ind.body}</p>
-          {/* the detection, surfaced inline on mobile */}
-          <div className="mt-6 max-w-md rounded-lg border p-3" style={{ borderColor: `${ind.tint}55` }}>
-            <span className="font-mono text-[0.62rem] font-semibold uppercase tracking-[0.14em]" style={{ color: ind.tint }}>
-              {d.label} {d.conf != null ? (d.conf / 100).toFixed(2) : d.metric}
-            </span>
-            <p className="mt-1.5 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-steel-300">{d.klass}</p>
-            <p className="mt-1.5 text-[0.8rem] text-steel-200">{d.provenance}</p>
-          </div>
-          <ul className="mt-5 space-y-2">
-            {ind.bullets.map((b) => (
-              <li key={b} className="flex items-center text-sm text-steel-300">
-                <span className="me-2.5 inline-block h-1.5 w-1.5 rounded-full bg-clay-400" />
-                {b}
-              </li>
-            ))}
-          </ul>
-          <Link
-            href={`/use-cases/${ind.slug}/`}
-            className="group mt-7 inline-flex items-center gap-2 text-sm font-medium text-clay-400 hover:text-clay-300"
-          >
-            Learn more
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  /* ───────────── desktop: the scrubbed sweep + catch ───────────── */
   return (
     <section
+      aria-label="Where Triya is deployed"
       ref={outerRef}
-      aria-labelledby={`line-${ind.id}`}
       className="dark relative bg-ink-900 text-cream-100"
-      style={{ minHeight: reduced ? "100vh" : "230vh" }}
+      style={{ minHeight: "460vh" }}
     >
       <div ref={stageRef} className="sticky top-0 h-screen overflow-hidden">
-        {ind.toneTint && (
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: ind.toneTint }} />
-        )}
         <HudScanlines />
 
-        {/* the line-art district (full-bleed) */}
+        {/* the single line-art district (full-bleed) — swaps via scan-wipe */}
         <div aria-hidden className="absolute inset-0">
           {show3D ? (
-            <LineArtScene
-              industry={ind.id}
-              reduced={reduced}
-              color={ind.lineColor}
-              progressRef={progressRef}
-              enteredRef={enteredRef}
-              anchorLocal={ind.anchor}
-              craneFrom={ind.crane[0]}
-              craneTo={ind.crane[1]}
-              xBias={ind.flip ? -1.0 : 1.0}
-              lift={ind.lift}
-              fitScale={ind.fitScale ?? 1}
+            <LineArtSwitcher
+              configs={CONFIGS}
+              toIndex={pair.to}
+              fromIndex={pair.from}
+              wiping={wiping}
+              wipeRef={wipeRef}
+              reduced={false}
               onAnchor={onAnchor}
             />
           ) : (
@@ -423,136 +344,71 @@ function IndustryRow({ ind }: { ind: Ind }) {
           )}
         </div>
 
-        {/* legibility scrim behind the copy column */}
+        {/* legibility scrim behind the copy column (left) */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 z-10 w-[58%]"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[58%]"
           style={{
-            [ind.flip ? "right" : "left"]: 0,
-            background: `linear-gradient(${ind.flip ? "270deg" : "90deg"}, hsl(var(--ink-900)/0.92), hsl(var(--ink-900)/0.55) 55%, transparent)`,
+            background:
+              "linear-gradient(90deg, hsl(var(--ink-900)/0.92), hsl(var(--ink-900)/0.55) 55%, transparent)",
           }}
         />
 
-        {/* the scan line leading the assembly (blade + trailing glow) */}
-        {!reduced && (
+        {/* the scan-wipe blade (sweeps L→R in sync with the model wipe) */}
+        <div
+          ref={scanRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 z-20"
+          style={{ left: "0%", width: "150px", transform: "translateX(-50%)", opacity: 0 }}
+        >
           <div
-            ref={scanRef}
-            aria-hidden
-            className="pointer-events-none absolute z-10"
-            style={
-              ind.scanAxis === "v"
-                ? {
-                    left: 0,
-                    right: 0,
-                    top: "0%",
-                    height: "140px",
-                    transform: "translateY(-50%)",
-                    opacity: 0,
-                    background: `linear-gradient(to bottom, transparent, ${ind.tint}26, transparent)`,
-                  }
-                : {
-                    top: 0,
-                    bottom: 0,
-                    left: "0%",
-                    width: "140px",
-                    transform: "translateX(-50%)",
-                    opacity: 0,
-                    background: `linear-gradient(to right, transparent, ${ind.tint}26, transparent)`,
-                  }
-            }
-          >
-            <div
-              className="absolute"
-              style={
-                ind.scanAxis === "v"
-                  ? { left: 0, right: 0, top: "50%", height: "2px", background: ind.tint, boxShadow: `0 0 22px 3px ${ind.tint}` }
-                  : { top: 0, bottom: 0, left: "50%", width: "2px", background: ind.tint, boxShadow: `0 0 22px 3px ${ind.tint}` }
-              }
-            />
-          </div>
-        )}
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(to right, transparent, ${CLAY}28, transparent)` }}
+          />
+          <div
+            className="absolute inset-y-0 left-1/2 w-[2px]"
+            style={{ background: CLAY, boxShadow: `0 0 24px 3px ${CLAY}` }}
+          />
+        </div>
 
-        {/* viewfinder HUD */}
-        <StageHud cameraId={d.cameraId} reduced={reduced} />
+        {/* viewfinder HUD (cam id + clock update per industry) */}
+        <StageHud cameraId={d.cameraId} reduced={false} />
 
-        {/* THE CATCH — leader line + reticle + parked card */}
+        {/* detection leader line + reticle + parked card (after land) */}
         <svg
           aria-hidden
           className="pointer-events-none absolute inset-0 z-20 h-full w-full"
-          style={{ opacity: caught ? 1 : 0, transition: "opacity .25s ease", filter: `drop-shadow(0 0 4px ${ind.tint}aa)` }}
+          style={{ opacity: showDetect ? 1 : 0, transition: "opacity .25s ease", filter: `drop-shadow(0 0 4px ${CLAY}aa)` }}
         >
           <path
             ref={lineRef}
             fill="none"
-            stroke={ind.tint}
+            stroke={CLAY}
             strokeWidth={1.6}
             pathLength={1}
             style={{
               strokeDasharray: 1,
-              strokeDashoffset: caught ? 0 : 1,
+              strokeDashoffset: showDetect ? 0 : 1,
               transition: "stroke-dashoffset .5s cubic-bezier(.22,1,.36,1)",
             }}
           />
-          <circle ref={dotRef} r={3.5} fill={ind.tint} />
+          <circle ref={dotRef} r={3.5} fill={CLAY} />
         </svg>
-
-        {/* reticle (positioned each frame onto the building anchor) */}
         <div
           ref={reticleWrapRef}
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 z-30"
           style={{ opacity: 0, transition: "opacity .2s ease", willChange: "transform" }}
         >
-          {(caught || reduced) && <Reticle tint={ind.tint} d={d} reduced={reduced} />}
+          {showDetect && <Reticle key={ind.id} tint={CLAY} d={d} reduced={false} />}
         </div>
+        <CalloutCard key={`card-${ind.id}`} d={d} caught={showDetect} cardFrac={cardFrac} reduced={false} />
 
-        {/* parked HUD card on the bleed rail */}
-        <CalloutCard ind={ind} d={d} caught={caught || reduced} cardFrac={cardFrac} reduced={reduced} />
-
-        {/* the copy column, composited over the district */}
+        {/* the copy column — types in on each land */}
         <div className="container relative z-40 flex h-full items-center">
-          <div className={`max-w-[30rem] ${ind.flip ? "ml-auto text-right" : ""}`}>
-            <motion.div
-              initial={reduced ? false : "hidden"}
-              whileInView={reduced ? undefined : "show"}
-              viewport={{ once: true, amount: 0.4 }}
-              variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-            >
-              <motion.p
-                variants={REVEAL}
-                className={`mb-4 inline-flex items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-clay-400 ${
-                  ind.flip ? "flex-row-reverse" : ""
-                }`}
-              >
-                <span className="leading-none" style={{ color: ind.tint }}>◣</span>
-                {ind.index} / {ind.title}
-              </motion.p>
-              <motion.h2 variants={REVEAL} id={`line-${ind.id}`} className="t-display-2 text-cream-50">
-                {ind.title}
-              </motion.h2>
-              <motion.p variants={REVEAL} className={`t-lead mt-5 max-w-md text-steel-200 ${ind.flip ? "ml-auto" : ""}`}>
-                {ind.body}
-              </motion.p>
-              <motion.ul variants={REVEAL} className={`mt-6 space-y-2 ${ind.flip ? "flex flex-col items-end" : ""}`}>
-                {ind.bullets.map((b) => (
-                  <li key={b} className={`flex items-center text-sm text-steel-300 ${ind.flip ? "flex-row-reverse" : ""}`}>
-                    <span className={`inline-block h-1.5 w-1.5 rounded-full bg-clay-400 ${ind.flip ? "ms-2.5" : "me-2.5"}`} />
-                    {b}
-                  </li>
-                ))}
-              </motion.ul>
-              <motion.div variants={REVEAL}>
-                <Link
-                  href={`/use-cases/${ind.slug}/`}
-                  className={`group mt-8 inline-flex items-center gap-2 text-sm font-medium text-clay-400 hover:text-clay-300 ${
-                    ind.flip ? "flex-row-reverse" : ""
-                  }`}
-                >
-                  Learn more
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
-                </Link>
-              </motion.div>
-            </motion.div>
+          <div className="max-w-[30rem]">
+            <TypedBlock ind={ind} ready={entered} runKey={active} />
+            <ProgressTicks active={active} />
           </div>
         </div>
       </div>
@@ -560,10 +416,237 @@ function IndustryRow({ ind }: { ind: Ind }) {
   );
 }
 
-const REVEAL = {
-  hidden: { opacity: 0, y: 22 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: DRIFT } },
-};
+/* ───────────────────────── typed copy block ───────────────────────── */
+
+function TypedBlock({ ind, ready, runKey }: { ind: Ind; ready: boolean; runKey: number }) {
+  const [nameN, setNameN] = useState(0);
+  const [bodyN, setBodyN] = useState(0);
+  const [bulletsN, setBulletsN] = useState(0);
+  const [phase, setPhase] = useState<"idle" | "name" | "body" | "done">("idle");
+
+  useEffect(() => {
+    if (!ready) return;
+    const timers: number[] = [];
+    setNameN(0);
+    setBodyN(0);
+    setBulletsN(0);
+    setPhase("idle");
+
+    const START = 340; // begin as the sweep passes centre
+    const NAME_MS = 34;
+    const BODY_MS = 13;
+    const BULLET_MS = 150;
+    const title = ind.title;
+    const body = ind.body;
+
+    const begin = window.setTimeout(() => {
+      setPhase("name");
+      let i = 0;
+      const nameInt = window.setInterval(() => {
+        i += 1;
+        setNameN(i);
+        if (i >= title.length) {
+          window.clearInterval(nameInt);
+          setPhase("body");
+          let j = 0;
+          const bodyInt = window.setInterval(() => {
+            j += 1;
+            setBodyN(j);
+            if (j >= body.length) {
+              window.clearInterval(bodyInt);
+              setPhase("done");
+              ind.bullets.forEach((_, k) => {
+                timers.push(window.setTimeout(() => setBulletsN(k + 1), k * BULLET_MS));
+              });
+            }
+          }, BODY_MS);
+          timers.push(bodyInt);
+        }
+      }, NAME_MS);
+      timers.push(nameInt);
+    }, START);
+    timers.push(begin);
+
+    return () =>
+      timers.forEach((t) => {
+        window.clearTimeout(t);
+        window.clearInterval(t);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runKey, ready]);
+
+  return (
+    <div>
+      <p className="mb-4 inline-flex items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-clay-400">
+        <span className="leading-none" style={{ color: CLAY }}>◣</span>
+        {ind.index} / {ind.title}
+      </p>
+      <h2 className="t-display-2 min-h-[1.1em] text-cream-50">
+        {ind.title.slice(0, nameN)}
+        {phase === "name" && <Caret />}
+      </h2>
+      <p className="t-lead mt-5 min-h-[4.5rem] max-w-md text-steel-200">
+        {ind.body.slice(0, bodyN)}
+        {phase === "body" && <Caret />}
+      </p>
+      <ul className="mt-6 space-y-2">
+        {ind.bullets.map((b, k) => (
+          <li
+            key={b}
+            className="flex items-center text-sm text-steel-300 transition-all duration-300"
+            style={{ opacity: k < bulletsN ? 1 : 0, transform: k < bulletsN ? "none" : "translateY(6px)" }}
+          >
+            <span className="me-2.5 inline-block h-1.5 w-1.5 rounded-full bg-clay-400" />
+            {b}
+          </li>
+        ))}
+      </ul>
+      <div style={{ opacity: bulletsN >= ind.bullets.length ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Link
+          href={`/use-cases/${ind.slug}/`}
+          className="group mt-8 inline-flex items-center gap-2 text-sm font-medium text-clay-400 hover:text-clay-300"
+        >
+          Learn more
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Caret() {
+  return (
+    <span
+      aria-hidden
+      className="ml-0.5 inline-block h-[0.9em] w-[2px] translate-y-[0.1em] animate-pulse"
+      style={{ background: CLAY }}
+    />
+  );
+}
+
+/* ───────────────────────── progress ticks ───────────────────────── */
+
+function ProgressTicks({ active }: { active: number }) {
+  return (
+    <div className="mt-10 flex items-center gap-2.5">
+      {INDUSTRIES.map((ind, i) => (
+        <div key={ind.id} className="flex items-center gap-2.5">
+          <span
+            className="h-[3px] rounded-full transition-all duration-500"
+            style={{
+              width: i === active ? 40 : 18,
+              background: i <= active ? CLAY : "hsl(var(--steel-500))",
+              opacity: i === active ? 1 : 0.5,
+            }}
+          />
+        </div>
+      ))}
+      <span className="ml-1 font-mono text-[0.7rem] tabular-nums text-steel-400">
+        {String(active + 1).padStart(2, "0")}
+        <span className="text-steel-600"> / {String(N).padStart(2, "0")}</span>
+      </span>
+    </div>
+  );
+}
+
+/* ───────────────────────── static stack (reduced / mobile) ───────────────────────── */
+
+function StaticStack({ reduced }: { reduced: boolean }) {
+  return (
+    <div className="bg-ink-900">
+      {INDUSTRIES.map((ind) => (
+        <StaticCard key={ind.id} ind={ind} reduced={reduced} />
+      ))}
+    </div>
+  );
+}
+
+function StaticCard({ ind, reduced }: { ind: Ind; reduced: boolean }) {
+  const capable = useCapable3D();
+  const ref = useRef<HTMLElement>(null);
+  const progressRef = useRef(1);
+  const enteredRef = useRef(true);
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setNear(true);
+      },
+      { rootMargin: "500px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const d = ind.detection;
+  const show3D = capable && near;
+
+  return (
+    <section
+      ref={ref}
+      aria-labelledby={`line-${ind.id}`}
+      className="dark relative overflow-hidden border-t border-white/5 bg-ink-900 text-cream-100"
+    >
+      <div className="relative h-[50vh] w-full overflow-hidden">
+        <HudScanlines />
+        <div aria-hidden className="absolute inset-0">
+          {show3D ? (
+            <LineArtScene
+              industry={ind.id}
+              reduced
+              color={ind.lineColor}
+              progressRef={progressRef}
+              enteredRef={enteredRef}
+              anchorLocal={ind.anchor}
+              craneFrom={0.4}
+              craneTo={0.4}
+              xBias={0}
+              lift={0}
+              fitScale={ind.fitScale ?? 1}
+              onAnchor={() => {}}
+            />
+          ) : null}
+        </div>
+        <StageHud cameraId={d.cameraId} reduced compact />
+      </div>
+      <div className="container py-10">
+        <p className="mb-3 inline-flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.22em] text-clay-400">
+          <span style={{ color: ind.tint }}>◣</span>
+          {ind.index} / {ind.title}
+        </p>
+        <h2 id={`line-${ind.id}`} className="t-display-2 text-cream-50">
+          {ind.title}
+        </h2>
+        <p className="t-lead mt-4 max-w-md text-steel-200">{ind.body}</p>
+        <div className="mt-6 max-w-md rounded-lg border p-3" style={{ borderColor: `${ind.tint}55` }}>
+          <span className="font-mono text-[0.62rem] font-semibold uppercase tracking-[0.14em]" style={{ color: ind.tint }}>
+            {d.label} {d.conf != null ? (d.conf / 100).toFixed(2) : d.metric}
+          </span>
+          <p className="mt-1.5 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-steel-300">{d.klass}</p>
+          <p className="mt-1.5 text-[0.8rem] text-steel-200">{d.provenance}</p>
+        </div>
+        <ul className="mt-5 space-y-2">
+          {ind.bullets.map((b) => (
+            <li key={b} className="flex items-center text-sm text-steel-300">
+              <span className="me-2.5 inline-block h-1.5 w-1.5 rounded-full bg-clay-400" />
+              {b}
+            </li>
+          ))}
+        </ul>
+        <Link
+          href={`/use-cases/${ind.slug}/`}
+          className="group mt-7 inline-flex items-center gap-2 text-sm font-medium text-clay-400 hover:text-clay-300"
+        >
+          Learn more
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 /* ───────────────────────── the reticle (the catch) ───────────────────────── */
 
@@ -576,19 +659,16 @@ function Reticle({ tint, d, reduced }: { tint: string; d: Detection; reduced: bo
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.42, ease: SNAP }}
     >
-      {/* soft acquisition glow */}
       <div
         className="absolute -inset-[20%] rounded-[42%]"
         style={{ background: `radial-gradient(50% 50% at 50% 50%, ${tint}, transparent 70%)`, opacity: 0.16 }}
       />
-      {/* the subject Triya caught — gives the brackets something to lock onto */}
       <SubjectGlyph kind={d.subject} tint={tint} reduced={reduced} />
       <div className="absolute inset-0 rounded-[2px] border" style={{ borderColor: tint, opacity: 0.5 }} />
       <BoxCorner pos="tl" tint={tint} reduced={reduced} />
       <BoxCorner pos="tr" tint={tint} reduced={reduced} />
       <BoxCorner pos="bl" tint={tint} reduced={reduced} />
       <BoxCorner pos="br" tint={tint} reduced={reduced} />
-      {/* label chip on the top edge — the confidence number is the hero */}
       <motion.div
         className="absolute -top-7 left-0 flex items-stretch overflow-hidden rounded shadow-[0_0_18px_-2px_rgba(0,0,0,0.6)]"
         style={{ background: tint }}
@@ -690,13 +770,11 @@ function ConfCount({ to }: { to: number }) {
 /* ───────────────────────── parked callout card ───────────────────────── */
 
 function CalloutCard({
-  ind,
   d,
   caught,
   cardFrac,
   reduced,
 }: {
-  ind: Ind;
   d: Detection;
   caught: boolean;
   cardFrac: { fx: number; fy: number };
@@ -706,17 +784,11 @@ function CalloutCard({
     <motion.div
       aria-hidden
       className="pointer-events-none absolute z-30 w-[16.5rem] rounded-lg border bg-ink-900/65 p-3 backdrop-blur-md"
-      style={{
-        borderColor: `${ind.tint}55`,
-        top: `${cardFrac.fy * 100}%`,
-        [ind.flip ? "left" : "right"]: "2.75rem",
-        transform: "translateY(-50%)",
-      }}
+      style={{ borderColor: `${CLAY}55`, top: `${cardFrac.fy * 100}%`, right: "2.75rem", transform: "translateY(-50%)" }}
       initial={reduced ? false : { opacity: 0, y: 8 }}
       animate={caught ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
       transition={{ delay: reduced ? 0 : 0.34, duration: 0.4, ease: DRIFT }}
     >
-      {/* label muted here so only the on-district chip stays hot (one focal point) */}
       <span className="font-mono text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-cream-100">{d.label}</span>
       <p className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-steel-400">{d.klass}</p>
       <div className="mt-2 h-px w-full bg-cream-100/10" />

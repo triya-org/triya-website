@@ -200,6 +200,36 @@ function linePart(rand: () => number, geo: THREE.BufferGeometry): Part {
   return { geo, pos: [0, 0, 0], ex: explode(rand) };
 }
 
+/* a SLEEK glass tower (curtain-wall bands + mullions + crown, NO busy window
+ * grid) — reads clean and modern even when towers stand close (smart city). */
+function towerPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  w: number,
+  h: number,
+  d: number,
+): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const body = new THREE.BoxGeometry(w, h, d);
+  body.translate(x, h / 2, z);
+  pieces.push(body);
+  addTowerDetail(pieces, x, z, w, h, d);
+  addRoof(rand, pieces, x, z, w, h, d);
+  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
+}
+
+/* two boulevards crossing the plaza, drawn as double-line roads on the ground */
+function avenueLines(size: number, ax: number, az: number): THREE.BufferGeometry {
+  const half = size / 2;
+  const g = 1.4; // road half-width
+  const y = 0.02;
+  const pts: number[] = [];
+  for (const z of [az - g, az + g]) pts.push(-half, y, z, half, y, z);
+  for (const x of [ax - g, ax + g]) pts.push(x, y, -half, x, y, half);
+  return lineGeo(pts);
+}
+
 /* ---- per-industry structures ---- */
 
 /** sawtooth factory roof over a hall */
@@ -371,18 +401,22 @@ function retail(rand: () => number): Part[] {
 
 function smartCities(rand: () => number): Part[] {
   const parts: Part[] = [];
+  // a modern downtown: sleek glass towers of varied height, well spaced along
+  // two boulevards, on a generous plaza. Clean (no busy window grids).
   const spots: [number, number, number, number, number][] = [
-    [-5.5, -3.5, 3.4, 13, 3.4],
-    [0, 0, 3.8, 17, 3.8],
-    [5.5, 3, 2.8, 9.5, 2.8],
-    [3.5, -4.5, 2.6, 7.5, 2.6],
-    [-4, 4.5, 2.6, 8.5, 2.6],
-    [6.5, -2, 2.4, 6.5, 2.4],
-    [-2, -5.5, 2.4, 7, 2.4],
-    [2, 5, 2.4, 6, 2.4],
+    [-8, -4.5, 3.0, 11, 3.0],
+    [-2.5, -6, 2.6, 8, 2.6],
+    [2.5, -4.5, 3.3, 15, 3.3], // hero tower
+    [8, -5.5, 2.4, 9, 2.4],
+    [-7.5, 3.5, 2.8, 9.5, 2.8],
+    [-1.5, 2.5, 3.0, 12.5, 3.0],
+    [4.5, 4, 2.6, 7, 2.6],
+    [9, 1.5, 2.2, 10.5, 2.2],
   ];
-  for (const [x, z, w, h, d] of spots) parts.push(buildingPart(rand, x, z, w, h, d, true));
-  parts.push(linePart(rand, gridGeo(22, 12)));
+  for (const [x, z, w, h, d] of spots) parts.push(towerPart(rand, x, z, w, h, d));
+  // a big street grid + two boulevards so it reads as a city plan
+  parts.push(linePart(rand, gridGeo(30, 15)));
+  parts.push(linePart(rand, avenueLines(30, 0.5, -1)));
   return parts;
 }
 
