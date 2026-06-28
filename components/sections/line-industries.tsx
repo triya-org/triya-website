@@ -97,8 +97,8 @@ const INDUSTRIES: Ind[] = [
     slug: "retail",
     lineColor: "#E8E0D2",
     tint: CLAY,
-    anchor: [2.2, 3.4, 2.4],
-    cardFrac: { fx: 0.79, fy: 0.83 },
+    anchor: [0.2, 0.9, 4.2],
+    cardFrac: { fx: 0.79, fy: 0.74 },
     detection: {
       label: "QUEUE BUILDUP — 6 WAITING",
       klass: "PERSON · QUEUE",
