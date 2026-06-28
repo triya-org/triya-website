@@ -58,6 +58,9 @@ interface Ind {
   tint: string;
   anchor: [number, number, number];
   fitScale?: number;
+  /** where the detection card parks (stage fractions) — chosen per district so
+   * the card sits in that art's clear zone and the leader still reaches the anchor */
+  cardFrac: { fx: number; fy: number };
   detection: Detection;
 }
 
@@ -75,6 +78,7 @@ const INDUSTRIES: Ind[] = [
     lineColor: "#D97757",
     tint: CLAY,
     anchor: [0.5, 3.2, 0.5],
+    cardFrac: { fx: 0.79, fy: 0.26 },
     detection: {
       label: "PPE — NO HARD HAT",
       klass: "PERSON · COMPLIANCE",
@@ -94,11 +98,12 @@ const INDUSTRIES: Ind[] = [
     lineColor: "#E8E0D2",
     tint: CLAY,
     anchor: [2.2, 3.4, 2.4],
+    cardFrac: { fx: 0.79, fy: 0.83 },
     detection: {
-      label: "LOITERING — 4m12s",
-      klass: "PERSON · BEHAVIOR",
-      conf: 91,
-      provenance: "Aisle 7 · dwell timer running",
+      label: "QUEUE BUILDUP — 6 WAITING",
+      klass: "PERSON · QUEUE",
+      conf: 93,
+      provenance: "Checkout 3 · wait time rising",
       cameraId: "RTL-07",
       subject: "person",
     },
@@ -112,7 +117,8 @@ const INDUSTRIES: Ind[] = [
     slug: "smart-cities",
     lineColor: "#A9BCC8",
     tint: CLAY,
-    anchor: [3, 0.5, 6.5],
+    anchor: [3, 0.6, 4.0],
+    cardFrac: { fx: 0.79, fy: 0.46 },
     detection: {
       label: "NO-PARKING — VEHICLE 2m",
       klass: "VEHICLE · ZONE",
@@ -132,6 +138,7 @@ const INDUSTRIES: Ind[] = [
     lineColor: "#D97757",
     tint: CLAY,
     anchor: [-2.0, 2.6, -0.3],
+    cardFrac: { fx: 0.79, fy: 0.25 },
     detection: {
       label: "CROWD GATHERING — DENSE",
       klass: "PERSON · HEADCOUNT",
@@ -207,7 +214,12 @@ function PinnedSwitcher() {
   const [wiping, setWiping] = useState(true);
   const [showDetect, setShowDetect] = useState(false);
 
-  const cardFrac = { fx: 0.79, fy: 0.62 };
+  const cardFrac = INDUSTRIES[active].cardFrac;
+  // onAnchor is a stable ([]) callback called every frame, so it must read the
+  // ACTIVE card position via a ref (closing over `cardFrac` would freeze the
+  // leader's origin at the first district's value).
+  const cardFracRef = useRef(cardFrac);
+  cardFracRef.current = cardFrac;
 
   // mount early + latch (never despawn); flag entered when the stage fills view
   useEffect(() => {
@@ -295,8 +307,9 @@ function PinnedSwitcher() {
       wrap.style.opacity = showDetectRef.current && a.on ? "1" : "0";
     }
     const sz = stageSizeRef.current;
-    const cx = cardFrac.fx * sz.w;
-    const cy = cardFrac.fy * sz.h;
+    const cf = cardFracRef.current;
+    const cx = cf.fx * sz.w;
+    const cy = cf.fy * sz.h;
     const line = lineRef.current;
     if (line) {
       const midX = a.x + (cx - a.x) * 0.5;
