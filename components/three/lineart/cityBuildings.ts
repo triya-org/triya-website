@@ -232,20 +232,115 @@ function avenueLines(size: number, ax: number, az: number): THREE.BufferGeometry
 
 /* ---- per-industry structures ---- */
 
-/** sawtooth factory roof over a hall */
-function sawtoothPart(rand: () => number, x: number, z: number, w: number, h: number, d: number): Part {
-  const pieces: THREE.BufferGeometry[] = [];
-  const teeth = Math.max(3, Math.round(w / 1.5));
+/** a north-light SAWTOOTH roof written into `out`: repeating teeth (sloped roof
+ * + a vertical glazed face with horizontal transoms) across the hall width — the
+ * iconic factory roofline, now tall enough to read at a distance. */
+function addSawtooth(
+  out: THREE.BufferGeometry[],
+  x: number,
+  z: number,
+  w: number,
+  h: number,
+  d: number,
+  teethH = 1.5,
+) {
+  const teeth = Math.max(3, Math.round(w / 2.4));
   const tw = w / teeth;
   for (let i = 0; i < teeth; i++) {
+    const ox = x - w / 2 + i * tw;
     const s = new THREE.Shape();
     s.moveTo(0, 0);
     s.lineTo(tw, 0);
-    s.lineTo(0, 0.6);
+    s.lineTo(0, teethH); // vertical glazed (north-light) face on the left
     s.closePath();
     const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false });
-    g.translate(x - w / 2 + i * tw, h, z - d / 2);
-    pieces.push(g);
+    g.translate(ox, h, z - d / 2);
+    out.push(g);
+    // a transom across the glazed face so it reads as a window, not a wall
+    const bar = new THREE.BoxGeometry(0.03, 0.03, d * 0.92);
+    bar.translate(ox + 0.015, h + teethH * 0.55, z);
+    out.push(bar);
+  }
+}
+
+/** a clean factory SHED: hall body + roller doors on the street face + a
+ * north-light sawtooth roof. No busy 4-face window grid (which read as office),
+ * so it stays legible even when sheds sit close together. */
+function shedPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  w: number,
+  h: number,
+  d: number,
+): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const body = new THREE.BoxGeometry(w, h, d);
+  body.translate(x, h / 2, z);
+  pieces.push(body);
+  // roller / loading doors along the +z (camera-facing) wall
+  const fz = z + d / 2;
+  const doors = Math.max(2, Math.round(w / 2.4));
+  const band = w * 0.82;
+  const dw = band / doors;
+  const dh = Math.min(1.9, h * 0.72);
+  for (let i = 0; i < doors; i++) {
+    const dx = x - band / 2 + dw * (i + 0.5);
+    const door = new THREE.PlaneGeometry(dw * 0.8, dh);
+    door.translate(dx, dh / 2 + 0.04, fz + 0.02);
+    pieces.push(door);
+  }
+  addSawtooth(pieces, x, z, w, h, d);
+  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
+}
+
+/** a row of cylindrical SILOS with conical caps, linked by a top walkway — an
+ * unmistakable plant signature. */
+function siloPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  n: number,
+  r: number,
+  h: number,
+): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const step = r * 2 + 0.16;
+  for (let i = 0; i < n; i++) {
+    const sx = x + i * step;
+    const body = new THREE.CylinderGeometry(r, r, h, 16);
+    body.translate(sx, h / 2, z);
+    pieces.push(body);
+    const cap = new THREE.ConeGeometry(r * 1.03, r * 0.75, 16);
+    cap.translate(sx, h + r * 0.375, z);
+    pieces.push(cap);
+  }
+  // a walkway rail bridging the silo tops
+  if (n > 1) {
+    const rail = new THREE.BoxGeometry(step * (n - 1) + 0.2, 0.08, 0.12);
+    rail.translate(x + (step * (n - 1)) / 2, h + 0.12, z + r * 0.7);
+    pieces.push(rail);
+  }
+  return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
+}
+
+/** a horizontal STORAGE TANK on saddle legs (process plant signature) */
+function tankPart(
+  rand: () => number,
+  x: number,
+  z: number,
+  len: number,
+  r: number,
+): Part {
+  const pieces: THREE.BufferGeometry[] = [];
+  const drum = new THREE.CylinderGeometry(r, r, len, 16);
+  drum.rotateZ(Math.PI / 2);
+  drum.translate(x, r + 0.55, z);
+  pieces.push(drum);
+  for (const lx of [x - len * 0.3, x + len * 0.3]) {
+    const leg = new THREE.BoxGeometry(0.14, 0.55, r * 1.7);
+    leg.translate(lx, 0.28, z);
+    pieces.push(leg);
   }
   return { geo: edgesMerge(pieces), pos: [0, 0, 0], ex: explode(rand) };
 }
@@ -423,21 +518,29 @@ function ferrisPart(rand: () => number, cx: number, cy: number, cz: number, Rad:
 
 function manufacturing(rand: () => number): Part[] {
   const parts: Part[] = [];
-  const halls: [number, number, number, number, number][] = [
-    [-4.5, 0.5, 6.5, 4.5, 5],
-    [3.2, 1.5, 5.5, 4, 4.5],
-    [-0.5, -4, 4.5, 3.5, 3.5],
-  ];
-  for (const [x, z, w, h, d] of halls) {
-    parts.push(buildingPart(rand, x, z, w, h, d, false));
-    parts.push(sawtoothPart(rand, x, z, w, h, d));
-  }
-  parts.push(stackPart(rand, -1.6, -1.5, 6.5));
-  parts.push(stackPart(rand, 0.2, -1.5, 5));
-  // container yard — stacked boxes
-  for (let i = 0; i < 5; i++) {
+  // A PROCESS PLANT, not an office park. Clean north-light sheds with roller
+  // doors front the floor; a silo cluster, a horizontal storage tank, two tall
+  // chimney stacks and a container yard give it an unmistakable industrial read.
+  // Stage each element as a DISTINCT, well-separated object (no stacking at the
+  // oblique angle) so the silhouette of each reads on its own:
+  //   centre  → the hero production hall (big sawtooth = the "factory" icon)
+  //   left    → a silo cluster, clear of the hall
+  //   right   → two chimney stacks, standing alone (not behind the hall)
+  //   r-front → a horizontal storage tank in the near corner
+  //   c-front → a small container stack in an open gap
+  parts.push(shedPart(rand, -0.4, 1.2, 6.4, 3.3, 4.8)); // hero hall
+
+  parts.push(siloPart(rand, -6.4, -0.4, 3, 0.85, 4.6)); // silo cluster (left)
+
+  parts.push(stackPart(rand, 5.6, -2.2, 6.8)); // chimneys (right, standalone)
+  parts.push(stackPart(rand, 6.9, -2.2, 5.2));
+
+  parts.push(tankPart(rand, 6.0, 4.4, 3.6, 0.9)); // storage tank (right-front)
+
+  // a small, tidy container stack in the open front-centre gap
+  for (let i = 0; i < 4; i++) {
     const b = new THREE.BoxGeometry(1.6, 0.9, 1.0);
-    b.translate(5.5, 0.45 + (i % 2) * 0.95, -3 + i * 0.6);
+    b.translate(2.4 + (i % 2) * 1.75, 0.45 + Math.floor(i / 2) * 0.95, 5.4);
     parts.push({ geo: edgesMerge([b]), pos: [0, 0, 0], ex: explode(rand) });
   }
   parts.push(linePart(rand, gridGeo(20, 9)));
