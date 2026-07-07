@@ -1,5 +1,10 @@
 .next/*
 venv/*
+
+# Local scratch / verification artifacts (never commit)
+/app/scratch/
+/.claude/
+
 # Dependencies
 node_modules/
 /.pnp

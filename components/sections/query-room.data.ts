@@ -104,8 +104,8 @@ export const CHANNELS: Channel[] = [
     box: { x: 43, y: 26, w: 20, h: 48, label: "UNAUTHORIZED" },
     matchChip: "1 alert",
     latency: "0.4s",
-    video: "/videos/retail_hero_1.mp4",
-    poster: "/images/scenarios/retail.jpg",
+    video: "/videos/intrusion_detection.mp4",
+    poster: "/images/scenarios/intrusion_detection.jpg",
   },
   {
     id: "no-parking",

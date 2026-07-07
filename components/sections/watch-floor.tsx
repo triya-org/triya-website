@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { WatchField } from "@/components/three/watch-field/WatchField";
-import { ScrambleText, Caret } from "@/components/viewport/DetectionViewport";
+import { Caret } from "@/components/viewport/DetectionViewport";
 import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import { LOCK, DRIFT } from "@/lib/motion-grammar";
 import {
@@ -56,6 +56,19 @@ const CONF: Record<string, number> = {
   "active-assurance": 91,
 };
 
+/** the one connected readout shown beside the detection box, per scenario */
+const CALLOUT: Record<string, string> = {
+  intrusion: "No clearance · Zone restricted",
+  "no-parking": "Idle 3m 12s · No-park zone",
+  crowd: "4.1 / m² · Above threshold",
+  "uniform-compliance": "Sustained 40s · Press bay",
+  labcoat: "Clean zone · PPE required",
+  "phone-usage": "2m 10s · Work zone",
+  smoking: "No-smoking zone · Confirmed",
+  "fire-smoke": "Auto-validated · Bay 2",
+  "active-assurance": "Empty 6m · Expected staffed",
+};
+
 // available scenarios reuse the closest real feed (single decode either way)
 const FALLBACK_VIDEO: Record<string, string> = {
   smoking: "/videos/manufacturing_hero_1.mp4",
@@ -91,6 +104,7 @@ interface Monitor {
   conf: number;
   detect: string;
   caption: string;
+  callout: string;
 }
 
 function buildMonitors(): Monitor[] {
@@ -114,6 +128,7 @@ function buildMonitors(): Monitor[] {
         conf,
         detect,
         caption: c.verb,
+        callout: CALLOUT[s.id] ?? "",
       };
     }
     const p = s.preview!;
@@ -129,6 +144,7 @@ function buildMonitors(): Monitor[] {
       conf,
       detect,
       caption: p.alert,
+      callout: CALLOUT[s.id] ?? "",
     };
   });
 }
@@ -296,7 +312,7 @@ export function WatchFloor() {
         onPointerCancel={endDrag}
       >
         {/* spacer establishes the stage height from the card footprint */}
-        <div aria-hidden="true" className="invisible mx-auto aspect-video" style={{ width: CARD_W }} />
+        <div aria-hidden="true" className="invisible mx-auto aspect-[16/7.8]" style={{ width: CARD_W }} />
 
         {monitors.map((m, i) => {
           const d = wrapD(i, idx, n);
@@ -407,7 +423,7 @@ function CoverCard({
       aria-hidden="true"
       tabIndex={-1}
       onClick={onClick}
-      className="cf-card absolute left-1/2 top-1/2 aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black"
+      className="cf-card absolute left-1/2 top-1/2 aspect-[16/7.8] overflow-hidden rounded-2xl border border-white/10 bg-black"
       style={{ width: CARD_W, zIndex: z }}
       initial={false}
       animate={{
@@ -428,7 +444,7 @@ function CoverCard({
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={m.poster} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+      <img src={m.poster} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-top" />
       {/* side cards get a scrim; the centre card stays clean so it reads bright
           as it travels in before the live overlay boots up over it */}
       {!isCenter && <div aria-hidden="true" className="absolute inset-0 bg-ink-900/35" />}
@@ -498,7 +514,7 @@ function LiveMonitor({
       style={{ width: CARD_W }}
     >
     <motion.div
-      className="cf-card relative aspect-video w-full overflow-hidden rounded-2xl border border-white/15 bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)]"
+      className="cf-card relative aspect-[16/7.8] w-full overflow-hidden rounded-2xl border border-white/15 bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)]"
       initial={false}
       animate={{ opacity: reduced || locked ? 1 : 0 }}
       transition={{ duration: locked ? 0.34 : 0.18, ease: DRIFT }}
@@ -509,7 +525,7 @@ function LiveMonitor({
         src={active.poster}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover object-top"
         style={{ filter: "saturate(0.96) brightness(1.06) contrast(1.05)" }}
       />
       {!reduced && (
@@ -521,7 +537,7 @@ function LiveMonitor({
           poster={active.poster}
           aria-hidden="true"
           tabIndex={-1}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover object-top"
           style={{ filter: "saturate(0.96) brightness(1.06) contrast(1.05)" }}
         />
       )}
@@ -537,41 +553,12 @@ function LiveMonitor({
       )}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 110px 6px rgba(0,0,0,0.4)" }} />
 
-      <MonitorCorners />
-
-      {/* HUD: cam id + REC */}
-      <div className="absolute left-3 top-3 z-20 flex items-center gap-2 rounded-md bg-black/40 px-2.5 py-1.5 backdrop-blur-sm">
-        <span className="relative flex h-2 w-2">
-          {!reduced && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-clay-400/70" />}
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-clay-400" />
-        </span>
-        <ScrambleText value={active.cameraId} reduced={reduced} className="font-mono text-[0.65rem] tracking-wider text-cream-100" />
-        <span className="font-mono text-[0.6rem] tracking-wider text-clay-300">REC</span>
-      </div>
-      {/* HUD: location + time */}
-      <div className="absolute right-3 top-3 z-20 text-right">
-        <p className="font-mono text-[0.65rem] tracking-wider text-cream-100">{active.timestamp}</p>
-        <p className="font-mono text-[0.6rem] tracking-wider text-steel-300">{active.location}</p>
-      </div>
-
-      {/* periodic analysing sweep */}
-      {!reduced && (
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 z-10 h-24 -translate-y-1/2"
-          style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--steel-300)/0.18), transparent)" }}
-          initial={{ top: "-14%" }}
-          animate={{ top: "114%" }}
-          transition={{ duration: 3.6, ease: "linear", repeat: Infinity, repeatDelay: 1.6 }}
-        >
-          <div className="absolute inset-x-0 top-1/2 h-px bg-steel-200/70" />
-        </motion.div>
-      )}
-
       {/* SIGNATURE — a vertical scan-mask wipe on every land */}
       {!reduced && <ScanWipe key={active.id} tint={tint} />}
 
-      {/* the detection box draws on when locked */}
+      {/* the detection draws on when locked: the box + one connected readout.
+          All other HUD chrome is intentionally gone — the footage is already a
+          camera, so the detection is the only thing on the glass. */}
       <AnimatePresence mode="wait">
         {locked && (
           <DetectionBox
@@ -584,19 +571,14 @@ function LiveMonitor({
           />
         )}
       </AnimatePresence>
-
-      {/* on-prem stamp */}
-      {locked && (
-        <motion.div
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="absolute bottom-3 right-3 z-20 select-none rounded-md border border-clay-400/60 bg-black/40 px-2 py-1 backdrop-blur-sm"
-        >
-          <p className="font-mono text-[0.5rem] font-semibold uppercase tracking-[0.14em] text-clay-300">
-            Processed on-prem
-          </p>
-        </motion.div>
+      {locked && active.callout && (
+        <DetectionCallout
+          key={active.id + "-callout"}
+          box={active.box}
+          text={active.callout}
+          tint={tint}
+          reduced={reduced}
+        />
       )}
     </motion.div>
     </div>
@@ -626,15 +608,70 @@ function ScanWipe({ tint }: { tint: string }) {
   );
 }
 
-function MonitorCorners() {
-  const base = "pointer-events-none absolute z-10 h-6 w-6 border-cream-100/35";
+/* ───────────────────────── detection callout (connected readout) ───────────────────────── */
+
+/** A single corem-style data chip connected to the detection box by a thin line
+ *  that draws on. Sits on whichever side of the box has more room. */
+function DetectionCallout({
+  box,
+  text,
+  tint,
+  reduced,
+}: {
+  box: BoundingBox;
+  text: string;
+  tint: string;
+  reduced: boolean;
+}) {
+  const cx = box.x + box.w / 2;
+  const onRight = cx < 52; // chip extends right when the box sits left-of-centre
+  const anchorX = onRight ? box.x + box.w : box.x; // box edge the line leaves from
+  const anchorY = clamp(box.y + box.h * 0.28, 6, 88);
+  const lineW = 7; // % of card width
+  const farX = onRight ? anchorX + lineW : anchorX - lineW; // chip-side end of the line
+
+  const draw = reduced ? { duration: 0 } : { duration: 0.32, ease: LOCK, delay: 0.42 };
+  const chipIn = reduced ? { duration: 0 } : { duration: 0.3, ease: DRIFT, delay: 0.6 };
+
   return (
-    <>
-      <span className={`${base} left-2 top-2 border-l-2 border-t-2`} />
-      <span className={`${base} right-2 top-2 border-r-2 border-t-2`} />
-      <span className={`${base} bottom-2 left-2 border-b-2 border-l-2`} />
-      <span className={`${base} bottom-2 right-2 border-b-2 border-r-2`} />
-    </>
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[18]">
+      {/* connector line */}
+      <motion.div
+        className="absolute h-px"
+        style={{
+          top: `${anchorY}%`,
+          left: `${onRight ? anchorX : farX}%`,
+          width: `${lineW}%`,
+          background: tint,
+          boxShadow: `0 0 8px -1px ${tint}`,
+          transformOrigin: onRight ? "left" : "right",
+        }}
+        initial={reduced ? false : { scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={draw}
+      />
+      {/* node dot on the box edge */}
+      <motion.span
+        className="absolute h-1.5 w-1.5 rounded-full"
+        style={{ top: `${anchorY}%`, left: `${anchorX}%`, marginLeft: -3, marginTop: -3, background: tint, boxShadow: `0 0 8px 0 ${tint}` }}
+        initial={reduced ? false : { scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={draw}
+      />
+      {/* the data chip */}
+      <motion.div
+        className="absolute flex items-center gap-1.5 whitespace-nowrap rounded-md border border-white/15 bg-ink-900/85 px-2 py-1 backdrop-blur-sm"
+        style={onRight ? { top: `${anchorY}%`, left: `${farX}%` } : { top: `${anchorY}%`, right: `${100 - farX}%` }}
+        initial={reduced ? false : { opacity: 0, x: onRight ? -6 : 6, y: "-50%" }}
+        animate={{ opacity: 1, x: 0, y: "-50%" }}
+        transition={chipIn}
+      >
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: tint }} />
+        <span className="font-mono text-[0.62rem] leading-none tracking-wide text-cream-100">
+          {text}
+        </span>
+      </motion.div>
+    </div>
   );
 }
 
