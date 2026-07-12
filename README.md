@@ -68,42 +68,24 @@ Open [http://localhost:3000](http://localhost:3000) to view the site.
 ### Building for Production
 
 ```bash
-# Build the static site
+# Build the production app
 npm run build
 
-# The output will be in the 'out' directory
+# Serve the production build locally
+npm run start
 ```
 
 ## 🌐 Deployment
 
-### GitHub Pages
-
-The site is configured for automatic deployment to GitHub Pages:
+The site is deployed on [Vercel](https://vercel.com) as a server-rendered Next.js app:
 
 1. Push changes to the `main` branch
-2. GitHub Actions will automatically build and deploy the site
-3. The site will be available at [https://www.triya.ai](https://www.triya.ai)
-
-### Manual Deployment
-
-To deploy manually to any static hosting service:
-
-```bash
-# Build the static site
-npm run build
-
-# The 'out' directory contains the static files
-# Upload the contents to your hosting service
-```
+2. Vercel automatically builds and deploys to production
+3. The site is available at [https://www.triya.ai](https://www.triya.ai)
 
 ### Custom Domain Setup
 
-The site is configured for the custom domain `www.triya.ai`:
-
-1. The `CNAME` file in the `public` directory specifies the domain
-2. Configure your domain's DNS to point to GitHub Pages:
-   - Add a CNAME record for `www` pointing to `[your-github-username].github.io`
-   - Add A records for the apex domain pointing to GitHub's IP addresses
+The custom domain `www.triya.ai` is configured in the Vercel project settings, with a CNAME record for `www` pointing to Vercel DNS.
 
 ## 🔧 Configuration
 
