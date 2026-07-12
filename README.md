@@ -9,7 +9,7 @@ The official website for Triya.ai - an Edge AI-powered surveillance platform des
 - **Dynamic Content**: Industry-specific use cases with real-world examples
 - **Modern Stack**: Built with Next.js 14, TypeScript, and Tailwind CSS
 - **Smooth Animations**: Engaging user experience with Framer Motion
-- **SEO Optimized**: Static export for optimal performance and search visibility
+- **SEO Optimized**: Server-rendered pages with structured metadata and an auto-generated sitemap
 
 ## 🛠️ Tech Stack
 
